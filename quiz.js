@@ -2,8 +2,9 @@
 const $ = (id) => document.getElementById(id);
 
 function track(eventName, data = {}) {
-  // 여기에 GA4 등 연결 가능
-  // console.log("[track]", eventName, data);
+  if (typeof gtag === "function") {
+    gtag('event', eventName, data);
+  }
 }
 
 function showToast(msg){
