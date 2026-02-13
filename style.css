@@ -140,9 +140,24 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .tcard{
   padding:14px;border-radius:16px;border:1px solid var(--line);
   background: rgba(255,255,255,.03);
+  
+  display:flex;                /* 🔥 핵심 */
+  flex-direction:column;       /* 🔥 세로 정렬 */
+  min-height:180px;            /* 🔥 카드 높이 통일 */
 }
-.tcard b{font-size:18px; font-weight:800;}   /* ✅ 제목 크게 */
+.tcard b{
+  font-size:18px;
+  font-weight:800;
+
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
 .tcard span{color:var(--muted);font-size:14px;} /* ✅ 13 → 14 */
+.tcard .go{
+  margin-top:auto;             /* 🔥 버튼 항상 맨 아래 */
+}
 
 .go {
   display: inline-block;
