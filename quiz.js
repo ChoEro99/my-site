@@ -1,0 +1,209 @@
+// 공통 퀴즈 엔진 (각 테스트 페이지에서 window.TEST 제공)
+const $ = (id) => document.getElementById(id);
+
+function track(eventName, data = {}) {
+  // GA4 등 붙일 때 여기 연결
+  // console.log("[track]", eventName, data);
+}
+
+function showToast(msg){
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 1200);
+}
+
+function makeOtherTestsLinks(){
+  // 홈/다른 테스트 유도 (페이지뷰↑)
+  return `
+  <div class="card mini" style="padding:14px;margin-top:12px">
+    <h4>다른 테스트 더 하기</h4>
+    <ul>
+      <li><a href="/tests/love.html">연애 스타일 테스트</a></li>
+      <li><a href="/tests/spend.html">소비 습관 테스트</a></li>
+      <li><a href="/tests/stress.html">직장 스트레스 유형</a></li>
+      <li><a href="/tests/money.html">돈 모으는 스타일</a></li>
+      <li><a href="/tests/work.html">일할 때 업무 스타일</a></li>
+      <li><a href="/">🏠 홈으로</a></li>
+    </ul>
+  </div>`;
+}
+
+function initQuiz(){
+  const TEST = window.TEST;
+  if (!TEST) {
+    document.body.innerHTML = "<p style='padding:20px'>TEST 데이터가 없습니다.</p>";
+    return;
+  }
+
+  // UI 요소
+  const screens = { start:$("screenStart"), quiz:$("screenQuiz"), result:$("screenResult") };
+
+  const state = {
+    idx:0,
+    scores: Object.fromEntries(TEST.types.map(t=>[t,0])),
+    answers:[]
+  };
+
+  function setPill(text){ $("pill").textContent = text; }
+  function switchScreen(name){
+    Object.values(screens).forEach(el=>el.classList.add("hidden"));
+    screens[name].classList.remove("hidden");
+  }
+
+  function applyScore(obj){ for (const k in obj) state.scores[k]=(state.scores[k]||0)+obj[k]; }
+  function unapplyScore(obj){ for (const k in obj) state.scores[k]=(state.scores[k]||0)-obj[k]; }
+
+  function topResult(){
+    const order = TEST.types;
+    let best = order[0];
+    for (const k of order){
+      if (state.scores[k] > state.scores[best]) best = k;
+    }
+    return best;
+  }
+
+  function setProgress(){
+    const total = TEST.questions.length;
+    const pct = Math.round((state.idx / total) * 100);
+    $("bar").style.width = pct + "%";
+    $("qMeta").textContent = `${state.idx+1} / ${total}`;
+  }
+
+  function renderQuestion(){
+    setProgress();
+    const q = TEST.questions[state.idx];
+    $("qTitle").textContent = q.q;
+    const wrap = $("choices");
+    wrap.innerHTML = "";
+    q.c.forEach((choice,i)=>{
+      const btn = document.createElement("button");
+      btn.className="choice";
+      btn.type="button";
+      btn.textContent = choice.t;
+      btn.onclick = ()=>pick(i);
+      wrap.appendChild(btn);
+    });
+    $("btnBack").disabled = (state.idx===0);
+  }
+
+  function renderResult(resultId, fromParam=false){
+    const r = TEST.results[resultId];
+    if (!r) return;
+
+    $("rEmoji").textContent = r.emoji || "✨";
+    $("rTitle").textContent = r.title;
+    $("rDesc").textContent = r.desc;
+
+    const tags = $("rTags"); tags.innerHTML="";
+    (r.tags||[]).forEach(t=>{
+      const s=document.createElement("span"); s.className="tag"; s.textContent="#"+t; tags.appendChild(s);
+    });
+
+    const s1=$("rStrengths"); s1.innerHTML="";
+    (r.strengths||[]).forEach(x=>{ const li=document.createElement("li"); li.textContent=x; s1.appendChild(li); });
+
+    const s2=$("rPitfalls"); s2.innerHTML="";
+    (r.pitfalls||[]).forEach(x=>{ const li=document.createElement("li"); li.textContent=x; s2.appendChild(li); });
+
+    const s3=$("rRoutine"); s3.innerHTML="";
+    (r.routine||[]).forEach(x=>{ const li=document.createElement("li"); li.textContent=x; s3.appendChild(li); });
+
+    // 저장
+    localStorage.setItem(TEST.storageKey, resultId);
+
+    // 공유 링크 (?r=)
+    const url = new URL(location.href);
+    url.searchParams.set("r", resultId);
+    $("shareHint").textContent = `공유 링크: ${url.toString()}`;
+
+    // 다른 테스트 유도
+    $("otherTests").innerHTML = makeOtherTestsLinks();
+
+    switchScreen("result");
+    track("quiz_result", { test: TEST.slug, resultId, fromParam });
+  }
+
+  function reset(){
+    state.idx=0;
+    state.scores = Object.fromEntries(TEST.types.map(t=>[t,0]));
+    state.answers=[];
+    renderQuestion();
+    switchScreen("quiz");
+    setPill(TEST.badge || "테스트 진행");
+    track("quiz_start", { test: TEST.slug });
+  }
+
+  function pick(choiceIndex){
+    const q = TEST.questions[state.idx];
+    const picked = q.c[choiceIndex];
+    applyScore(picked.s);
+    state.answers[state.idx]=choiceIndex;
+
+    if (state.idx < TEST.questions.length-1){
+      state.idx += 1;
+      renderQuestion();
+    } else {
+      $("bar").style.width="100%";
+      renderResult(topResult());
+    }
+  }
+
+  // 버튼 이벤트
+  $("btnStart").onclick = reset;
+  $("btnAgain").onclick = reset;
+
+  $("btnBack").onclick = ()=>{
+    if (state.idx===0) return;
+    const prevIdx = state.idx-1;
+    const prevQ = TEST.questions[prevIdx];
+    const prevChoice = state.answers[prevIdx];
+    state.idx = prevIdx;
+    if (typeof prevChoice === "number"){
+      unapplyScore(prevQ.c[prevChoice].s);
+      state.answers[prevIdx]=undefined;
+    }
+    renderQuestion();
+    track("quiz_back", { test: TEST.slug, idx: state.idx });
+  };
+
+  $("btnRestart").onclick = ()=>{
+    switchScreen("start");
+    setPill("시작 화면");
+  };
+
+  $("btnCopy").onclick = async ()=>{
+    const last = localStorage.getItem(TEST.storageKey);
+    const url = new URL(location.href);
+    if (last) url.searchParams.set("r", last);
+    try{
+      await navigator.clipboard.writeText(url.toString());
+      showToast("결과 링크 복사 완료!");
+    }catch(e){
+      const tmp=document.createElement("textarea");
+      tmp.value=url.toString(); document.body.appendChild(tmp);
+      tmp.select(); document.execCommand("copy"); document.body.removeChild(tmp);
+      showToast("복사 완료!");
+    }
+    track("share_copy", { test: TEST.slug });
+  };
+
+  // 공유 링크로 진입
+  const params = new URLSearchParams(location.search);
+  const r = params.get("r");
+  const last = localStorage.getItem(TEST.storageKey);
+
+  if (last) $("btnShowLast").classList.remove("hidden");
+  $("btnShowLast").onclick = ()=>renderResult(last, true);
+
+  $("year").textContent = new Date().getFullYear();
+
+  if (r && TEST.results[r]) {
+    setPill("공유 결과 보기");
+    renderResult(r, true);
+    return;
+  }
+
+  setPill("시작 화면");
+  switchScreen("start");
+}
