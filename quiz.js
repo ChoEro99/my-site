@@ -51,10 +51,15 @@ function initQuiz(){
     answers: []
   };
 
-  function setPill(text){
-    const p = $("pill");
-    if (p) p.textContent = text;
+function setPill(text){
+  if (!text) {
+    $("pill").style.display = "none";
+    return;
   }
+  $("pill").style.display = "inline-block";
+  $("pill").textContent = text;
+}
+
 
   function switchScreen(name){
     Object.values(screens).forEach(el => el && el.classList.add("hidden"));
