@@ -115,11 +115,30 @@ function initQuiz(){
     // 공유 링크 (?r=)
     const url = new URL(location.href);
     url.searchParams.set("r", resultId);
+    const shareUrl = url.toString();
     $("shareHint").textContent = `공유 링크: ${url.toString()}`;
 
     // 다른 테스트 유도
     $("otherTests").innerHTML = makeOtherTestsLinks();
 
+    const kbtn = document.getElementById("btnKakao");
+if (kbtn && window.Kakao && window.Kakao.isInitialized()) {
+  kbtn.onclick = () => {
+    window.Kakao.Share.sendDefault({
+      objectType: "feed",
+      content: {
+        title: TEST.ogTitle || document.title,
+        description: TEST.ogDesc || "2~3분 심리테스트! 결과를 공유해보세요.",
+        imageUrl: TEST.ogImage || (location.origin + "/og.png"),
+        link: { mobileWebUrl: shareUrl, webUrl: shareUrl }
+      },
+      buttons: [
+        { title: "결과 보기", link: { mobileWebUrl: shareUrl, webUrl: shareUrl } }
+      ]
+    });
+    track("share_kakao", { test: TEST.slug, resultId });
+  };
+}
     switchScreen("result");
     track("quiz_result", { test: TEST.slug, resultId, fromParam });
   }
