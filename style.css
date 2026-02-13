@@ -135,7 +135,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
   transition:opacity .2s ease, transform .2s ease;
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}
 @media (max-width:920px){.cards{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:560px){.cards{grid-template-columns:1fr}}
 .tcard{
