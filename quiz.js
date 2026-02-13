@@ -222,7 +222,7 @@ function initQuiz(){
 
   $("btnRestart") && ($("btnRestart").onclick = () => {
     switchScreen("start");
-    setPill("시작 화면");
+    setPill("");
   });
 
   $("btnCopy") && ($("btnCopy").onclick = async () => {
@@ -261,6 +261,6 @@ function initQuiz(){
     return;
   }
 
-  setPill("시작 화면");
+  setPill("");
   switchScreen("start");
 }
