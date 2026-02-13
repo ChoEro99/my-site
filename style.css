@@ -11,7 +11,7 @@
 body{
   margin:0;
   font-family: ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo","Noto Sans KR", Segoe UI, Roboto, Arial, sans-serif;
-  font-size:24px;      /* ✅ 추가 */
+  font-size:22px;      /* ✅ 추가 */
   line-height:1.7;     /* ✅ 1.55 → 1.7로 변경 */
   background:
     radial-gradient(1200px 800px at 20% 10%, rgba(110,231,255,.18), transparent 60%),
@@ -26,7 +26,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
 .brand b{font-size:26px}
 .brand span{font-size:19px;color:var(--muted)}
 .pill{
-  font-size:24px;                 /* ✅ 12 → 14 */
+  font-size:22px;                 /* ✅ 12 → 14 */
   color:var(--text);              /* ✅ 글자 더 선명하게 */
   border:1px solid var(--line);
   padding:10px 14px;              /* ✅ 8 10 → 10 14 */
