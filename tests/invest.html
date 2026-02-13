@@ -1,0 +1,107 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>주식/코인 투자 성향 테스트 | 2~3분</title>
+<meta name="description" content="공격/분산/스윙/관망 중 내 투자 성향은? (콘텐츠용)"/>
+<meta property="og:title" content="주식/코인 투자 성향 테스트" />
+<meta property="og:description" content="공격/분산/스윙/관망 중 내 투자 성향은?" />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="https://testpick.kr/og.png" />
+<link rel="stylesheet" href="/style.css"/></head><body>
+<div class="wrap"><header><div class="brand"><b>주식/코인 투자 성향 테스트</b><span>10문항 · 결과 공유</span></div><div class="pill" id="pill">로딩…</div></header>
+<div class="grid">
+
+<main class="card hero" id="screenStart">
+<h1>나는 어떤 투자 성향일까?</h1>
+<p>* 교육/콘텐츠용이며 투자 조언이 아닙니다.</p>
+<div class="btns"><button class="primary" id="btnStart">테스트 시작</button><button id="btnShowLast" class="hidden">마지막 결과</button><a class="pill" href="/">🏠 홈</a></div>
+<div class="note">팁: 결과에 “돈 모으는 스타일”과 연결되는 추천이 나와요.</div>
+</main>
+
+<main class="card hidden" id="screenQuiz">
+<div class="progress"><div class="bar" id="bar"></div></div>
+<div class="pill" id="qMeta"></div><div class="qtitle" id="qTitle"></div><div class="choices" id="choices"></div>
+<div class="btns" style="margin-top:12px"><button id="btnBack">이전</button><button id="btnRestart">처음으로</button></div>
+</main>
+
+<main class="card hidden" id="screenResult">
+<div class="resultTitle"><div class="emoji" id="rEmoji"></div><h2 id="rTitle"></h2></div>
+<p class="resultDesc" id="rDesc"></p><div class="tags" id="rTags"></div>
+
+<div class="twoCol">
+<div class="card mini" style="padding:14px"><h4>강점</h4><ul id="rStrengths"></ul></div>
+<div class="card mini" style="padding:14px"><h4>주의</h4><ul id="rPitfalls"></ul></div>
+</div>
+
+<div class="card mini" style="padding:14px;margin-top:12px"><h4>추천 루틴</h4><ul id="rRoutine"></ul></div>
+
+<div class="card mini" style="padding:14px;margin-top:12px">
+<h4>돈 모으는 스타일과의 궁합</h4>
+<ul style="color:var(--muted);margin:0;padding-left:18px">
+  <li><a href="/tests/money.html">👉 돈 모으는 스타일 테스트</a>와 같이 보면 더 정확해요.</li>
+  <li>투자 성향이 “공격”일수록 리스크 비중 규칙을 꼭 만들고, “관망”일수록 자동 저축 루틴으로 시작하는 게 좋아요.</li>
+</ul>
+</div>
+
+<div class="adbox"><b>[광고/제휴 자리]</b><br/>투자/가계부/금융 도구 제휴는 “추천/비교” 톤으로</div>
+
+<div class="btns">
+  <button class="primary" id="btnCopy">결과 링크 복사</button>
+  <button id="btnKakao">카카오톡 공유</button>
+  <button id="btnAgain">다시하기</button>
+  <a class="pill" href="/">🏠 홈</a>
+  <a class="pill" href="/tests/money.html">💰 돈 모으는 스타일</a>
+</div>
+
+<div class="note" id="shareHint"></div><div id="otherTests"></div>
+</main>
+
+<aside class="card side">
+<h3>주의</h3>
+<ul><li>이 테스트는 투자 조언이 아님</li><li>광고 문구 과장 금지</li></ul>
+<div class="adbox"><b>[광고 자리]</b></div>
+</aside>
+
+</div></div><div class="toast" id="toast"></div>
+
+<script>
+window.TEST={
+slug:"invest",badge:"투자 성향",storageKey:"lastResult_invest",
+ogTitle:"주식/코인 투자 성향 테스트",ogDesc:"공격/분산/스윙/관망 중 내 투자 성향은?",ogImage: location.origin + "/og.png",
+types:["aggr","diver","swing","watch"],
+results:{
+aggr:{emoji:"📈",title:"공격형",desc:"수익 기회에 과감히 들어가는 타입. 속도와 확신이 강점!",tags:["공격","기회","속도"],
+strengths:["의사결정 빠름","기회 포착","실행력"],
+pitfalls:["과열/몰빵 위험","손실 회피 편향","과도한 트레이딩"],
+routine:["비중 규칙(최대%) 고정","손절/익절 기준 글로 쓰기","점검은 주 1회"]},
+diver:{emoji:"🧺",title:"분산형",desc:"리스크를 나누고 꾸준히 쌓는 타입. 장기전에 강함.",tags:["분산","장기","루틴"],
+strengths:["멘탈 안정","리스크 관리","꾸준함"],
+pitfalls:["기회 놓침 아쉬움","너무 보수적일 수"],
+routine:["정기적립(자동)","리밸런스 분기 1회","뉴스는 하루 10분"]},
+swing:{emoji:"🪃",title:"스윙형",desc:"큰 흐름을 보고 타이밍을 잡는 타입. 기다릴 줄 아는 스타일.",tags:["스윙","흐름","타이밍"],
+strengths:["큰 파동 활용","손익비 감각","매매 빈도 적당"],
+pitfalls:["타이밍 집착","기회비용 스트레스"],
+routine:["진입 조건 3개만","손익비 1:2 이상","일지 1줄 기록"]},
+watch:{emoji:"🧘",title:"관망형",desc:"확신이 들기 전엔 안 움직이는 타입. 안전이 우선.",tags:["관망","안전","신중"],
+strengths:["큰 실수 적음","충동매매 없음","현금 관리"],
+pitfalls:["시작이 늦어짐","정보 과다로 멈춤"],
+routine:["소액으로 시스템 시작","자동저축+소액 적립","학습은 주 2회"]},
+},
+questions:[
+{q:"가격이 급등하면?",c:[{t:"기회! 들어간다",s:{aggr:2}},{t:"일단 분산으로 접근",s:{diver:2}},{t:"조정 기다린다",s:{swing:2}},{t:"지켜본다",s:{watch:2}}]},
+{q:"손실이 나면?",c:[{t:"빠르게 대응/재진입",s:{aggr:2}},{t:"비중 조절",s:{diver:2}},{t:"기준 깨지면 정리",s:{swing:2}},{t:"그냥 안 한다",s:{watch:2}}]},
+{q:"투자 정보는?",c:[{t:"커뮤/트렌드 빠르게",s:{aggr:2}},{t:"기본/분산 위주",s:{diver:2}},{t:"차트/흐름 위주",s:{swing:2}},{t:"확실한 것만",s:{watch:2}}]},
+{q:"매매 빈도는?",c:[{t:"자주",s:{aggr:2}},{t:"정기적립 위주",s:{diver:2}},{t:"기회 때만",s:{swing:2}},{t:"거의 안 함",s:{watch:2}}]},
+{q:"내가 원하는 건?",c:[{t:"큰 수익",s:{aggr:2}},{t:"안정 성장",s:{diver:2}},{t:"좋은 타이밍",s:{swing:2}},{t:"손실 최소",s:{watch:2}}]},
+{q:"리스크를 느끼면?",c:[{t:"감수하고 간다",s:{aggr:2}},{t:"나눠서 간다",s:{diver:2}},{t:"조건 오면 간다",s:{swing:2}},{t:"안 간다",s:{watch:2}}]},
+{q:"계획은?",c:[{t:"상황에 맞게",s:{aggr:2}},{t:"룰대로",s:{diver:2}},{t:"시나리오대로",s:{swing:2}},{t:"확실할 때만",s:{watch:2}}]},
+{q:"수익 나면?",c:[{t:"더 키운다",s:{aggr:2}},{t:"일부 이익실현/리밸",s:{diver:2}},{t:"목표 오면 정리",s:{swing:2}},{t:"그냥 만족",s:{watch:2}}]},
+{q:"공포장이 오면?",c:[{t:"역으로 기회",s:{aggr:2}},{t:"분할매수",s:{diver:2}},{t:"바닥 확인 후",s:{swing:2}},{t:"현금이 최고",s:{watch:2}}]},
+{q:"내 투자 한 줄",c:[{t:"공격형",s:{aggr:2}},{t:"분산형",s:{diver:2}},{t:"스윙형",s:{swing:2}},{t:"관망형",s:{watch:2}}]},
+]
+};
+</script>
+
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
+<script>Kakao.init("e810a3d9eddcf0271884bbe79e1ac6f3");</script>
+<script src="/quiz.js"></script><script>initQuiz();</script>
+</body></html>
