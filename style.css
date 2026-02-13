@@ -11,12 +11,13 @@
 body{
   margin:0;
   font-family: ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo","Noto Sans KR", Segoe UI, Roboto, Arial, sans-serif;
+  font-size:16px;      /* ✅ 추가 */
+  line-height:1.7;     /* ✅ 1.55 → 1.7로 변경 */
   background:
     radial-gradient(1200px 800px at 20% 10%, rgba(110,231,255,.18), transparent 60%),
     radial-gradient(900px 700px at 90% 30%, rgba(167,139,250,.16), transparent 55%),
     var(--bg);
   color:var(--text);
-  line-height:1.55;
 }
 a{color:var(--accent); text-decoration:none}
 .wrap{max-width:980px;margin:0 auto;padding:26px 18px 60px}
@@ -25,11 +26,20 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
 .brand b{font-size:18px}
 .brand span{font-size:13px;color:var(--muted)}
 .pill{
-  font-size:12px;color:var(--muted);
+  font-size:14px;                 /* ✅ 12 → 14 */
+  color:var(--text);              /* ✅ 글자 더 선명하게 */
   border:1px solid var(--line);
-  padding:8px 10px;border-radius:999px;
-  background: rgba(255,255,255,.03);
+  padding:10px 14px;              /* ✅ 8 10 → 10 14 */
+  border-radius:999px;
+  background: rgba(255,255,255,.05);
   white-space:nowrap;
+  transition: transform .15s ease, background .2s ease, color .2s ease;
+}
+
+.pill:hover{
+  background: linear-gradient(90deg, rgba(110,231,255,.95), rgba(167,139,250,.95));
+  color:#0b0f19;
+  transform: translateY(-1px);
 }
 .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
 @media (max-width:920px){.grid{grid-template-columns:1fr}}
@@ -131,9 +141,8 @@ button:disabled{opacity:.55;cursor:not-allowed}
   padding:14px;border-radius:16px;border:1px solid var(--line);
   background: rgba(255,255,255,.03);
 }
-.tcard b{display:block;margin-bottom:6px}
-.tcard span{color:var(--muted);font-size:13px}
-.tcard .go{margin-top:10px;display:inline-block}
+.tcard b{font-size:18px; font-weight:800;}   /* ✅ 제목 크게 */
+.tcard span{color:var(--muted);font-size:14px;} /* ✅ 13 → 14 */
 
 .go {
   display: inline-block;
