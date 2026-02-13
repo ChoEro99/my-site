@@ -11,7 +11,7 @@
 body{
   margin:0;
   font-family: ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo","Noto Sans KR", Segoe UI, Roboto, Arial, sans-serif;
-  font-size:16px;      /* ✅ 추가 */
+  font-size:24px;      /* ✅ 추가 */
   line-height:1.7;     /* ✅ 1.55 → 1.7로 변경 */
   background:
     radial-gradient(1200px 800px at 20% 10%, rgba(110,231,255,.18), transparent 60%),
@@ -23,10 +23,10 @@ a{color:var(--accent); text-decoration:none}
 .wrap{max-width:980px;margin:0 auto;padding:26px 18px 60px}
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
 .brand{display:flex;flex-direction:column;gap:2px}
-.brand b{font-size:18px}
-.brand span{font-size:13px;color:var(--muted)}
+.brand b{font-size:26px}
+.brand span{font-size:19px;color:var(--muted)}
 .pill{
-  font-size:14px;                 /* ✅ 12 → 14 */
+  font-size:24px;                 /* ✅ 12 → 14 */
   color:var(--text);              /* ✅ 글자 더 선명하게 */
   border:1px solid var(--line);
   padding:10px 14px;              /* ✅ 8 10 → 10 14 */
@@ -50,9 +50,9 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
   padding:18px;
   box-shadow: 0 12px 30px rgba(0,0,0,.25);
 }
-.hero h1{margin:6px 0 8px;font-size:28px}
+.hero h1{margin:6px 0 8px;font-size:36px}
 .hero p{margin:0;color:var(--muted)}
-.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.btns{display:flex;flex-wrap:wrap;gap:14px;margin-top:18px}
 button{
   border:1px solid var(--line);
   background: rgba(255,255,255,.04);
@@ -68,7 +68,7 @@ button.primary{
   color:#0b0f19;
 }
 button:disabled{opacity:.55;cursor:not-allowed}
-.note{font-size:12px;color:var(--muted);margin-top:10px}
+.note{font-size:18px;color:var(--muted);margin-top:10px}
 
 .progress{
   width:100%;
@@ -119,7 +119,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .twoCol{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media (max-width:560px){.twoCol{grid-template-columns:1fr}}
 .mini h4{margin:0 0 8px;font-size:14px}
-.mini li,.mini p{color:var(--muted);font-size:13px}
+.mini li,.mini p{color:var(--muted);font-size:20px}
 .mini ul{margin:0;padding-left:18px}
 .footer{margin-top:18px;color:var(--muted);font-size:12px}
 .toast{
