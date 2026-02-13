@@ -116,29 +116,46 @@ function initQuiz(){
     const url = new URL(location.href);
     url.searchParams.set("r", resultId);
     const shareUrl = url.toString();
-    $("shareHint").textContent = `공유 링크: ${url.toString()}`;
+    $("shareHint").textContent = `공유 링크: ${shareUrl}`;
 
     // 다른 테스트 유도
     $("otherTests").innerHTML = makeOtherTestsLinks();
 
-    const kbtn = document.getElementById("btnKakao");
+    const url = new URL(location.href);
+url.searchParams.set("r", resultId);
+const shareUrl = url.toString();
+
+const kbtn = document.getElementById("btnKakao");
 if (kbtn && window.Kakao && window.Kakao.isInitialized()) {
   kbtn.onclick = () => {
+    const imageAbs = (TEST.ogImage && TEST.ogImage.startsWith("http"))
+      ? TEST.ogImage
+      : (location.origin + "/og.png"); // ✅ 절대주소로
+
     window.Kakao.Share.sendDefault({
       objectType: "feed",
       content: {
         title: TEST.ogTitle || document.title,
-        description: TEST.ogDesc || "2~3분 심리테스트! 결과를 공유해보세요.",
-        imageUrl: TEST.ogImage || (location.origin + "/og.png"),
-        link: { mobileWebUrl: shareUrl, webUrl: shareUrl }
+        description: TEST.ogDesc || "2~3분 심리테스트! 결과를 확인해보세요.",
+        imageUrl: imageAbs,
+        link: {
+          mobileWebUrl: shareUrl,
+          webUrl: shareUrl
+        }
       },
       buttons: [
-        { title: "결과 보기", link: { mobileWebUrl: shareUrl, webUrl: shareUrl } }
+        {
+          title: "결과 보러가기",
+          link: {
+            mobileWebUrl: shareUrl,
+            webUrl: shareUrl
+          }
+        }
       ]
     });
-    track("share_kakao", { test: TEST.slug, resultId });
   };
 }
+    
     switchScreen("result");
     track("quiz_result", { test: TEST.slug, resultId, fromParam });
   }
