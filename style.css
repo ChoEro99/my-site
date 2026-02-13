@@ -195,3 +195,4 @@ button:disabled{opacity:.55;cursor:not-allowed}
   text-align: left;             /* 글자는 왼쪽 */
   display: inline-block;        /* 전체를 가운데 배치 */
 }
+#pill{ display:none !important; }
