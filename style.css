@@ -178,10 +178,14 @@ button:disabled{opacity:.55;cursor:not-allowed}
   box-shadow: 0 8px 20px rgba(0,0,0,0.3);
 }
 .side ol {
-  font-size:18px;   /* 🔥 16 → 14 정도로 줄임 */
+  font-size:14px;   /* 🔥 16 → 14 정도로 줄임 */
   line-height:1.6;
 }
 
-.side ol a {
-  font-size:18px;   /* 링크도 동일하게 */
+.side h3 {
+  font-size:18px;   /* 제목 크게 */
+}
+
+.side ol {
+  font-size:14px;   /* 목록 작게 */
 }
