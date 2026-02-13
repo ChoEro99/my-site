@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>5분 여행 성향 테스트 | 재미로 보는 나의 여행 스타일</title>
+  <meta name="description" content="12문항으로 알아보는 나의 여행 성향! 탐험가/계획가/힐러/사교형 중 나는 어떤 타입?" />
+  <meta name="robots" content="index,follow" />
+  <meta property="og:title" content="5분 여행 성향 테스트" />
+  <meta property="og:description" content="12문항으로 알아보는 나의 여행 스타일! 결과를 링크로 공유해보세요." />
+  <meta property="og:type" content="website" />
+  <!-- og:image는 나중에 이미지 올리고 URL 넣으면 공유 썸네일이 좋아져요 -->
+  <!-- <meta property="og:image" content="https://your-domain.com/og.png" /> -->
+
+  <style>
+    :root{
+      --bg:#0b0f19;
+      --card:#121a2a;
+      --muted:#93a4c7;
+      --text:#eaf0ff;
+      --line:rgba(255,255,255,.08);
+      --accent:#6ee7ff;
+      --accent2:#a78bfa;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", Segoe UI, Roboto, Arial, "Helvetica Neue", sans-serif;
+      background: radial-gradient(1200px 800px at 20% 10%, rgba(110,231,255,.18), transparent 60%),
+                  radial-gradient(900px 700px at 90% 30%, rgba(167,139,250,.16), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      line-height:1.55;
+    }
+    .wrap{max-width:860px;margin:0 auto;padding:28px 18px 60px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+    .brand{display:flex;flex-direction:column;gap:2px}
+    .brand b{font-size:18px}
+    .brand span{font-size:13px;color:var(--muted)}
+    .pill{
+      font-size:12px;color:var(--muted);
+      border:1px solid var(--line);
+      padding:8px 10px;border-radius:999px;
+      background: rgba(255,255,255,.03);
+      white-space:nowrap;
+    }
+
+    .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+    @media (max-width:860px){.grid{grid-template-columns:1fr}}
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:18px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.25);
+    }
+    .hero h1{margin:6px 0 8px;font-size:28px}
+    .hero p{margin:0;color:var(--muted)}
+    .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+    button{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color:var(--text);
+      padding:12px 14px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:700;
+    }
+    button.primary{
+      border:none;
+      background: linear-gradient(90deg, rgba(110,231,255,.95), rgba(167,139,250,.95));
+      color:#0b0f19;
+    }
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .note{font-size:12px;color:var(--muted);margin-top:10px}
+
+    .progress{
+      width:100%;
+      height:10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.06);
+      overflow:hidden;
+      border:1px solid var(--line);
+      margin:14px 0 10px;
+    }
+    .bar{height:100%;width:0%;background: linear-gradient(90deg, var(--accent), var(--accent2));}
+
+    .qtitle{font-size:18px;margin:6px 0 10px}
+    .choices{display:grid;gap:10px}
+    .choice{
+      text-align:left;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      transition: transform .06s ease, background .2s ease;
+    }
+    .choice:hover{transform: translateY(-1px); background: rgba(255,255,255,.05);}
+
+    .side h3{margin:6px 0 10px;font-size:16px}
+    .side ul{margin:0;padding-left:18px;color:var(--muted)}
+    .adbox{
+      margin-top:12px;
+      padding:12px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.16);
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .resultTitle{display:flex;align-items:center;gap:10px;margin:2px 0 8px}
+    .resultTitle .emoji{font-size:28px}
+    .resultTitle h2{margin:0;font-size:22px}
+    .resultDesc{color:var(--muted);margin:0 0 14px}
+    .tags{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+    .tag{
+      font-size:12px;
+      padding:7px 10px;border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+    }
+    .twoCol{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:560px){.twoCol{grid-template-columns:1fr}}
+    .mini h4{margin:0 0 8px;font-size:14px}
+    .mini p, .mini li{color:var(--muted);font-size:13px}
+    .mini ul{margin:0;padding-left:18px}
+
+    footer{margin-top:18px;color:var(--muted);font-size:12px}
+    a{color:var(--accent)}
+    .hidden{display:none}
+    .toast{
+      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
+      background: rgba(18,26,42,.95);
+      border:1px solid var(--line);
+      padding:10px 12px;border-radius:12px;
+      color:var(--text);
+      font-size:13px;
+      box-shadow:0 12px 30px rgba(0,0,0,.35);
+      opacity:0;pointer-events:none;
+      transition:opacity .2s ease, transform .2s ease;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+  </style>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "5분 여행 성향 테스트",
+    "description": "12문항으로 알아보는 나의 여행 스타일 테스트",
+    "inLanguage": "ko-KR"
+  }
+  </script>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <b>5분 여행 성향 테스트</b>
+        <span>재미로 보는 나의 여행 스타일 · 결과 링크 공유 가능</span>
+      </div>
+      <div class="pill" id="pill">로딩 중…</div>
+    </header>
+
+    <div class="grid">
+      <!-- MAIN -->
+      <main class="card hero" id="screenStart">
+        <h1>당신의 여행은 어떤 느낌에 가까워요?</h1>
+        <p>12문항 · 약 2~3분 · 결과 4가지 타입</p>
+
+        <div class="btns">
+          <button class="primary" id="btnStart">테스트 시작</button>
+          <button id="btnShowLast" class="hidden">마지막 결과 보기</button>
+        </div>
+
+        <div class="note">
+          * 본 테스트는 재미/콘텐츠용이며, 심리 진단/의료적 판단을 대체하지 않습니다.
+        </div>
+      </main>
+
+      <main class="card hidden" id="screenQuiz">
+        <div class="progress" aria-label="진행률">
+          <div class="bar" id="bar"></div>
+        </div>
+        <div class="pill" id="qMeta">1 / 12</div>
+        <div class="qtitle" id="qTitle">질문</div>
+        <div class="choices" id="choices"></div>
+
+        <div class="btns" style="margin-top:12px">
+          <button id="btnBack">이전</button>
+          <button id="btnRestart">처음으로</button>
+        </div>
+
+        <div class="note">
+          팁: 결과를 공유하면 링크로 바로 결과 화면이 열려요.
+        </div>
+      </main>
+
+      <main class="card hidden" id="screenResult">
+        <div class="resultTitle">
+          <div class="emoji" id="rEmoji">✨</div>
+          <h2 id="rTitle">결과</h2>
+        </div>
+        <p class="resultDesc" id="rDesc"></p>
+
+        <div class="tags" id="rTags"></div>
+
+        <div class="twoCol">
+          <div class="card mini" style="padding:14px">
+            <h4>이런 점이 강점이에요</h4>
+            <ul id="rStrengths"></ul>
+          </div>
+          <div class="card mini" style="padding:14px">
+            <h4>이럴 땐 주의!</h4>
+            <ul id="rPitfalls"></ul>
+          </div>
+        </div>
+
+        <div class="card mini" style="padding:14px;margin-top:12px">
+          <h4>추천 여행 루틴(가볍게 따라해보기)</h4>
+          <ul id="rRoutine"></ul>
+        </div>
+
+        <div class="btns">
+          <button class="primary" id="btnCopy">결과 링크 복사</button>
+          <button id="btnAgain">다시하기</button>
+        </div>
+
+        <div class="note" id="shareHint"></div>
+      </main>
+
+      <!-- SIDE -->
+      <aside class="card side">
+        <h3>수익화 포인트(추천)</h3>
+        <ul>
+          <li>테스트 결과 화면 상단/하단에 광고 배치(애드센스)</li>
+          <li>결과별 추천 “아이템/서비스” 제휴 링크</li>
+          <li>다른 테스트 3~5개로 내부 링크 확장(체류↑)</li>
+          <li>결과 공유 UX(링크/카톡) 강화</li>
+        </ul>
+
+        <div class="adbox">
+          <b>[광고 자리]</b><br/>
+          애드센스 승인 후 여기에 광고 스크립트를 넣으면 좋아요.<br/>
+          (레이아웃 깨짐 방지용 박스)
+        </div>
+
+        <div class="adbox">
+          <b>[분석 자리]</b><br/>
+          GA4/Clarity 등을 넣을 경우, 스크립트를 head 또는 아래 track() 위치에 연결하면 됩니다.
+        </div>
+      </aside>
+    </div>
+
+    <footer>
+      © <span id="year"></span> · 테스트는 재미용 콘텐츠입니다. |
+      <a href="#" id="privacyLink">간단 개인정보 안내</a>
+      <div class="hidden" id="privacy">
+        <br/>
+        <b>개인정보 안내(샘플)</b><br/>
+        본 사이트는 테스트 결과를 서버로 전송하지 않으며(기본 구현 기준),
+        브라우저에 “마지막 결과”를 저장할 수 있습니다(localStorage).<br/>
+        광고/분석 도구를 추가하는 경우, 해당 서비스의 쿠키/식별자가 사용될 수 있습니다.
+      </div>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast">복사 완료!</div>
+
+  <script>
+    // ---------------------------
+    // 1) 데이터 (질문/선택지/점수)
+    // ---------------------------
+    const QUESTIONS = [
+      {
+        q: "여행을 떠나기 전날, 당신은?",
+        c: [
+          { t: "즉흥으로 대충 챙기고 내일 생각한다", s: { explorer: 2, social: 1 } },
+          { t: "체크리스트로 꼼꼼히 준비한다", s: { planner: 2 } },
+          { t: "컨디션 관리가 최우선! 일찍 잔다", s: { relaxer: 2 } },
+          { t: "누구랑 뭘 할지 먼저 연락 돌린다", s: { social: 2 } },
+        ]
+      },
+      {
+        q: "일정이 틀어졌을 때 가장 가까운 반응은?",
+        c: [
+          { t: "오히려 좋아! 새로운 루트로 간다", s: { explorer: 2 } },
+          { t: "대안 플랜B를 꺼낸다", s: { planner: 2 } },
+          { t: "무리하지 말고 쉬는 쪽으로 조정", s: { relaxer: 2 } },
+          { t: "사람들 의견 모아서 최적안 찾기", s: { social: 2 } },
+        ]
+      },
+      {
+        q: "여행지에서 가장 설레는 순간은?",
+        c: [
+          { t: "지도에 없는 골목을 발견했을 때", s: { explorer: 2 } },
+          { t: "계획대로 착착 진행될 때", s: { planner: 2 } },
+          { t: "숙소에 딱 도착해 샤워할 때", s: { relaxer: 2 } },
+          { t: "현지 사람/동행과 친해질 때", s: { social: 2 } },
+        ]
+      },
+      {
+        q: "맛집 선택 기준은?",
+        c: [
+          { t: "지나가다 끌리는 곳이면 들어간다", s: { explorer: 2 } },
+          { t: "리뷰/평점/동선까지 보고 고른다", s: { planner: 2 } },
+          { t: "대기 적고 편한 곳이 최고", s: { relaxer: 2 } },
+          { t: "여럿이 나눠 먹기 좋은 곳", s: { social: 2 } },
+        ]
+      },
+      {
+        q: "여행 예산을 짜는 스타일은?",
+        c: [
+          { t: "대충 감으로… 필요하면 줄이거나 늘린다", s: { explorer: 2 } },
+          { t: "항목별로 미리 정리해두는 편", s: { planner: 2 } },
+          { t: "편안함(숙소/이동)에 더 쓰는 편", s: { relaxer: 2 } },
+          { t: "함께하는 경험(식사/체험)에 더 쓴다", s: { social: 2 } },
+        ]
+      },
+      {
+        q: "여행 중 사진은?",
+        c: [
+          { t: "기억나면 찍고, 아니면 말고", s: { relaxer: 1, explorer: 1 } },
+          { t: "스팟/구도 미리 찾아서 찍는다", s: { planner: 2 } },
+          { t: "풍경/감성 위주로 느긋하게", s: { relaxer: 2 } },
+          { t: "사람이 나와야 여행이지! 같이 찍는다", s: { social: 2 } },
+        ]
+      },
+      {
+        q: "이동 수단 선택은?",
+        c: [
+          { t: "걷고 헤매다 발견하는 재미", s: { explorer: 2 } },
+          { t: "시간 절약! 최적 동선으로", s: { planner: 2 } },
+          { t: "피곤하면 택시/편한 이동", s: { relaxer: 2 } },
+          { t: "다 같이 편한 방식으로 타협", s: { social: 2 } },
+        ]
+      },
+      {
+        q: "여행에서 꼭 하고 싶은 건?",
+        c: [
+          { t: "새로운 액티비티/체험 도전", s: { explorer: 2 } },
+          { t: "핵심 명소를 효율적으로 클리어", s: { planner: 2 } },
+          { t: "휴식, 스파, 카페, 여유", s: { relaxer: 2 } },
+          { t: "맛있는 거 + 사람들과 수다", s: { social: 2 } },
+        ]
+      },
+      {
+        q: "숙소 스타일은?",
+        c: [
+          { t: "특이한 곳(감성/콘셉트)이면 OK", s: { explorer: 2 } },
+          { t: "후기/위치/시설 검증된 곳", s: { planner: 2 } },
+          { t: "침구/방음/컨디션 최우선", s: { relaxer: 2 } },
+          { t: "거실 넓고 같이 놀기 좋은 곳", s: { social: 2 } },
+        ]
+      },
+      {
+        q: "동행과 다툼이 생기면?",
+        c: [
+          { t: "각자 하고 싶은 거 하고 나중에 합류", s: { explorer: 2 } },
+          { t: "원인 정리하고 룰/합의 만든다", s: { planner: 2 } },
+          { t: "감정 소모 줄이게 쉬면서 풀자", s: { relaxer: 2 } },
+          { t: "대화로 분위기 풀고 중재한다", s: { social: 2 } },
+        ]
+      },
+      {
+        q: "여행이 끝나고 가장 먼저 하는 일은?",
+        c: [
+          { t: "다음 여행 검색부터 한다", s: { explorer: 2 } },
+          { t: "정산/사진 정리/기록을 남긴다", s: { planner: 2 } },
+          { t: "푹 쉬고 루틴 회복이 우선", s: { relaxer: 2 } },
+          { t: "후기 공유/친구들에게 썰 푼다", s: { social: 2 } },
+        ]
+      },
+      {
+        q: "당신에게 ‘좋은 여행’이란?",
+        c: [
+          { t: "예상 못한 발견이 있는 여행", s: { explorer: 2 } },
+          { t: "후회 없는 동선과 선택의 여행", s: { planner: 2 } },
+          { t: "내 컨디션이 좋아지는 여행", s: { relaxer: 2 } },
+          { t: "사람과 추억이 남는 여행", s: { social: 2 } },
+        ]
+      }
+    ];
+
+    // ---------------------------
+    // 2) 결과 템플릿
+    // ---------------------------
+    const RESULTS = {
+      explorer: {
+        emoji: "🧭",
+        title: "탐험가형",
+        desc: "예상 밖의 골목, 새로운 체험, 즉흥의 설렘을 사랑해요. ‘발견’이 여행의 핵심!",
+        tags: ["즉흥력", "호기심", "발견하는 재미", "액티비티"],
+        strengths: ["새로운 환경 적응이 빠름", "예상 밖 변수에 강함", "남들이 안 가본 곳을 잘 찾음"],
+        pitfalls: ["동선/시간 관리가 흐트러질 수 있음", "예산이 새기 쉬움", "동행과 속도 차이 발생 가능"],
+        routine: ["오전: 1개만 ‘고정 일정’ 잡기", "오후: 지도 없는 산책 1시간", "저녁: 오늘 발견 TOP3 기록하기"]
+      },
+      planner: {
+        emoji: "🗺️",
+        title: "계획가형",
+        desc: "시간, 동선, 예산까지 ‘최적화’가 편안함을 줘요. 준비가 곧 여행의 반!",
+        tags: ["효율", "체크리스트", "동선 최적화", "안정감"],
+        strengths: ["여행 만족도(성공률)가 높음", "돈/시간 낭비를 줄임", "동행이 믿고 따르기 좋음"],
+        pitfalls: ["계획이 틀어지면 스트레스 받을 수 있음", "즉흥 재미가 줄어들 수 있음", "동행에게 ‘빡빡’하게 느껴질 수 있음"],
+        routine: ["전날: 핵심 3개만 확정", "당일: 여유 시간 20% 비워두기", "마무리: 다음날 플랜B 1개 준비"]
+      },
+      relaxer: {
+        emoji: "🌿",
+        title: "힐러형",
+        desc: "여행은 회복! 컨디션이 좋아야 풍경도 음식도 제대로 즐길 수 있어요.",
+        tags: ["휴식", "컨디션", "여유", "감성"],
+        strengths: ["여행에서 번아웃이 적음", "분위기/감성 포착을 잘함", "무리 없는 선택으로 만족도가 높음"],
+        pitfalls: ["명소/체험을 놓쳤다는 아쉬움이 남을 수 있음", "동행의 텐션과 어긋날 수 있음", "결정이 느릴 수 있음"],
+        routine: ["오전: 느린 시작(브런치/카페)", "오후: 가까운 코스 1~2개만", "저녁: 숙소/스파/야경으로 회복"]
+      },
+      social: {
+        emoji: "🎉",
+        title: "사교형",
+        desc: "함께 웃고 떠드는 시간이 여행의 하이라이트! 사람과 분위기가 제일 중요해요.",
+        tags: ["동행 중심", "추억", "공유", "분위기 메이커"],
+        strengths: ["여행 분위기를 살림", "동행의 만족도를 잘 챙김", "현지 교류/추천을 잘 얻음"],
+        pitfalls: ["혼자만의 시간이 부족할 수 있음", "동행 의견 조율에 에너지 소모", "‘모두 만족’에 집착할 수 있음"],
+        routine: ["오전: 다 같이 할 1개 확정", "오후: 1~2시간 각자 시간", "저녁: 같이 먹을 ‘대표 식사’ 1번"]
+      }
+    };
+
+    // ---------------------------
+    // 3) 상태/유틸
+    // ---------------------------
+    const $ = (id) => document.getElementById(id);
+
+    const screens = {
+      start: $("screenStart"),
+      quiz: $("screenQuiz"),
+      result: $("screenResult"),
+    };
+
+    const state = {
+      idx: 0,
+      scores: { explorer: 0, planner: 0, relaxer: 0, social: 0 },
+      answers: [] // 선택 인덱스 기록
+    };
+
+    function track(eventName, data = {}) {
+      // 나중에 GA4 등 붙일 때 여기 연결
+      // console.log("[track]", eventName, data);
+    }
+
+    function showToast(msg) {
+      const t = $("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 1200);
+    }
+
+    function setPill(text){ $("pill").textContent = text; }
+
+    function switchScreen(name){
+      for (const k of Object.keys(screens)) screens[k].classList.add("hidden");
+      screens[name].classList.remove("hidden");
+    }
+
+    function reset(){
+      state.idx = 0;
+      state.scores = { explorer: 0, planner: 0, relaxer: 0, social: 0 };
+      state.answers = [];
+      renderQuestion();
+      switchScreen("quiz");
+      track("quiz_start");
+    }
+
+    function applyScore(scoreObj){
+      for (const key of Object.keys(scoreObj)){
+        state.scores[key] = (state.scores[key] || 0) + scoreObj[key];
+      }
+    }
+
+    function unapplyScore(scoreObj){
+      for (const key of Object.keys(scoreObj)){
+        state.scores[key] = (state.scores[key] || 0) - scoreObj[key];
+      }
+    }
+
+    function getTopResultId(){
+      const order = ["explorer", "planner", "relaxer", "social"]; // 동점일 때 우선순위
+      let best = order[0];
+      for (const k of order){
+        if (state.scores[k] > state.scores[best]) best = k;
+      }
+      return best;
+    }
+
+    function setProgress(){
+      const total = QUESTIONS.length;
+      const pct = Math.round(((state.idx) / total) * 100);
+      $("bar").style.width = pct + "%";
+      $("qMeta").textContent = `${state.idx + 1} / ${total}`;
+    }
+
+    // ---------------------------
+    // 4) 렌더링
+    // ---------------------------
+    function renderQuestion(){
+      const total = QUESTIONS.length;
+      setProgress();
+
+      const q = QUESTIONS[state.idx];
+      $("qTitle").textContent = q.q;
+
+      const wrap = $("choices");
+      wrap.innerHTML = "";
+      q.c.forEach((choice, i) => {
+        const btn = document.createElement("button");
+        btn.className = "choice";
+        btn.type = "button";
+        btn.textContent = choice.t;
+        btn.onclick = () => onPick(i);
+        wrap.appendChild(btn);
+      });
+
+      $("btnBack").disabled = (state.idx === 0);
+    }
+
+    function renderResult(resultId, fromParam = false){
+      const r = RESULTS[resultId];
+      if (!r) return;
+
+      $("rEmoji").textContent = r.emoji;
+      $("rTitle").textContent = `${r.title}`;
+      $("rDesc").textContent = r.desc;
+
+      const tags = $("rTags");
+      tags.innerHTML = "";
+      r.tags.forEach(t => {
+        const span = document.createElement("span");
+        span.className = "tag";
+        span.textContent = "#" + t;
+        tags.appendChild(span);
+      });
+
+      const s1 = $("rStrengths");
+      s1.innerHTML = "";
+      r.strengths.forEach(x => {
+        const li = document.createElement("li");
+        li.textContent = x;
+        s1.appendChild(li);
+      });
+
+      const s2 = $("rPitfalls");
+      s2.innerHTML = "";
+      r.pitfalls.forEach(x => {
+        const li = document.createElement("li");
+        li.textContent = x;
+        s2.appendChild(li);
+      });
+
+      const s3 = $("rRoutine");
+      s3.innerHTML = "";
+      r.routine.forEach(x => {
+        const li = document.createElement("li");
+        li.textContent = x;
+        s3.appendChild(li);
+      });
+
+      // 저장(마지막 결과)
+      localStorage.setItem("lastResultId", resultId);
+
+      // 공유 링크
+      const url = new URL(location.href);
+      url.searchParams.set("r", resultId);
+      const shareUrl = url.toString();
+      $("shareHint").textContent = `공유 링크: ${shareUrl}`;
+
+      switchScreen("result");
+      track("quiz_result", { resultId, fromParam });
+    }
+
+    // ---------------------------
+    // 5) 이벤트
+    // ---------------------------
+    function onPick(choiceIndex){
+      const q = QUESTIONS[state.idx];
+      const picked = q.c[choiceIndex];
+
+      // 점수 반영
+      applyScore(picked.s);
+
+      // 기록
+      state.answers[state.idx] = choiceIndex;
+
+      // 다음
+      if (state.idx < QUESTIONS.length - 1){
+        state.idx += 1;
+        renderQuestion();
+      } else {
+        // 완료
+        $("bar").style.width = "100%";
+        const top = getTopResultId();
+        renderResult(top);
+      }
+    }
+
+    $("btnBack").onclick = () => {
+      if (state.idx === 0) return;
+      // 현재 idx-1 질문의 점수를 롤백해야 함
+      const prevIdx = state.idx - 1;
+      const prevQ = QUESTIONS[prevIdx];
+      const prevChoiceIndex = state.answers[prevIdx];
+
+      // 한 단계 뒤로 이동
+      state.idx = prevIdx;
+
+      // 점수 롤백: prev 질문에서 선택했던 점수를 빼고, 선택 기록 제거
+      if (typeof prevChoiceIndex === "number"){
+        const prevPicked = prevQ.c[prevChoiceIndex];
+        unapplyScore(prevPicked.s);
+        state.answers[prevIdx] = undefined;
+      }
+
+      renderQuestion();
+      track("quiz_back", { idx: state.idx });
+    };
+
+    $("btnRestart").onclick = () => {
+      switchScreen("start");
+      setPill("시작 화면");
+      track("go_start");
+    };
+
+    $("btnStart").onclick = () => reset();
+
+    $("btnAgain").onclick = () => reset();
+
+    $("btnCopy").onclick = async () => {
+      const url = new URL(location.href);
+      const last = localStorage.getItem("lastResultId");
+      if (last) url.searchParams.set("r", last);
+      try{
+        await navigator.clipboard.writeText(url.toString());
+        showToast("결과 링크 복사 완료!");
+      } catch (e){
+        // fallback
+        const tmp = document.createElement("textarea");
+        tmp.value = url.toString();
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand("copy");
+        document.body.removeChild(tmp);
+        showToast("복사 완료!");
+      }
+      track("share_copy");
+    };
+
+    $("privacyLink").onclick = (e) => {
+      e.preventDefault();
+      $("privacy").classList.toggle("hidden");
+    };
+
+    // ---------------------------
+    // 6) 초기 진입 처리 (?r=type)
+    // ---------------------------
+    function init(){
+      $("year").textContent = new Date().getFullYear();
+
+      const params = new URLSearchParams(location.search);
+      const r = params.get("r");
+
+      const last = localStorage.getItem("lastResultId");
+      if (last) $("btnShowLast").classList.remove("hidden");
+
+      $("btnShowLast").onclick = () => renderResult(last, true);
+
+      if (r && RESULTS[r]){
+        setPill("공유 결과 보기");
+        renderResult(r, true);
+        return;
+      }
+
+      setPill("시작 화면");
+      switchScreen("start");
+    }
+
+    init();
+  </script>
+</body>
+</html>
