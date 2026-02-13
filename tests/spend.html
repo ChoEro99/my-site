@@ -1,0 +1,114 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>소비 습관 테스트 | 2~3분</title>
+<meta name="description" content="충동/계획/감성/절약 중 내 소비 타입은?"/>
+<link rel="stylesheet" href="/style.css"/></head><body>
+<div class="wrap"><header><div class="brand"><b>소비 습관 테스트</b><span>10문항 · 결과 공유</span></div><div class="pill" id="pill">로딩…</div></header>
+<div class="grid">
+<main class="card hero" id="screenStart"><h1>내 지갑을 지배하는 소비 타입</h1><p>쇼핑할 때 나타나는 습관을 확인!</p>
+<div class="btns"><button class="primary" id="btnStart">시작</button><button id="btnShowLast" class="hidden">마지막 결과</button><a class="pill" href="/">🏠 홈</a></div>
+<div class="note">* 재미/콘텐츠용</div></main>
+<main class="card hidden" id="screenQuiz"><div class="progress"><div class="bar" id="bar"></div></div>
+<div class="pill" id="qMeta"></div><div class="qtitle" id="qTitle"></div><div class="choices" id="choices"></div>
+<div class="btns" style="margin-top:12px"><button id="btnBack">이전</button><button id="btnRestart">처음으로</button></div></main>
+<main class="card hidden" id="screenResult">
+<div class="resultTitle"><div class="emoji" id="rEmoji"></div><h2 id="rTitle"></h2></div>
+<p class="resultDesc" id="rDesc"></p><div class="tags" id="rTags"></div>
+<div class="twoCol">
+<div class="card mini" style="padding:14px"><h4>강점</h4><ul id="rStrengths"></ul></div>
+<div class="card mini" style="padding:14px"><h4>주의</h4><ul id="rPitfalls"></ul></div>
+</div>
+<div class="card mini" style="padding:14px;margin-top:12px"><h4>추천 루틴</h4><ul id="rRoutine"></ul></div>
+<div class="adbox"><b>[광고/제휴 자리]</b><br/>가계부/카드/앱 제휴 넣기 좋음</div>
+<div class="btns"><button class="primary" id="btnCopy">링크 복사</button><button id="btnAgain">다시하기</button><a class="pill" href="/">🏠 홈</a></div>
+<div class="note" id="shareHint"></div><div id="otherTests"></div>
+</main>
+<aside class="card side"><h3>수익 팁</h3><ul><li>결과별 추천템 제휴</li><li>“절약/가계부” 키워드 SEO</li></ul><div class="adbox"><b>[광고 자리]</b></div></aside>
+</div></div><div class="toast" id="toast"></div>
+<script>
+window.TEST={
+slug:"spend",badge:"소비 테스트",storageKey:"lastResult_spend",
+types:["impulse","plan","feels","save"],
+results:{
+impulse:{emoji:"💸",title:"충동 소비형",desc:"기분/타이밍이 결제 버튼을 누르게 해요.",tags:["즉시만족","기분소비","충동"],
+strengths:["새로운 트렌드 빠름","결정이 빠름","경험에 과감"],
+pitfalls:["후회 결제 잦음","예산 붕괴 위험","할인에 약함"],
+routine:["장바구니 24시간 룰","월 예산을 ‘주 단위’로 쪼개기","결제 전 ‘대체품’ 1개 찾기"]},
+plan:{emoji:"📊",title:"계획 소비형",desc:"예산/목표를 정하고 합리적으로 써요.",tags:["예산","비교","합리"],
+strengths:["돈 관리 안정","가성비 최적","목표 달성률 높음"],
+pitfalls:["가끔 ‘삶의 재미’가 줄 수","타인과 소비 텐션 차이"],
+routine:["고정비/변동비 분리","구매 전 비교 2곳","한 달 1회 ‘보상 소비’ 허용"]},
+feels:{emoji:"🎁",title:"감성 소비형",desc:"브랜드/무드/스토리에 끌리는 편!",tags:["감성","브랜드","취향"],
+strengths:["취향이 뚜렷","만족감 높은 소비","선물 센스 좋음"],
+pitfalls:["가격 대비 효용 낮을 수","비슷한 아이템 중복"],
+routine:["취향 보드 만들기","유사템 보유 체크","‘1개 들이면 1개 비우기’"]},
+save:{emoji:"🧊",title:"극절약형",desc:"필요한 것만! 지출 최소화가 편해요.",tags:["절약","저축","신중"],
+strengths:["저축 속도 빠름","지출 통제 강함","위기 대응력 좋음"],
+pitfalls:["경험/관계 지출에 인색해 보일 수","스트레스가 쌓일 수"],
+routine:["필수/선호 지출 분리","월 1회 작은 즐거움 예산","절약 성과 ‘시각화’"]},
+},
+questions:[
+{q:"장바구니에 담으면?",c:[
+{t:"바로 결제",s:{impulse:2}},
+{t:"며칠 고민",s:{plan:2}},
+{t:"브랜드/무드 보고 결정",s:{feels:2}},
+{t:"필요한지부터 재검토",s:{save:2}},
+]},
+{q:"할인/쿠폰 보면?",c:[
+{t:"지금 사야 이득!",s:{impulse:2}},
+{t:"원래 필요하면 산다",s:{plan:2}},
+{t:"감성템이면 산다",s:{feels:2}},
+{t:"할인도 지출은 지출",s:{save:2}},
+]},
+{q:"월말에 돈이 남으면?",c:[
+{t:"맛있는 거/쇼핑",s:{impulse:2}},
+{t:"다음달 예산에 반영",s:{plan:2}},
+{t:"취향템 하나",s:{feels:2}},
+{t:"저축/투자",s:{save:2}},
+]},
+{q:"비싼 제품을 살 때?",c:[
+{t:"기분이 중요",s:{impulse:2}},
+{t:"스펙/후기 비교",s:{plan:2}},
+{t:"브랜드 스토리",s:{feels:2}},
+{t:"대체품 찾기",s:{save:2}},
+]},
+{q:"영수증/내역 관리는?",c:[
+{t:"거의 안 봄",s:{impulse:2}},
+{t:"대부분 기록",s:{plan:2}},
+{t:"큰 것만 기억",s:{feels:2}},
+{t:"철저히 확인",s:{save:2}},
+]},
+{q:"친구가 같이 쇼핑하자면?",c:[
+{t:"당장 콜",s:{impulse:2}},
+{t:"목록 정해서",s:{plan:2}},
+{t:"구경만 해도 행복",s:{feels:2}},
+{t:"필요한 것만",s:{save:2}},
+]},
+{q:"새로운 취미/경험은?",c:[
+{t:"일단 해보자",s:{impulse:2}},
+{t:"비용/효과 계산",s:{plan:2}},
+{t:"감성 맞으면 OK",s:{feels:2}},
+{t:"무료/저렴부터",s:{save:2}},
+]},
+{q:"지출이 커지면?",c:[
+{t:"그땐 그때",s:{impulse:2}},
+{t:"예산 조정",s:{plan:2}},
+{t:"만족했으면 OK",s:{feels:2}},
+{t:"바로 컷",s:{save:2}},
+]},
+{q:"가장 후회되는 소비는?",c:[
+{t:"그때 충동 결제",s:{impulse:2}},
+{t:"비교 없이 산 것",s:{plan:2}},
+{t:"취향 아니라진 것",s:{feels:2}},
+{t:"필요해서 못 즐긴 것",s:{save:2}},
+]},
+{q:"내 소비 한 줄 요약",c:[
+{t:"지금 행복이 중요",s:{impulse:2}},
+{t:"계획이 곧 자유",s:{plan:2}},
+{t:"취향이 삶의 질",s:{feels:2}},
+{t:"안 쓰는 게 버는 것",s:{save:2}},
+]},
+]
+};
+</script>
+<script src="/quiz.js"></script><script>initQuiz();</script></body></html>
