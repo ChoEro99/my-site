@@ -1,0 +1,125 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>연애 스타일 테스트 | 2~3분</title>
+<meta name="description" content="직진/안정/계산/밀당 중 내 연애 스타일은?"/>
+<link rel="stylesheet" href="/style.css"/></head><body>
+<div class="wrap">
+<header><div class="brand"><b>연애 스타일 테스트</b><span>10문항 · 결과 공유</span></div><div class="pill" id="pill">로딩…</div></header>
+<div class="grid">
+<main class="card hero" id="screenStart">
+<h1>나는 어떤 연애 스타일일까?</h1><p>연애할 때 드러나는 내 기본 성향</p>
+<div class="btns"><button class="primary" id="btnStart">테스트 시작</button><button id="btnShowLast" class="hidden">마지막 결과</button><a class="pill" href="/">🏠 홈</a></div>
+<div class="note">* 재미/콘텐츠용</div></main>
+
+<main class="card hidden" id="screenQuiz">
+<div class="progress"><div class="bar" id="bar"></div></div>
+<div class="pill" id="qMeta"></div>
+<div class="qtitle" id="qTitle"></div><div class="choices" id="choices"></div>
+<div class="btns" style="margin-top:12px"><button id="btnBack">이전</button><button id="btnRestart">처음으로</button></div>
+</main>
+
+<main class="card hidden" id="screenResult">
+<div class="resultTitle"><div class="emoji" id="rEmoji"></div><h2 id="rTitle"></h2></div>
+<p class="resultDesc" id="rDesc"></p><div class="tags" id="rTags"></div>
+<div class="twoCol">
+<div class="card mini" style="padding:14px"><h4>강점</h4><ul id="rStrengths"></ul></div>
+<div class="card mini" style="padding:14px"><h4>주의</h4><ul id="rPitfalls"></ul></div>
+</div>
+<div class="card mini" style="padding:14px;margin-top:12px"><h4>추천 루틴</h4><ul id="rRoutine"></ul></div>
+<div class="adbox"><b>[광고 자리 - 결과]</b></div>
+<div class="btns"><button class="primary" id="btnCopy">결과 링크 복사</button><button id="btnAgain">다시하기</button><a class="pill" href="/">🏠 홈</a></div>
+<div class="note" id="shareHint"></div><div id="otherTests"></div>
+</main>
+
+<aside class="card side"><h3>수익 팁</h3><ul><li>결과 하단에 “다른 테스트”</li><li>연애 키워드는 공유 잘 됨</li></ul><div class="adbox"><b>[광고 자리]</b></div></aside>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+window.TEST={
+slug:"love",badge:"연애 테스트",storageKey:"lastResult_love",
+types:["straight","stable","smart","pushpull"],
+results:{
+straight:{emoji:"🔥",title:"직진형",desc:"좋아하면 표현부터! 속도감 있는 연애.",tags:["표현","확신","직진"],
+strengths:["관계가 빠르게 진전","상대가 안정감을 느낌","감정 표현이 솔직함"],
+pitfalls:["상대 페이스를 놓칠 수 있음","서운함이 빨리 올라올 수 있음"],
+routine:["연락: 하루 1번은 명확히","갈등: 10분 쉬고 말하기","기대치: ‘요청’으로 전달"]},
+stable:{emoji:"💞",title:"안정형",desc:"꾸준함과 신뢰가 핵심. 오래 가는 연애 스타일.",tags:["신뢰","루틴","배려"],
+strengths:["상대를 편하게 함","관계 유지력이 좋음","갈등이 커지기 전 조절"],
+pitfalls:["감정 표현이 밋밋해 보일 수","불만을 참다가 터질 수"],
+routine:["주1회 데이트 고정","감사/칭찬 1일1개","불만은 ‘사소할 때’ 말하기"]},
+smart:{emoji:"🧠",title:"계산형",desc:"감정보다 현실/합을 본다. 선택에 신중한 스타일.",tags:["현실","합","신중"],
+strengths:["관계 리스크를 줄임","장기적인 시야","문제 해결이 논리적"],
+pitfalls:["차갑게 느껴질 수 있음","상대가 ‘평가받는 느낌’"],
+routine:["감정: 결론보다 공감 먼저","기준: ‘필수/선호’ 분리","칭찬은 구체적으로"]},
+pushpull:{emoji:"🎭",title:"밀당형",desc:"당기고 밀며 긴장감 유지. 감정의 온도차가 매력.",tags:["텐션","리듬","밀당"],
+strengths:["관계에 설렘을 줌","분위기 전환이 빠름","매력 어필이 강함"],
+pitfalls:["상대가 불안해질 수","오해/거리감이 생길 수"],
+routine:["밀기 전에 ‘확신’ 한 번","답장 텀은 의도 말고 컨디션","중요한 건 바로 확인"]},
+},
+questions:[
+{q:"호감 생기면?",c:[
+{t:"바로 티 낸다",s:{straight:2}},
+{t:"천천히 확인",s:{smart:2}},
+{t:"자연스럽게 꾸준히",s:{stable:2}},
+{t:"살짝 간보기",s:{pushpull:2}},
+]},
+{q:"연락 스타일은?",c:[
+{t:"자주/빠르게",s:{straight:2}},
+{t:"필요할 때만",s:{smart:2}},
+{t:"일정한 루틴",s:{stable:2}},
+{t:"리듬 타는 편",s:{pushpull:2}},
+]},
+{q:"다툼이 생기면?",c:[
+{t:"바로 풀자",s:{straight:2}},
+{t:"원인 정리부터",s:{smart:2}},
+{t:"감정 달래고 대화",s:{stable:2}},
+{t:"잠깐 거리 둔다",s:{pushpull:2}},
+]},
+{q:"기념일은?",c:[
+{t:"크게 챙기고 싶다",s:{straight:2}},
+{t:"의미 있으면 OK",s:{smart:2}},
+{t:"소소하지만 꾸준히",s:{stable:2}},
+{t:"분위기 좋게 이벤트",s:{pushpull:2}},
+]},
+{q:"상대의 단점이 보이면?",c:[
+{t:"바로 말한다",s:{straight:2}},
+{t:"장단점 계산한다",s:{smart:2}},
+{t:"부드럽게 조율",s:{stable:2}},
+{t:"반응 보고 말한다",s:{pushpull:2}},
+]},
+{q:"데이트 계획은?",c:[
+{t:"가자! 지금!",s:{straight:2}},
+{t:"효율/동선 중요",s:{smart:2}},
+{t:"서로 편한 코스",s:{stable:2}},
+{t:"그날 분위기 따라",s:{pushpull:2}},
+]},
+{q:"서운함이 쌓이면?",c:[
+{t:"바로 터놓는다",s:{straight:2}},
+{t:"정리해서 전달",s:{smart:2}},
+{t:"돌려 말하다가 결국 말함",s:{stable:2}},
+{t:"표현을 줄이며 신호",s:{pushpull:2}},
+]},
+{q:"연애에서 가장 중요?",c:[
+{t:"확신/애정표현",s:{straight:2}},
+{t:"현실적 합",s:{smart:2}},
+{t:"신뢰/배려",s:{stable:2}},
+{t:"설렘/텐션",s:{pushpull:2}},
+]},
+{q:"질투 상황이면?",c:[
+{t:"확인하고 정리",s:{straight:2}},
+{t:"사실관계 체크",s:{smart:2}},
+{t:"대화로 안심",s:{stable:2}},
+{t:"살짝 밀어본다",s:{pushpull:2}},
+]},
+{q:"관계가 안정되면?",c:[
+{t:"더 깊게 가자",s:{straight:2}},
+{t:"장기계획 점검",s:{smart:2}},
+{t:"루틴이 행복",s:{stable:2}},
+{t:"가끔 자극 필요",s:{pushpull:2}},
+]},
+]
+};
+</script>
+<script src="/quiz.js"></script><script>initQuiz();</script>
+</body></html>
