@@ -28,35 +28,35 @@ index 9e6cab4e1f160e0147c0c9f4babb85b06a47b1f8..f2a30fdae4519457ff3eb63eb79ae53a
    </div>`;
  }
  
-+
-+function upsertMeta(selector, attr, value) {
-+  if (!value) return;
-+  let node = document.head.querySelector(selector);
-+  if (!node) {
-+    node = document.createElement("meta");
-+    const [k, v] = attr;
-+    node.setAttribute(k, v);
-+    document.head.appendChild(node);
-+  }
-+  node.setAttribute("content", value);
-+}
-+
-+function applySeoMeta(TEST) {
-+  const title = `${TEST.ogTitle || document.title} | 2~3분 심리테스트`;
-+  const desc = TEST.ogDesc || "2~3분 심리테스트 결과를 바로 확인해보세요.";
-+  const image = (TEST.ogImage && String(TEST.ogImage).startsWith("http"))
-+    ? TEST.ogImage
-+    : `${location.origin}/og.png`;
-+
-+  document.title = title;
-+  upsertMeta('meta[name="description"]', ["name", "description"], desc);
-+  upsertMeta('meta[property="og:title"]', ["property", "og:title"], title);
-+  upsertMeta('meta[property="og:description"]', ["property", "og:description"], desc);
-+  upsertMeta('meta[property="og:type"]', ["property", "og:type"], "website");
-+  upsertMeta('meta[property="og:image"]', ["property", "og:image"], image);
-+  upsertMeta('meta[property="og:url"]', ["property", "og:url"], location.href);
-+}
-+
+
+function upsertMeta(selector, attr, value) {
+  if (!value) return;
+  let node = document.head.querySelector(selector);
+  if (!node) {
+    node = document.createElement("meta");
+    const [k, v] = attr;
+    node.setAttribute(k, v);
+    document.head.appendChild(node);
+  }
+  node.setAttribute("content", value);
+}
+
+function applySeoMeta(TEST) {
+  const title = `${TEST.ogTitle || document.title} | 2~3분 심리테스트`;
+  const desc = TEST.ogDesc || "2~3분 심리테스트 결과를 바로 확인해보세요.";
+  const image = (TEST.ogImage && String(TEST.ogImage).startsWith("http"))
+    ? TEST.ogImage
+    : `${location.origin}/og.png`;
+
+  document.title = title;
+  upsertMeta('meta[name="description"]', ["name", "description"], desc);
+  upsertMeta('meta[property="og:title"]', ["property", "og:title"], title);
+  upsertMeta('meta[property="og:description"]', ["property", "og:description"], desc);
+  upsertMeta('meta[property="og:type"]', ["property", "og:type"], "website");
+  upsertMeta('meta[property="og:image"]', ["property", "og:image"], image);
+  upsertMeta('meta[property="og:url"]', ["property", "og:url"], location.href);
+}
+
  function initQuiz(){
    const TEST = window.TEST;
    if (!TEST) {
@@ -64,37 +64,37 @@ index 9e6cab4e1f160e0147c0c9f4babb85b06a47b1f8..f2a30fdae4519457ff3eb63eb79ae53a
      return;
    }
  
-+  applySeoMeta(TEST);
-+
-+  function readStats(){
-+    try {
-+      const raw = localStorage.getItem(`quizStats:${TEST.slug}`);
-+      const parsed = raw ? JSON.parse(raw) : null;
-+      return { starts: parsed?.starts || 0, completions: parsed?.completions || 0 };
-+    } catch (e) {
-+      return { starts: 0, completions: 0 };
-+    }
-+  }
-+
-+  function saveStats(stats){
-+    localStorage.setItem(`quizStats:${TEST.slug}`, JSON.stringify(stats));
-+  }
-+
-+  function updateStats(type){
-+    const stats = readStats();
-+    if (type === "start") stats.starts += 1;
-+    if (type === "completion") stats.completions += 1;
-+    saveStats(stats);
-+
-+    const completionRate = stats.starts ? Math.round((stats.completions / stats.starts) * 100) : 0;
-+    track("quiz_completion_stats", {
-+      test: TEST.slug,
-+      starts: stats.starts,
-+      completions: stats.completions,
-+      completionRate
-+    });
-+  }
-+
+  applySeoMeta(TEST);
+
+  function readStats(){
+    try {
+      const raw = localStorage.getItem(`quizStats:${TEST.slug}`);
+      const parsed = raw ? JSON.parse(raw) : null;
+      return { starts: parsed?.starts || 0, completions: parsed?.completions || 0 };
+    } catch (e) {
+      return { starts: 0, completions: 0 };
+    }
+  }
+
+  function saveStats(stats){
+    localStorage.setItem(`quizStats:${TEST.slug}`, JSON.stringify(stats));
+  }
+
+  function updateStats(type){
+    const stats = readStats();
+    if (type === "start") stats.starts += 1;
+    if (type === "completion") stats.completions += 1;
+    saveStats(stats);
+
+    const completionRate = stats.starts ? Math.round((stats.completions / stats.starts) * 100) : 0;
+    track("quiz_completion_stats", {
+      test: TEST.slug,
+      starts: stats.starts,
+      completions: stats.completions,
+      completionRate
+    });
+  }
+
    // 스크린
    const screens = {
      start: $("screenStart"),
@@ -105,9 +105,9 @@ index 9e6cab4e1f160e0147c0c9f4babb85b06a47b1f8..f2a30fdae4519457ff3eb63eb79ae53a
    const state = {
      idx: 0,
      scores: Object.fromEntries(TEST.types.map(t=>[t,0])),
-+    answers: [],
-+    runCounted: false,
-+    completedCounted: false
+    answers: [],
+    runCounted: false,
+    completedCounted: false
    };
  
  function setPill(text){
@@ -159,11 +159,11 @@ index 9e6cab4e1f160e0147c0c9f4babb85b06a47b1f8..f2a30fdae4519457ff3eb63eb79ae53a
        };
      }
  
-+    if (!fromParam && !state.completedCounted) {
-+      updateStats("completion");
-+      state.completedCounted = true;
-+    }
-+
+    if (!fromParam && !state.completedCounted) {
+      updateStats("completion");
+      state.completedCounted = true;
+    }
+
      switchScreen("result");
      track("quiz_result", { test: TEST.slug, resultId, fromParam });
    }
@@ -172,13 +172,13 @@ index 9e6cab4e1f160e0147c0c9f4babb85b06a47b1f8..f2a30fdae4519457ff3eb63eb79ae53a
      state.idx = 0;
      state.scores = Object.fromEntries(TEST.types.map(t=>[t,0]));
      state.answers = [];
-+    state.completedCounted = false;
-+
-+    if (!state.runCounted) {
-+      updateStats("start");
-+      state.runCounted = true;
-+    }
-+
+    state.completedCounted = false;
+
+    if (!state.runCounted) {
+      updateStats("start");
+      state.runCounted = true;
+    }
+
      renderQuestion();
      switchScreen("quiz");
      setPill(TEST.badge || "테스트 진행");
@@ -202,14 +202,14 @@ index 9e6cab4e1f160e0147c0c9f4babb85b06a47b1f8..f2a30fdae4519457ff3eb63eb79ae53a
    }
  
    // 버튼 이벤트
-+  $("btnStart") && ($("btnStart").onclick = () => {
-+    state.runCounted = false;
-+    reset();
-+  });
-+  $("btnAgain") && ($("btnAgain").onclick = () => {
-+    state.runCounted = false;
-+    reset();
-+  });
+  $("btnStart") && ($("btnStart").onclick = () => {
+    state.runCounted = false;
+    reset();
+  });
+  $("btnAgain") && ($("btnAgain").onclick = () => {
+    state.runCounted = false;
+    reset();
+  });
  
    $("btnBack") && ($("btnBack").onclick = () => {
      if (state.idx === 0) return;
