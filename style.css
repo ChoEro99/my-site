@@ -28,34 +28,34 @@ index 5545259ee5562636f8666d256638308c43a1400b..623701ebdadd0256ddaf793c18d21c5a
  }
  .hero h1{margin:6px 0 8px;font-size:32px}
  .hero p{margin:0;color:var(--muted)}
-+.home-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px}
-+.home-tools input[type="search"]{-webkit-appearance:none;appearance:none}
-+.home-tools input{
-+  flex:1 1 320px;
-+  width:100%;
-+  min-height:46px;
-+  border-radius:12px;
-+  border:1px solid var(--line);
-+  background-color:rgba(255,255,255,.04);
-+  color:var(--text);
-+  padding:0 14px;
-+  font-size:16px;
-+  outline:none;
-+}
-+.home-tools input:focus{border-color:rgba(110,231,255,.7);box-shadow:0 0 0 3px rgba(110,231,255,.15)}
-+.home-tools input::placeholder{color:var(--muted)}
-+.home-tools select{
-+  min-height:46px;
-+  border-radius:12px;
-+  border:1px solid var(--line);
-+  background-color:rgba(255,255,255,.04);
-+  color:var(--text);
-+  padding:0 12px;
-+  font-size:15px;
-+}
-+.home-tools button{min-height:46px;flex:0 0 auto}
-+@media (max-width:560px){.home-tools{flex-direction:column;align-items:stretch}.home-tools button,.home-tools select{width:100%}}
-+.search-meta{font-size:14px;color:var(--muted);margin:0 0 4px}
+.home-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px}
+.home-tools input[type="search"]{-webkit-appearance:none;appearance:none}
+.home-tools input{
+  flex:1 1 320px;
+  width:100%;
+  min-height:46px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background-color:rgba(255,255,255,.04);
+  color:var(--text);
+  padding:0 14px;
+  font-size:16px;
+  outline:none;
+}
+.home-tools input:focus{border-color:rgba(110,231,255,.7);box-shadow:0 0 0 3px rgba(110,231,255,.15)}
+.home-tools input::placeholder{color:var(--muted)}
+.home-tools select{
+  min-height:46px;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background-color:rgba(255,255,255,.04);
+  color:var(--text);
+  padding:0 12px;
+  font-size:15px;
+}
+.home-tools button{min-height:46px;flex:0 0 auto}
+@media (max-width:560px){.home-tools{flex-direction:column;align-items:stretch}.home-tools button,.home-tools select{width:100%}}
+.search-meta{font-size:14px;color:var(--muted);margin:0 0 4px}
  .btns{display:flex;flex-wrap:wrap;gap:14px;margin-top:18px}
  button{
    border:1px solid var(--line);
