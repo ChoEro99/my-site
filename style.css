@@ -1,5 +1,32 @@
-
-@@ -30,50 +30,78 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
+:root{
+  --bg:#0b0f19;
+  --card:#121a2a;
+  --muted:#93a4c7;
+  --text:#eaf0ff;
+  --line:rgba(255,255,255,.10);
+  --accent:#6ee7ff;
+  --accent2:#a78bfa;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Apple SD Gothic Neo","Noto Sans KR", Segoe UI, Roboto, Arial, sans-serif;
+  font-size:18px;      /* ✅ 추가 */
+  line-height:1.7;     /* ✅ 1.55 → 1.7로 변경 */
+  background:
+    radial-gradient(1200px 800px at 20% 10%, rgba(110,231,255,.18), transparent 60%),
+    radial-gradient(900px 700px at 90% 30%, rgba(167,139,250,.16), transparent 55%),
+    var(--bg);
+  color:var(--text);
+}
+a{color:var(--accent); text-decoration:none}
+.wrap{max-width:980px;margin:0 auto;padding:26px 18px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.brand{display:flex;flex-direction:column;gap:2px}
+.brand b{font-size:24px}
+.brand span{font-size:15px;color:var(--muted)}
+.pill{
+  font-size:16px;                 /* ✅ 12 → 14 */
    color:var(--text);              /* ✅ 글자 더 선명하게 */
    border:1px solid var(--line);
    padding:10px 14px;              /* ✅ 8 10 → 10 14 */
