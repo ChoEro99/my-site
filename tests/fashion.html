@@ -1,0 +1,100 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>👗 패션 선택 테스트 | 2~3분</title>
+<meta name="description" content="임팩트형/기본형/무드형/조화형 패션 성향 확인"/>
+<meta property="og:title" content="👗 패션 선택 테스트" />
+<meta property="og:description" content="임팩트형/기본형/무드형/조화형 패션 성향 확인" />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="https://my-site-five-ecru.vercel.app/og.png" />
+<link rel="stylesheet" href="/style.css"/><script src="/analytics-consent.js" defer></script>
+</head><body>
+<div class="wrap">
+<header><div class="brand"><b>👗 패션 선택 테스트</b><span>10문항 · 결과 공유</span></div><div class="pill" id="pill">로딩…</div></header>
+<div class="grid">
+
+<main class="card hero" id="screenStart">
+<h1>옷을 고를 때 가장 우선하는 기준은?</h1><p>2~3분이면 결과가 나와요.</p>
+<div class="btns">
+  <button class="primary" id="btnStart">테스트 시작</button>
+  <button id="btnShowLast" class="hidden">마지막 결과</button>
+  <a class="pill" href="/">🏠 홈</a>
+</div>
+<div class="note">* 재미/콘텐츠용</div>
+</main>
+
+<main class="card hidden" id="screenQuiz">
+<div class="progress"><div class="bar" id="bar"></div></div>
+<div class="pill" id="qMeta"></div>
+<div class="qtitle" id="qTitle"></div><div class="choices" id="choices"></div>
+<div class="btns" style="margin-top:12px">
+  <button id="btnBack">이전</button>
+  <button id="btnRestart">처음으로</button>
+</div>
+</main>
+
+<main class="card hidden" id="screenResult">
+<div class="resultTitle"><div class="emoji" id="rEmoji"></div><h2 id="rTitle"></h2></div>
+<p class="resultDesc" id="rDesc"></p><div class="tags" id="rTags"></div>
+
+<div class="twoCol">
+  <div class="card mini" style="padding:14px"><h4>강점</h4><ul id="rStrengths"></ul></div>
+  <div class="card mini" style="padding:14px"><h4>주의</h4><ul id="rPitfalls"></ul></div>
+</div>
+
+<div class="card mini" style="padding:14px;margin-top:12px"><h4>추천 루틴</h4><ul id="rRoutine"></ul></div>
+
+<div class="adbox"><b>[광고 자리 - 결과]</b></div>
+
+<div class="btns">
+  <button class="primary" id="btnCopy">결과 링크 복사</button>
+  <button id="btnKakao">카카오톡 공유</button>
+  <button id="btnAgain">다시하기</button>
+  <a class="pill" href="/">🏠 홈</a>
+</div>
+
+<div class="note" id="shareHint"></div><div id="otherTests"></div>
+</main>
+
+<aside class="card side">
+<h3>한 줄 팁</h3>
+<ul><li>결과를 친구와 공유하면 더 재밌어요.</li><li>홈에서 다른 테스트도 해보세요.</li></ul>
+<div class="adbox"><b>[광고 자리]</b></div>
+</aside>
+
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+window.TEST={
+slug:"fashion",badge:"패션 테스트",storageKey:"lastResult_fashion",
+ogTitle:"👗 패션 선택 테스트",
+ogDesc:"임팩트형/기본형/무드형/조화형 패션 성향 확인",
+ogImage: location.origin + "/og.png",
+types:["a","b","c","d"],
+results:{
+a:{emoji:"⚡",title:"실행형",desc:"일단 시작해보며 감을 잡는 타입이에요.",tags:["즉시","행동","속도"],strengths:["실행력이 빠름","결정이 명확함","추진력이 좋음"],pitfalls:["디테일 누락 가능","체크 타이밍 필요"],routine:["아침에 오늘 목표 1개","점심 전 중간 점검","저녁에 결과 기록"]},
+b:{emoji:"🧭",title:"균형형",desc:"상황을 넓게 보고 안정적으로 선택해요.",tags:["안정","균형","현실"],strengths:["실수율이 낮음","변수 대응 안정적","협업 친화적"],pitfalls:["결정이 늦어질 수 있음","모험이 줄 수 있음"],routine:["시작 전 기준 3개 설정","중간에 우선순위 정리","마감 전에 1개 과감히 완료"]},
+c:{emoji:"🎨",title:"감각형",desc:"기분과 몰입감이 맞을 때 최고의 퍼포먼스를 냅니다.",tags:["감성","몰입","취향"],strengths:["창의성 높음","디테일 감각 좋음","즐거움 유지"],pitfalls:["컨디션 영향 큼","루틴 흔들릴 수 있음"],routine:["좋아하는 환경 세팅","25분 몰입 + 5분 휴식","작은 보상으로 유지"]},
+d:{emoji:"🤝",title:"관계형",desc:"사람과 연결될 때 동기가 크게 올라가요.",tags:["소통","팀워크","공유"],strengths:["협업 성과 높음","공감 능력 우수","분위기 조율"],pitfalls:["혼자 결정 피로","타인 의견에 흔들림"],routine:["시작 전 공유 메시지","중간 피드백 1회","끝나고 핵심 요약 공유"]},
+},
+questions:[
+{q:"새로운 선택 앞에서 나는?",c:[{t:"일단 해본다",s:{a:2}},{t:"정보를 더 모은다",s:{b:2}},{t:"느낌이 맞는지 본다",s:{c:2}},{t:"주변 의견을 듣는다",s:{d:2}}]},
+{q:"내가 가장 편한 작업 방식은?",c:[{t:"짧고 빠른 스프린트",s:{a:2}},{t:"계획표 기반 진행",s:{b:2}},{t:"분위기 타며 집중",s:{c:2}},{t:"함께 맞춰서 진행",s:{d:2}}]},
+{q:"예상과 다른 상황이 오면?",c:[{t:"바로 대안 실행",s:{a:2}},{t:"원인부터 분석",s:{b:2}},{t:"잠깐 리프레시",s:{c:2}},{t:"사람들과 조율",s:{d:2}}]},
+{q:"결정할 때 가장 중요한 건?",c:[{t:"속도",s:{a:2}},{t:"안정성",s:{b:2}},{t:"만족감",s:{c:2}},{t:"관계 영향",s:{d:2}}]},
+{q:"좋아하는 피드백 스타일은?",c:[{t:"간단/직설",s:{a:2}},{t:"근거 중심",s:{b:2}},{t:"톤/맥락 배려",s:{c:2}},{t:"대화형 피드백",s:{d:2}}]},
+{q:"휴식이 필요할 때 나는?",c:[{t:"짧게 쉬고 복귀",s:{a:2}},{t:"일정 재정리",s:{b:2}},{t:"좋아하는 콘텐츠",s:{c:2}},{t:"누군가와 수다",s:{d:2}}]},
+{q:"내 강점이 빛나는 순간은?",c:[{t:"긴급 상황 처리",s:{a:2}},{t:"복잡한 문제 정리",s:{b:2}},{t:"새 아이디어 제안",s:{c:2}},{t:"협업 분위기 조성",s:{d:2}}]},
+{q:"장기 목표를 세울 때 나는?",c:[{t:"핵심 1개 먼저",s:{a:2}},{t:"단계별 로드맵",s:{b:2}},{t:"재미 요소 포함",s:{c:2}},{t:"함께할 사람 설정",s:{d:2}}]},
+{q:"성과를 확인하는 방식은?",c:[{t:"완료 개수",s:{a:2}},{t:"지표/데이터",s:{b:2}},{t:"만족도 체감",s:{c:2}},{t:"주변 반응",s:{d:2}}]},
+{q:"내일 바로 실천할 한 가지는?",c:[{t:"미뤄둔 일 즉시 시작",s:{a:2}},{t:"우선순위표 작성",s:{b:2}},{t:"환경 세팅 바꾸기",s:{c:2}},{t:"체크인 파트너 만들기",s:{d:2}}]},
+]
+};
+</script>
+
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
+<script>Kakao.init("e810a3d9eddcf0271884bbe79e1ac6f3");</script>
+
+<script src="/quiz.js"></script>
+<script>initQuiz();</script>
+</body></html>
