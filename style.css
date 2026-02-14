@@ -1,7 +1,4 @@
-diff --git a/style.css b/style.css
-index 5545259ee5562636f8666d256638308c43a1400b..623701ebdadd0256ddaf793c18d21c5ab9cf0920 100644
---- a/style.css
-+++ b/style.css
+
 @@ -30,50 +30,78 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
    color:var(--text);              /* ✅ 글자 더 선명하게 */
    border:1px solid var(--line);
