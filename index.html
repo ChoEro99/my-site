@@ -95,6 +95,9 @@
  <li><a href="/tests/gift.html">선물 취향 테스트</a></li>
  <li><a href="/tests/mood.html">회복 스타일 테스트</a></li>
  </ol>
+   
+ <h3 style="margin-top:16px">🆕 최근 업데이트 테스트 10</h3>
+ <ol class="top-list" id="latestTestsList"></ol>
  </aside>
      </div>
    </div>
@@ -136,6 +139,7 @@
     const searchMeta = document.getElementById("searchMeta");
     const randomBtn = document.getElementById("btnRandomTest");
     const sortSelect = document.getElementById("sortSelect");
+    const latestTestsList = document.getElementById("latestTestsList");
 
     function getCompletionStats(slug){
       try {
@@ -162,6 +166,28 @@
         return getCardScore(b) - getCardScore(a);
       });
       sorted.forEach(card => cardsWrap?.appendChild(card));
+    }
+
+    function renderLatestTests(){
+      if (!latestTestsList) return;
+
+      const latestCards = [...cards]
+        .sort((a, b) => new Date(b.dataset.created || 0) - new Date(a.dataset.created || 0))
+        .slice(0, 10);
+
+      latestTestsList.innerHTML = "";
+      latestCards.forEach((card) => {
+        const goLink = card.querySelector("a.go");
+        if (!goLink) return;
+
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.href = goLink.getAttribute("href") || "#";
+        const title = card.querySelector("b")?.textContent || goLink.textContent || "테스트";
+        a.textContent = title.replace(/^\S+\s/, "");
+        li.appendChild(a);
+        latestTestsList.appendChild(li);
+      });
     }
 
     function updateSearchMeta(visibleCount, keyword){
@@ -201,6 +227,7 @@
     }
 
     sortCards();
+    renderLatestTests();
     filterCards();
     searchInput?.addEventListener("input", () => {
       filterCards();
