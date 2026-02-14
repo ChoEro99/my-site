@@ -123,10 +123,11 @@ function initQuiz(){
 
     const completionRate = stats.starts ? Math.round((stats.completions / stats.starts) * 100) : 0;
     track("quiz_completion_stats", {
-      test: TEST.slug,
+      test_slug: TEST.slug,
       starts: stats.starts,
       completions: stats.completions,
-      completionRate
+      completion_rate: completionRate,
+      page_type: "quiz"
     });
   }
 
@@ -266,7 +267,7 @@ function setPill(text){
           ]
         });
 
-        track("share_kakao", { test: TEST.slug, resultId });
+        track("share_kakao", { test_slug: TEST.slug, result_id: resultId, page_type: "result" });
       };
     }
     
@@ -276,7 +277,7 @@ function setPill(text){
     }
 
     switchScreen("result");
-    track("quiz_result", { test: TEST.slug, resultId, fromParam });
+    track("quiz_result", { test_slug: TEST.slug, result_id: resultId, from_param: fromParam, page_type: "result" });
   }
 
   function reset(){
@@ -293,7 +294,7 @@ function setPill(text){
     renderQuestion();
     switchScreen("quiz");
     setPill(TEST.badge || "테스트 진행");
-    track("quiz_start", { test: TEST.slug });
+    track("quiz_start", { test_slug: TEST.slug, page_type: "quiz" });
   }
 
   function pick(choiceIndex){
@@ -334,7 +335,7 @@ function setPill(text){
       state.answers[prevIdx] = undefined;
     }
     renderQuestion();
-    track("quiz_back", { test: TEST.slug, idx: state.idx });
+    track("quiz_back", { test_slug: TEST.slug, question_index: state.idx, page_type: "quiz" });
   });
 
   $("btnRestart") && ($("btnRestart").onclick = () => {
@@ -358,7 +359,7 @@ function setPill(text){
       document.body.removeChild(tmp);
       showToast("복사 완료!");
     }
-    track("share_copy", { test: TEST.slug });
+    track("share_copy", { test_slug: TEST.slug, page_type: "result" });
   });
 
   // 공유 링크로 진입
