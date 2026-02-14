@@ -1,5 +1,12 @@
+// quiz.js (FINAL) - Kakao share + shareUrl + absolute OG image + other tests
+const $ = (id) => document.getElementById(id);
 
-@@ -9,68 +9,130 @@ function track(eventName, data = {}) {
+function track(eventName, data = {}) {
+  if (typeof gtag === "function") {
+    gtag('event', eventName, data);
+  }
+}
+
  
  function showToast(msg){
    const t = $("toast");
@@ -130,7 +137,6 @@ function applySeoMeta(TEST) {
    }
  
    function topResult(){
-@@ -154,83 +216,101 @@ function setPill(text){
      const kbtn = document.getElementById("btnKakao");
      if (kbtn && window.Kakao && window.Kakao.isInitialized()) {
        kbtn.onclick = () => {
