@@ -14,6 +14,7 @@
   <meta name="twitter:title" content="심리테스트 모음" />
   <meta name="twitter:description" content="2~3분 심리테스트 모음. 결과 공유 가능" />
   <meta name="twitter:image" content="https://my-site-five-ecru.vercel.app/og.png" />
+  <meta name="ga-measurement-id" content="G-XXXXXXX" />
   <link rel="stylesheet" href="/style.css" />
   <script src="/analytics-consent.js" defer></script>
  </head>
@@ -65,7 +66,8 @@
            © <span id="year"></span> ·
            <a href="/privacy.html">개인정보처리방침</a> ·
            <a href="/contact.html">문의</a> ·
-           <a href="/about.html">소개</a>
+           <a href="/about.html">소개</a> ·
+           <a href="#" id="btnConsentSettings">쿠키 설정</a>
          </div>
        </main>
  
@@ -198,7 +200,13 @@
     sortSelect?.addEventListener("change", () => {
       sortCards();
       filterCards();
-      track("sort_tests", { mode: sortSelect?.value || "popular" });
+      track("sort_tests", { mode: sortSelect?.value || "popular", page_type: "home" });
+    });
+    document.getElementById("btnConsentSettings")?.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (typeof window.openConsentSettings === "function") {
+        window.openConsentSettings();
+      }
     });
    </script>
    <script type="application/ld+json">
