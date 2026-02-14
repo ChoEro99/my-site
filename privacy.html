@@ -58,7 +58,7 @@
 <hr style="border:0;border-top:1px solid var(--line);margin:20px 0"/>
 
 <p class="footer">
-© <span id="year"></span> · <a href="/contact.html">문의하기</a>
+© <span id="year"></span> · <a href="/contact.html">문의하기</a> · <a href="#" id="btnConsentSettings">쿠키 설정</a>
 </p>
 
 </main>
@@ -66,6 +66,10 @@
 
 <script>
 document.getElementById("year").textContent = new Date().getFullYear();
+document.getElementById("btnConsentSettings")?.addEventListener("click", function (event) {
+  event.preventDefault();
+  if (typeof window.openConsentSettings === "function") window.openConsentSettings();
+});
 </script>
 
 </body>
