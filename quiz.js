@@ -183,7 +183,7 @@ function setPill(text){
     const bar = $("bar");
     const meta = $("qMeta");
     if (bar) bar.style.width = pct + "%";
-    if (meta) meta.textContent = `${state.idx+1} / ${total}`;
+    if (meta) meta.textContent = `${state.idx+1}/${total}`;
   }
 
   function renderQuestion(){
