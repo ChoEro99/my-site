@@ -34,6 +34,12 @@ gtag('config', 'G-XXXXXXX');
     <div class="grid">
       <main class="card hero">
         <h1>오늘은 뭐 해볼까?</h1>
+        
+<div class="home-tools" aria-label="테스트 탐색 도구">
+          <input id="testSearch" type="search" placeholder="테스트 검색 (예: 연애, 여행, 투자)" aria-label="테스트 검색" />
+          <button id="btnRandomTest" type="button">랜덤 추천 받기</button>
+        </div>
+        <p id="searchMeta" class="search-meta">총 12개 테스트</p>
 
         <div class="cards">
           <div class="tcard"><b>🧭 여행 성향 테스트</b><span>탐험가/계획가/힐러/사교형</span><br/><a class="go" href="/tests/travel.html">시작하기 →</a></div>
@@ -68,7 +74,7 @@ gtag('config', 'G-XXXXXXX');
 <ol style="padding-left:18px; color:var(--muted);">
 <li><a href="/tests/love.html">연애 스타일 테스트</a></li>
 <li><a href="/tests/invest.html">주식/코인 투자 성향</a></li>
-<li><a href="/tests/people.html">인간관계 유형 테스트</a></li>
+<li><a href="/tests/stress.html">직장 스트레스 유형</a></li>
 <li><a href="/tests/travel.html">여행 성향 테스트</a></li>
 <li><a href="/tests/money.html">돈 모으는 스타일</a></li>
 <li><a href="/tests/office.html">직장 생존 유형</a></li>
@@ -83,6 +89,48 @@ gtag('config', 'G-XXXXXXX');
 
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
+    
+    const cards = Array.from(document.querySelectorAll(".cards .tcard"));
+    const searchInput = document.getElementById("testSearch");
+    const searchMeta = document.getElementById("searchMeta");
+    const randomBtn = document.getElementById("btnRandomTest");
+
+    function updateSearchMeta(visibleCount, keyword){
+      if (!searchMeta) return;
+      if (!keyword){
+        searchMeta.textContent = `총 ${cards.length}개 테스트`;
+        return;
+      }
+      searchMeta.textContent = `"${keyword}" 검색 결과 ${visibleCount}개`;
+    }
+
+    function filterCards(){
+      const keyword = (searchInput?.value || "").trim().toLowerCase();
+      let visibleCount = 0;
+
+      cards.forEach((card) => {
+        const text = card.textContent.toLowerCase();
+        const matched = !keyword || text.includes(keyword);
+        card.classList.toggle("hidden", !matched);
+        if (matched) visibleCount += 1;
+      });
+
+      updateSearchMeta(visibleCount, keyword);
+    }
+
+    function moveToRandomTest(){
+      const visibleLinks = cards
+        .filter(card => !card.classList.contains("hidden"))
+        .map(card => card.querySelector("a.go")?.getAttribute("href"))
+        .filter(Boolean);
+
+      if (!visibleLinks.length) return;
+      const picked = visibleLinks[Math.floor(Math.random() * visibleLinks.length)];
+      location.href = picked;
+    }
+
+    searchInput?.addEventListener("input", filterCards);
+    randomBtn?.addEventListener("click", moveToRandomTest);
   </script>
 </body>
 </html>
