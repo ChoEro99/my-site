@@ -1,7 +1,8 @@
 (function () {
   const STORAGE_KEY = 'siteConsentV1';
   const DEFAULT_MEASUREMENT_ID = 'G-XXXXXXX';
-  const measurementId = (window.GA_MEASUREMENT_ID || DEFAULT_MEASUREMENT_ID).trim();
+  const metaMeasurement = document.querySelector('meta[name="ga-measurement-id"]')?.getAttribute('content') || '';
+  const measurementId = (window.GA_MEASUREMENT_ID || metaMeasurement || DEFAULT_MEASUREMENT_ID).trim();
 
   function hasValidMeasurementId() {
     return /^G-[A-Z0-9]+$/i.test(measurementId) && measurementId !== DEFAULT_MEASUREMENT_ID;
@@ -33,13 +34,17 @@
 
   window.trackEvent = function (eventName, data) {
     if (typeof window.gtag === 'function') {
-      window.gtag('event', eventName, data || {});
+      window.gtag('event', eventName, Object.assign({
+        page_path: location.pathname
+      }, data || {}));
     }
   };
 
-  function createBanner() {
+  function createBanner(forceOpen = false) {
     const consent = getConsent();
-    if (consent) return;
+    if (consent && !forceOpen) return;
+    const existing = document.querySelector('.consent-banner');
+    if (existing) existing.remove();
 
     const banner = document.createElement('aside');
     banner.className = 'consent-banner';
@@ -53,17 +58,21 @@
     `;
     document.body.appendChild(banner);
 
-    document.getElementById('consentAccept')?.addEventListener('click', function () {
+    banner.querySelector('#consentAccept')?.addEventListener('click', function () {
       setConsent('granted');
       loadAnalytics();
       banner.remove();
     });
 
-    document.getElementById('consentReject')?.addEventListener('click', function () {
+    banner.querySelector('#consentReject')?.addEventListener('click', function () {
       setConsent('denied');
       banner.remove();
     });
   }
+
+  window.openConsentSettings = function () {
+    createBanner(true);
+  };
 
   document.addEventListener('DOMContentLoaded', function () {
     if (getConsent() === 'granted') {
