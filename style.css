@@ -244,3 +244,20 @@ button:disabled{opacity:.55;cursor:not-allowed}
   .footer{font-size:14px}
   .adbox{font-size:14px}
 }
+
+.consent-banner{
+  position:fixed;
+  left:50%;
+  bottom:14px;
+  transform:translateX(-50%);
+  width:min(720px, calc(100% - 24px));
+  z-index:9999;
+  background:rgba(9,18,34,.96);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,.35);
+}
+.consent-banner p{margin:0 0 10px;color:var(--text);font-size:14px;line-height:1.5}
+.consent-actions{display:flex;gap:8px;flex-wrap:wrap}
+.consent-actions button{min-height:40px;padding:8px 14px;font-size:14px}
