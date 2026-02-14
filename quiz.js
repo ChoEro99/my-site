@@ -1,4 +1,3 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
 diff --git a/quiz.js b/quiz.js
 index 9e6cab4e1f160e0147c0c9f4babb85b06a47b1f8..f2a30fdae4519457ff3eb63eb79ae53a0c45a8ba 100644
 --- a/quiz.js
@@ -236,6 +235,4 @@ index 9e6cab4e1f160e0147c0c9f4babb85b06a47b1f8..f2a30fdae4519457ff3eb63eb79ae53a
      const last = localStorage.getItem(TEST.storageKey);
      const u = new URL(location.href);
      if (last) u.searchParams.set("r", last);
- 
-EOF
-)
+
