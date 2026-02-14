@@ -31,11 +31,15 @@
 </main>
 
 <div class="footer">
-© <span id="year"></span>
+© <span id="year"></span> · <a href="#" id="btnConsentSettings">쿠키 설정</a>
 </div>
 </div>
 <script>
 document.getElementById("year").textContent = new Date().getFullYear();
+document.getElementById("btnConsentSettings")?.addEventListener("click", function (event) {
+  event.preventDefault();
+  if (typeof window.openConsentSettings === "function") window.openConsentSettings();
+});
 </script>
 </body>
 </html>
