@@ -35,6 +35,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
 
 .pill{
   font-size:18px;
+  line-height:1;
+  white-space:nowrap;
   color:var(--text);
   border:1px solid var(--line);
   width:54px;
