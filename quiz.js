@@ -379,11 +379,11 @@ function setPill(text){
     return;
   }
 
-    document.addEventListener('click', (event) => {
+  document.addEventListener('click', (event) => {
     const link = event.target.closest('a[href^="http"]');
     if (!link) return;
     if (link.hostname === location.hostname) return;
-    track('outbound_click', { test: TEST.slug, href: link.href });
+    track('outbound_click', { test_slug: TEST.slug, href: link.href, page_type: 'quiz' });
   });
 
   setPill("");
