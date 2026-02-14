@@ -214,7 +214,19 @@ function setPill(text){
 
     $("rEmoji").textContent = r.emoji || "✨";
     $("rTitle").textContent = r.title || "결과";
-    $("rDesc").textContent  = r.desc  || "";
+    const descEl = $("rDesc");
+    descEl.textContent  = r.desc  || "";
+
+    let aiHint = $("rAiHint");
+    if (!aiHint && descEl && descEl.parentNode) {
+      aiHint = document.createElement("p");
+      aiHint.id = "rAiHint";
+      aiHint.className = "note";
+      descEl.parentNode.insertBefore(aiHint, descEl.nextSibling);
+    }
+    if (aiHint) {
+      aiHint.textContent = "아래 결과와 루틴은 AI가 추천한 맞춤 제안이에요.";
+    }
 
     const tags = $("rTags"); tags.innerHTML="";
     (r.tags||[]).forEach(t=>{
