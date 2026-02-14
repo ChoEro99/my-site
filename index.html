@@ -1,182 +1,206 @@
-<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>심리테스트 모음 | 2~3분 재미 테스트</title>
-  <meta name="description" content="연애/소비/직장/돈/업무/여행등 성향 테스트 모음. 결과 공유 가능" />
-  <meta property="og:title" content="심리테스트 모음" />
-  <meta property="og:description" content="2~3분 심리테스트 모음. 결과 공유 가능" />
-  <meta property="og:type" content="website" />
-  <meta property="og:image" content="https://my-site-five-ecru.vercel.app/og.png" />
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6051453612452994"
-     crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="/style.css" />
-  <!-- GA4 -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX"></script>
-<script>
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-XXXXXXX');
-</script>
-</head>
-<body>
-  <div class="wrap">
-    <header>
-      <div class="brand">
-        <b>심리테스트 모음</b>
-        <span>2~3분이내 간단 · 결과 공유 가능</span>
-      </div>
-      <div class="pill">홈</div>
-    </header>
-
-    <div class="grid">
-      <main class="card hero">
-        <h1>오늘은 뭐 해볼까?</h1>
-        
-<div class="home-tools" aria-label="테스트 탐색 도구">
-          <input id="testSearch" type="search" placeholder="테스트 검색 (예: 연애, 여행, 투자)" aria-label="테스트 검색" />
-          <button id="btnRandomTest" type="button">랜덤 추천 받기</button>
-        </div>
-        <p id="searchMeta" class="search-meta">총 12개 테스트</p>
-
-        <div class="home-tools" aria-label="테스트 탐색 도구">
-          <input id="testSearch" type="search" placeholder="테스트 검색 (예: 연애, 여행, 투자)" aria-label="테스트 검색" />
-          <select id="sortSelect" aria-label="정렬 기준">
-            <option value="popular">인기순</option>
-            <option value="latest">최신순</option>
-          </select>
-          <button id="btnRandomTest" type="button">랜덤 추천 받기</button>
-        </div>
-        <p id="searchMeta" class="search-meta">총 12개 테스트</p>
-
-        <div class="cards" id="testCards">
-          <div class="tcard" data-slug="travel" data-created="2026-02-01"><b>🧭 여행 성향 테스트</b><span>탐험가/계획가/힐러/사교형</span><br/><a class="go" href="/tests/travel.html">시작하기 →</a></div>
-          <div class="tcard" data-slug="love" data-created="2026-02-02"><b>💘 연애 스타일 테스트</b><span>직진/안정/계산/밀당</span><br/><a class="go" href="/tests/love.html">시작하기 →</a></div>
-          <div class="tcard" data-slug="spend" data-created="2026-02-03"><b>💳 소비 습관 테스트</b><span>충동/계획/감성/절약</span><br/><a class="go" href="/tests/spend.html">시작하기 →</a></div>
-          <div class="tcard" data-slug="stress" data-created="2026-02-04"><b>😵 직장 스트레스 유형</b><span>과부하/억제/분노/회피</span><br/><a class="go" href="/tests/stress.html">시작하기 →</a></div>
-          <div class="tcard" data-slug="money" data-created="2026-02-05"><b>🏦 돈 모으는 스타일</b><span>공격/안정/틈새/무계획</span><br/><a class="go" href="/tests/money.html">시작하기 →</a></div>
-          <div class="tcard" data-slug="work" data-created="2026-02-06"><b>🧩 업무 스타일 테스트</b><span>리더/장인/조율/스프린터</span><br/><a class="go" href="/tests/work.html">시작하기 →</a></div>
-          <div class="tcard" data-slug="spendlevel" data-created="2026-02-07"><b>🧾 소비 레벨 테스트</b><span>라이트/밸런스/프리미엄/플렉스</span><br/><a class="go" href="/tests/spendlevel.html">시작하기 →</a></div>
-          <div class="tcard" data-slug="office" data-created="2026-02-08"><b>🏢 직장 생존 유형</b><span>정치/실력/네트워크/독립</span><br/><a class="go" href="/tests/office.html">시작하기 →</a></div>
-          <div class="tcard" data-slug="habit" data-created="2026-02-09"><b>⏱ 루틴/습관 테스트</b><span>시작/유지/몰입/회복</span><br/><a class="go" href="/tests/habit.html">시작하기 →</a></div>
-          <div class="tcard" data-slug="invest" data-created="2026-02-10"><b>📈 주식/코인 투자 성향</b><span>공격/분산/스윙/관망</span><br/><a class="go" href="/tests/invest.html">시작하기 →</a></div>
-          <div class="tcard" data-slug="gift" data-created="2026-02-11"><b>🎁 선물 취향 테스트</b><span>실용/감성/럭셔리/경험</span><br/><a class="go" href="/tests/gift.html">시작하기 →</a></div>
-          <div class="tcard" data-slug="mood" data-created="2026-02-12"><b>🌿 회복 스타일 테스트</b><span>속도/감성/사교/혼자</span><br/><a class="go" href="/tests/mood.html">시작하기 →</a></div>
-        </div>
-
-        <div class="adbox" style="margin-top:14px">
-          <b>[광고 자리 - 홈 상단]</b><br/>
-          애드센스 승인 후 여기에 코드 삽입
-        </div>
-
-        <div class="footer">
-          © <span id="year"></span> ·
-          <a href="/privacy.html">개인정보처리방침</a> ·
-          <a href="/contact.html">문의</a> ·
-          <a href="/about.html">소개</a>
-        </div>
-      </main>
-
-<aside class="card side">
-<h3>🔥 인기 테스트 TOP 10</h3>
-<ol style="padding-left:18px; color:var(--muted);">
-<li><a href="/tests/love.html">연애 스타일 테스트</a></li>
-<li><a href="/tests/invest.html">주식/코인 투자 성향</a></li>
-<li><a href="/tests/stress.html">직장 스트레스 유형</a></li>
-<li><a href="/tests/travel.html">여행 성향 테스트</a></li>
-<li><a href="/tests/money.html">돈 모으는 스타일</a></li>
-<li><a href="/tests/office.html">직장 생존 유형</a></li>
-<li><a href="/tests/spend.html">소비 습관 테스트</a></li>
-<li><a href="/tests/habit.html">루틴/습관 테스트</a></li>
-<li><a href="/tests/gift.html">선물 취향 테스트</a></li>
-<li><a href="/tests/mood.html">회복 스타일 테스트</a></li>
-</ol>
-</aside>
-    </div>
-  </div>
-
-  <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
-
-    const cardsWrap = document.getElementById("testCards");
-    const cards = Array.from(document.querySelectorAll(".cards .tcard"));
-    const searchInput = document.getElementById("testSearch");
-    const searchMeta = document.getElementById("searchMeta");
-    const randomBtn = document.getElementById("btnRandomTest");
-    const sortSelect = document.getElementById("sortSelect");
-
-    function getCompletionStats(slug){
-      try {
-        const raw = localStorage.getItem(`quizStats:${slug}`);
-        const parsed = raw ? JSON.parse(raw) : null;
-        return { starts: parsed?.starts || 0, completions: parsed?.completions || 0 };
-      } catch (e) {
-        return { starts: 0, completions: 0 };
-      }
-    }
-
-    function getCardScore(card){
-      const slug = card.dataset.slug || "";
-      const stats = getCompletionStats(slug);
-      return (stats.completions * 3) + stats.starts;
-    }
-
-    function sortCards(){
-      const mode = sortSelect?.value || "popular";
-      const sorted = [...cards].sort((a, b) => {
-        if (mode === "latest") {
-          return new Date(b.dataset.created || 0) - new Date(a.dataset.created || 0);
-        }
-        return getCardScore(b) - getCardScore(a);
-      });
-      sorted.forEach(card => cardsWrap?.appendChild(card));
-    }
-
-    function updateSearchMeta(visibleCount, keyword){
-      if (!searchMeta) return;
-      const modeLabel = (sortSelect?.value === "latest") ? "최신순" : "인기순";
-      if (!keyword){
-        searchMeta.textContent = `${modeLabel} · 총 ${cards.length}개 테스트`;
-        return;
-      }
-      searchMeta.textContent = `${modeLabel} · "${keyword}" 검색 결과 ${visibleCount}개`;
-    }
-
-    function filterCards(){
-      const keyword = (searchInput?.value || "").trim().toLowerCase();
-      let visibleCount = 0;
-
-      cards.forEach((card) => {
-        const text = card.textContent.toLowerCase();
-        const matched = !keyword || text.includes(keyword);
-        card.classList.toggle("hidden", !matched);
-        if (matched) visibleCount += 1;
-      });
-
-      updateSearchMeta(visibleCount, keyword);
-    }
-
-    function moveToRandomTest(){
-      const visibleLinks = cards
-        .filter(card => !card.classList.contains("hidden"))
-        .map(card => card.querySelector("a.go")?.getAttribute("href"))
-        .filter(Boolean);
-
-      if (!visibleLinks.length) return;
-      const picked = visibleLinks[Math.floor(Math.random() * visibleLinks.length)];
-      location.href = picked;
-    }
-
-    sortCards();
-    filterCards();
-    searchInput?.addEventListener("input", filterCards);
-    randomBtn?.addEventListener("click", moveToRandomTest);
-    sortSelect?.addEventListener("change", () => {
-      sortCards();
-      filterCards();
-    });
-  </script>
-</body>
-</html>
+diff --git a/index.html b/index.html
+index 2a2ccd1901103c9f64c1c6c19125c2d309322ac0..83a3245c95bb6c2dd5987daef82dc4360b9396f7 100644
+--- a/index.html
++++ b/index.html
+@@ -13,76 +13,187 @@
+      crossorigin="anonymous"></script>
+   <link rel="stylesheet" href="/style.css" />
+   <!-- GA4 -->
+ <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXX"></script>
+ <script>
+ window.dataLayer = window.dataLayer || [];
+ function gtag(){dataLayer.push(arguments);}
+ gtag('js', new Date());
+ gtag('config', 'G-XXXXXXX');
+ </script>
+ </head>
+ <body>
+   <div class="wrap">
+     <header>
+       <div class="brand">
+         <b>심리테스트 모음</b>
+         <span>2~3분이내 간단 · 결과 공유 가능</span>
+       </div>
+       <div class="pill">홈</div>
+     </header>
+ 
+     <div class="grid">
+       <main class="card hero">
+         <h1>오늘은 뭐 해볼까?</h1>
+ 
+-        <div class="cards">
+-          <div class="tcard"><b>🧭 여행 성향 테스트</b><span>탐험가/계획가/힐러/사교형</span><br/><a class="go" href="/tests/travel.html">시작하기 →</a></div>
+-          <div class="tcard"><b>💘 연애 스타일 테스트</b><span>직진/안정/계산/밀당</span><br/><a class="go" href="/tests/love.html">시작하기 →</a></div>
+-          <div class="tcard"><b>💳 소비 습관 테스트</b><span>충동/계획/감성/절약</span><br/><a class="go" href="/tests/spend.html">시작하기 →</a></div>
+-          <div class="tcard"><b>😵 직장 스트레스 유형</b><span>과부하/억제/분노/회피</span><br/><a class="go" href="/tests/stress.html">시작하기 →</a></div>
+-          <div class="tcard"><b>🏦 돈 모으는 스타일</b><span>공격/안정/틈새/무계획</span><br/><a class="go" href="/tests/money.html">시작하기 →</a></div>
+-          <div class="tcard"><b>🧩 업무 스타일 테스트</b><span>리더/장인/조율/스프린터</span><br/><a class="go" href="/tests/work.html">시작하기 →</a></div>
+-          <div class="tcard"><b>🧾 소비 레벨 테스트</b><span>라이트/밸런스/프리미엄/플렉스</span><br/><a class="go" href="/tests/spendlevel.html">시작하기 →</a></div>
+-          <div class="tcard"><b>🏢 직장 생존 유형</b><span>정치/실력/네트워크/독립</span><br/><a class="go" href="/tests/office.html">시작하기 →</a></div>
+-          <div class="tcard"><b>⏱ 루틴/습관 테스트</b><span>시작/유지/몰입/회복</span><br/><a class="go" href="/tests/habit.html">시작하기 →</a></div>
+-          <div class="tcard"><b>📈 주식/코인 투자 성향</b><span>공격/분산/스윙/관망</span><br/><a class="go" href="/tests/invest.html">시작하기 →</a></div>
+-          <div class="tcard"><b>🎁 선물 취향 테스트</b><span>실용/감성/럭셔리/경험</span><br/><a class="go" href="/tests/gift.html">시작하기 →</a></div>
+-          <div class="tcard"><b>🌿 회복 스타일 테스트</b><span>속도/감성/사교/혼자</span><br/><a class="go" href="/tests/mood.html">시작하기 →</a></div>
++        <div class="home-tools" aria-label="테스트 탐색 도구">
++          <input id="testSearch" type="search" placeholder="테스트 검색 (예: 연애, 여행, 투자)" aria-label="테스트 검색" />
++          <select id="sortSelect" aria-label="정렬 기준">
++            <option value="popular">인기순</option>
++            <option value="latest">최신순</option>
++          </select>
++          <button id="btnRandomTest" type="button">랜덤 추천 받기</button>
++        </div>
++        <p id="searchMeta" class="search-meta">총 12개 테스트</p>
++
++        <div class="cards" id="testCards">
++          <div class="tcard" data-slug="travel" data-created="2026-02-01"><b>🧭 여행 성향 테스트</b><span>탐험가/계획가/힐러/사교형</span><br/><a class="go" href="/tests/travel.html">시작하기 →</a></div>
++          <div class="tcard" data-slug="love" data-created="2026-02-02"><b>💘 연애 스타일 테스트</b><span>직진/안정/계산/밀당</span><br/><a class="go" href="/tests/love.html">시작하기 →</a></div>
++          <div class="tcard" data-slug="spend" data-created="2026-02-03"><b>💳 소비 습관 테스트</b><span>충동/계획/감성/절약</span><br/><a class="go" href="/tests/spend.html">시작하기 →</a></div>
++          <div class="tcard" data-slug="stress" data-created="2026-02-04"><b>😵 직장 스트레스 유형</b><span>과부하/억제/분노/회피</span><br/><a class="go" href="/tests/stress.html">시작하기 →</a></div>
++          <div class="tcard" data-slug="money" data-created="2026-02-05"><b>🏦 돈 모으는 스타일</b><span>공격/안정/틈새/무계획</span><br/><a class="go" href="/tests/money.html">시작하기 →</a></div>
++          <div class="tcard" data-slug="work" data-created="2026-02-06"><b>🧩 업무 스타일 테스트</b><span>리더/장인/조율/스프린터</span><br/><a class="go" href="/tests/work.html">시작하기 →</a></div>
++          <div class="tcard" data-slug="spendlevel" data-created="2026-02-07"><b>🧾 소비 레벨 테스트</b><span>라이트/밸런스/프리미엄/플렉스</span><br/><a class="go" href="/tests/spendlevel.html">시작하기 →</a></div>
++          <div class="tcard" data-slug="office" data-created="2026-02-08"><b>🏢 직장 생존 유형</b><span>정치/실력/네트워크/독립</span><br/><a class="go" href="/tests/office.html">시작하기 →</a></div>
++          <div class="tcard" data-slug="habit" data-created="2026-02-09"><b>⏱ 루틴/습관 테스트</b><span>시작/유지/몰입/회복</span><br/><a class="go" href="/tests/habit.html">시작하기 →</a></div>
++          <div class="tcard" data-slug="invest" data-created="2026-02-10"><b>📈 주식/코인 투자 성향</b><span>공격/분산/스윙/관망</span><br/><a class="go" href="/tests/invest.html">시작하기 →</a></div>
++          <div class="tcard" data-slug="gift" data-created="2026-02-11"><b>🎁 선물 취향 테스트</b><span>실용/감성/럭셔리/경험</span><br/><a class="go" href="/tests/gift.html">시작하기 →</a></div>
++          <div class="tcard" data-slug="mood" data-created="2026-02-12"><b>🌿 회복 스타일 테스트</b><span>속도/감성/사교/혼자</span><br/><a class="go" href="/tests/mood.html">시작하기 →</a></div>
+         </div>
+ 
+         <div class="adbox" style="margin-top:14px">
+           <b>[광고 자리 - 홈 상단]</b><br/>
+           애드센스 승인 후 여기에 코드 삽입
+         </div>
+ 
+         <div class="footer">
+           © <span id="year"></span> ·
+           <a href="/privacy.html">개인정보처리방침</a> ·
+           <a href="/contact.html">문의</a> ·
+           <a href="/about.html">소개</a>
+         </div>
+       </main>
+ 
+ <aside class="card side">
+ <h3>🔥 인기 테스트 TOP 10</h3>
+ <ol style="padding-left:18px; color:var(--muted);">
+ <li><a href="/tests/love.html">연애 스타일 테스트</a></li>
+ <li><a href="/tests/invest.html">주식/코인 투자 성향</a></li>
+-<li><a href="/tests/people.html">인간관계 유형 테스트</a></li>
++<li><a href="/tests/stress.html">직장 스트레스 유형</a></li>
+ <li><a href="/tests/travel.html">여행 성향 테스트</a></li>
+ <li><a href="/tests/money.html">돈 모으는 스타일</a></li>
+ <li><a href="/tests/office.html">직장 생존 유형</a></li>
+ <li><a href="/tests/spend.html">소비 습관 테스트</a></li>
+ <li><a href="/tests/habit.html">루틴/습관 테스트</a></li>
+ <li><a href="/tests/gift.html">선물 취향 테스트</a></li>
+ <li><a href="/tests/mood.html">회복 스타일 테스트</a></li>
+ </ol>
+ </aside>
+     </div>
+   </div>
+ 
+   <script>
+     document.getElementById("year").textContent = new Date().getFullYear();
++
++    function dedupeHomeTools(){
++      const toolBlocks = Array.from(document.querySelectorAll(".home-tools"));
++      if (toolBlocks.length <= 1) return;
++
++      let preferred = toolBlocks[toolBlocks.length - 1];
++      for (let i = toolBlocks.length - 1; i >= 0; i -= 1) {
++        if (toolBlocks[i].querySelector("#sortSelect")) {
++          preferred = toolBlocks[i];
++          break;
++        }
++      }
++      toolBlocks.forEach(block => {
++        if (block !== preferred) block.remove();
++      });
++
++      const metaBlocks = Array.from(document.querySelectorAll("#searchMeta"));
++      metaBlocks.forEach((meta, idx) => {
++        if (idx > 0) meta.remove();
++      });
++    }
++
++    dedupeHomeTools();
++
++    const cardsWrap = document.getElementById("testCards");
++    const cards = Array.from(document.querySelectorAll(".cards .tcard"));
++    const searchInput = document.getElementById("testSearch");
++    const searchMeta = document.getElementById("searchMeta");
++    const randomBtn = document.getElementById("btnRandomTest");
++    const sortSelect = document.getElementById("sortSelect");
++
++    function getCompletionStats(slug){
++      try {
++        const raw = localStorage.getItem(`quizStats:${slug}`);
++        const parsed = raw ? JSON.parse(raw) : null;
++        return { starts: parsed?.starts || 0, completions: parsed?.completions || 0 };
++      } catch (e) {
++        return { starts: 0, completions: 0 };
++      }
++    }
++
++    function getCardScore(card){
++      const slug = card.dataset.slug || "";
++      const stats = getCompletionStats(slug);
++      return (stats.completions * 3) + stats.starts;
++    }
++
++    function sortCards(){
++      const mode = sortSelect?.value || "popular";
++      const sorted = [...cards].sort((a, b) => {
++        if (mode === "latest") {
++          return new Date(b.dataset.created || 0) - new Date(a.dataset.created || 0);
++        }
++        return getCardScore(b) - getCardScore(a);
++      });
++      sorted.forEach(card => cardsWrap?.appendChild(card));
++    }
++
++    function updateSearchMeta(visibleCount, keyword){
++      if (!searchMeta) return;
++      const modeLabel = (sortSelect?.value === "latest") ? "최신순" : "인기순";
++      if (!keyword){
++        searchMeta.textContent = `${modeLabel} · 총 ${cards.length}개 테스트`;
++        return;
++      }
++      searchMeta.textContent = `${modeLabel} · "${keyword}" 검색 결과 ${visibleCount}개`;
++    }
++
++    function filterCards(){
++      const keyword = (searchInput?.value || "").trim().toLowerCase();
++      let visibleCount = 0;
++
++      cards.forEach((card) => {
++        const text = card.textContent.toLowerCase();
++        const matched = !keyword || text.includes(keyword);
++        card.classList.toggle("hidden", !matched);
++        if (matched) visibleCount += 1;
++      });
++
++      updateSearchMeta(visibleCount, keyword);
++    }
++
++    function moveToRandomTest(){
++      const visibleLinks = cards
++        .filter(card => !card.classList.contains("hidden"))
++        .map(card => card.querySelector("a.go")?.getAttribute("href"))
++        .filter(Boolean);
++
++      if (!visibleLinks.length) return;
++      const picked = visibleLinks[Math.floor(Math.random() * visibleLinks.length)];
++      location.href = picked;
++    }
++
++    sortCards();
++    filterCards();
++    searchInput?.addEventListener("input", filterCards);
++    randomBtn?.addEventListener("click", moveToRandomTest);
++    sortSelect?.addEventListener("change", () => {
++      sortCards();
++      filterCards();
++    });
+   </script>
+ </body>
+ </html>
