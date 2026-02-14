@@ -1,7 +1,4 @@
-diff --git a/quiz.js b/quiz.js
-index 9e6cab4e1f160e0147c0c9f4babb85b06a47b1f8..f2a30fdae4519457ff3eb63eb79ae53a0c45a8ba 100644
---- a/quiz.js
-+++ b/quiz.js
+
 @@ -9,68 +9,130 @@ function track(eventName, data = {}) {
  
  function showToast(msg){
