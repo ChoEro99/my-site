@@ -2,6 +2,10 @@
 const $ = (id) => document.getElementById(id);
 
 function track(eventName, data = {}) {
+    if (typeof window.trackEvent === "function") {
+    window.trackEvent(eventName, data);
+    return;
+  }
   if (typeof gtag === "function") {
     gtag('event', eventName, data);
   }
@@ -58,6 +62,34 @@ function applySeoMeta(TEST) {
   upsertMeta('meta[property="og:type"]', ["property", "og:type"], "website");
   upsertMeta('meta[property="og:image"]', ["property", "og:image"], image);
   upsertMeta('meta[property="og:url"]', ["property", "og:url"], location.href);
+  upsertMeta('meta[name="twitter:card"]', ["name", "twitter:card"], "summary_large_image");
+  upsertMeta('meta[name="twitter:title"]', ["name", "twitter:title"], title);
+  upsertMeta('meta[name="twitter:description"]', ["name", "twitter:description"], desc);
+  upsertMeta('meta[name="twitter:image"]', ["name", "twitter:image"], image);
+
+  let canonical = document.head.querySelector('link[rel="canonical"]');
+  if (!canonical) {
+    canonical = document.createElement('link');
+    canonical.setAttribute('rel', 'canonical');
+    document.head.appendChild(canonical);
+  }
+  canonical.setAttribute('href', location.origin + location.pathname);
+
+  const oldSchema = document.getElementById('quizSchema');
+  if (oldSchema) oldSchema.remove();
+  const schema = document.createElement('script');
+  schema.type = 'application/ld+json';
+  schema.id = 'quizSchema';
+  schema.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Quiz',
+    name: TEST.ogTitle || document.title,
+    description: desc,
+    inLanguage: 'ko-KR',
+    educationalLevel: 'beginner',
+    about: (TEST.badge || TEST.slug || '심리 테스트')
+  });
+  document.head.appendChild(schema);
 }
 
 function initQuiz(){
@@ -345,6 +377,13 @@ function setPill(text){
     renderResult(r, true);
     return;
   }
+
+    document.addEventListener('click', (event) => {
+    const link = event.target.closest('a[href^="http"]');
+    if (!link) return;
+    if (link.hostname === location.hostname) return;
+    track('outbound_click', { test: TEST.slug, href: link.href });
+  });
 
   setPill("");
   switchScreen("start");
