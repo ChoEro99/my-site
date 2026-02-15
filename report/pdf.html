@@ -45,8 +45,35 @@
   const pitfalls = Array.isArray(data.pitfalls) ? data.pitfalls : [];
   const routine = Array.isArray(data.routine) ? data.routine : [];
 
+  const TEST_PROFILES = {
+    travel:{focus:'여행',outcome:'만족도',context:'일정/동선'},
+    love:{focus:'관계',outcome:'관계 안정감',context:'감정/소통'},
+    spend:{focus:'소비',outcome:'지출 효율',context:'구매/결제'},
+    stress:{focus:'스트레스',outcome:'회복 탄력성',context:'업무 압박'},
+    money:{focus:'자산관리',outcome:'저축 지속률',context:'예산/저축'},
+    work:{focus:'업무',outcome:'성과 재현성',context:'협업/실행'},
+    spendlevel:{focus:'소비 레벨',outcome:'체감 만족',context:'가격/가치'},
+    office:{focus:'직장 생존',outcome:'조직 적응력',context:'관계/성과'},
+    habit:{focus:'루틴',outcome:'실천 유지율',context:'착수/지속'},
+    invest:{focus:'투자',outcome:'변동성 대응력',context:'진입/청산'},
+    gift:{focus:'선물',outcome:'선택 정확도',context:'취향/상황'},
+    mood:{focus:'회복',outcome:'정서 회복속도',context:'피로/감정'},
+    sleep:{focus:'수면',outcome:'컨디션 안정성',context:'취침/기상'},
+    study:{focus:'학습',outcome:'학습 누적량',context:'계획/복습'},
+    exercise:{focus:'운동',outcome:'운동 지속성',context:'강도/빈도'},
+    food:{focus:'식사',outcome:'식습관 균형',context:'메뉴/패턴'},
+    friend:{focus:'친구관계',outcome:'관계 만족도',context:'대화/거리감'},
+    weekend:{focus:'주말활용',outcome:'주간 회복력',context:'휴식/활동'},
+    communication:{focus:'소통',outcome:'전달 정확도',context:'표현/경청'},
+    fashion:{focus:'패션',outcome:'스타일 일관성',context:'선택/조합'},
+    pet:{focus:'반려',outcome:'돌봄 안정성',context:'교감/관리'},
+    movie:{focus:'콘텐츠 취향',outcome:'만족 재현성',context:'선택/감상'}
+  };
+
+  const profile = TEST_PROFILES[test] || {focus:'일상',outcome:'실행 만족도',context:'선택/실행'};
+
   const buildStarterItems = () => {
-    const summary = data.desc || `${resultTitle} 타입은 실행력과 잠재력이 균형을 이루는 편입니다.`;
+    const summary = data.desc || `${resultTitle} 타입은 ${profile.focus} 상황에서 균형 잡힌 실행 흐름을 보입니다.`;
     const leadStrength = strengths[0] || '빠른 상황 파악';
     const supportStrength = strengths[1] || '일관된 실행력';
     const leadPitfall = pitfalls[0] || '초반 과열 후 페이스 저하';
@@ -56,11 +83,11 @@
 
     return [
       `요약 진단: ${summary}`,
-      `기본 심층 분석 ① 강점 구조: 핵심 강점은 '${leadStrength}'이며, '${supportStrength}'가 이를 보완합니다. 이 조합은 시작 속도와 유지력을 동시에 끌어올리는 패턴입니다.`,
-      `기본 심층 분석 ② 리스크 구조: '${leadPitfall}' 상황에서 성과 편차가 커질 수 있습니다. 특히 '${supportPitfall}'가 겹치면 흐름이 끊기기 쉬워 사전 점검이 중요합니다.`,
-      `기본 심층 분석 ③ 실행 루틴: '${leadRoutine}'를 앵커 습관으로 두고 '${supportRoutine}'를 보조 루틴으로 연결하면 실천율이 안정적으로 올라갑니다.`,
-      `예시 사례 A(잘 풀릴 때): 해야 할 일이 많아도 우선순위를 빠르게 잡고 바로 착수해, 초반 30분 내 성과를 만듭니다.`,
-      `예시 사례 B(흔들릴 때): 일정이 꼬이면 완벽하게 다시 시작하려다 지연이 생깁니다. 이때는 분량을 50%로 줄여 재착수하면 회복이 빠릅니다.`
+      `기본 심층 분석 ① 강점 구조: '${resultTitle}'의 핵심 강점은 '${leadStrength}'이며 '${supportStrength}'가 이를 보완합니다. 이 조합은 ${profile.context} 상황에서 ${profile.outcome}을 높이는 패턴입니다.`,
+      `기본 심층 분석 ② 리스크 구조: '${leadPitfall}' 신호가 나타나면 결과 편차가 커질 수 있습니다. 특히 '${supportPitfall}'가 겹치면 흐름이 끊기기 쉬워 사전 점검이 중요합니다.`,
+      `기본 심층 분석 ③ 실행 루틴: '${leadRoutine}'를 앵커 습관으로 두고 '${supportRoutine}'를 보조 루틴으로 연결하면 ${profile.outcome}이 안정적으로 올라갑니다.`,
+      `예시 사례 A(잘 풀릴 때): ${profile.focus} 의사결정이 필요한 순간, '${leadStrength}'를 활용해 빠르게 방향을 정하고 필요한 행동을 바로 착수합니다.`,
+      `예시 사례 B(흔들릴 때): ${profile.context}가 복잡해지면 '${leadPitfall}'이 드러날 수 있습니다. 이때는 목표 범위를 줄이고 '${leadRoutine}'만 먼저 실행하면 회복이 빨라집니다.`
     ];
   };
 
@@ -75,6 +102,7 @@
       `대조/비교: '${resultTitle}'은(는) ${compareType}과 비교해 시작 속도는 빠르지만 중후반 페이스 관리가 관건입니다. 반대로 루틴이 고정되면 누적 성과는 더 크게 나타납니다.`
     );
   }
+  
   const ul = document.getElementById('reportList');
   ul.innerHTML = items.map(x => `<li>${x}</li>`).join('');
 
