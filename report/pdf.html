@@ -41,15 +41,39 @@
   document.getElementById('title').textContent = `${resultTitle} ${plan === 'full' ? 'Full' : 'Starter'} PDF 리포트`;
   document.getElementById('meta').textContent = `${testTitle} · 결제번호 ${purchase.paymentId}`;
 
-  const items = [
-    `요약: ${data.desc || '-'}`,
-    `강점: ${(data.strengths || []).join(', ') || '-'}`,
-    `주의: ${(data.pitfalls || []).join(', ') || '-'}`,
-    `루틴: ${(data.routine || []).join(', ') || '-'}`
-  ];
+  const strengths = Array.isArray(data.strengths) ? data.strengths : [];
+  const pitfalls = Array.isArray(data.pitfalls) ? data.pitfalls : [];
+  const routine = Array.isArray(data.routine) ? data.routine : [];
+
+  const buildStarterItems = () => {
+    const summary = data.desc || `${resultTitle} 타입은 실행력과 잠재력이 균형을 이루는 편입니다.`;
+    const leadStrength = strengths[0] || '빠른 상황 파악';
+    const supportStrength = strengths[1] || '일관된 실행력';
+    const leadPitfall = pitfalls[0] || '초반 과열 후 페이스 저하';
+    const supportPitfall = pitfalls[1] || '우선순위 혼선';
+    const leadRoutine = routine[0] || '핵심 1가지부터 시작하기';
+    const supportRoutine = routine[1] || '마감 10분 회고 정리';
+
+    return [
+      `요약 진단: ${summary}`,
+      `기본 심층 분석 ① 강점 구조: 핵심 강점은 '${leadStrength}'이며, '${supportStrength}'가 이를 보완합니다. 이 조합은 시작 속도와 유지력을 동시에 끌어올리는 패턴입니다.`,
+      `기본 심층 분석 ② 리스크 구조: '${leadPitfall}' 상황에서 성과 편차가 커질 수 있습니다. 특히 '${supportPitfall}'가 겹치면 흐름이 끊기기 쉬워 사전 점검이 중요합니다.`,
+      `기본 심층 분석 ③ 실행 루틴: '${leadRoutine}'를 앵커 습관으로 두고 '${supportRoutine}'를 보조 루틴으로 연결하면 실천율이 안정적으로 올라갑니다.`,
+      `예시 사례 A(잘 풀릴 때): 해야 할 일이 많아도 우선순위를 빠르게 잡고 바로 착수해, 초반 30분 내 성과를 만듭니다.`,
+      `예시 사례 B(흔들릴 때): 일정이 꼬이면 완벽하게 다시 시작하려다 지연이 생깁니다. 이때는 분량을 50%로 줄여 재착수하면 회복이 빠릅니다.`
+    ];
+  };
+
+  const items = buildStarterItems();
   if (plan === 'full') {
-    items.push(`선호 유형 해석: ${resultTitle}의 관계/행동 패턴을 구체적으로 해석합니다.`);
-    items.push(`대조/비교: 다른 주요 유형과의 차이점을 비교해 개선 포인트를 제시합니다.`);
+    const preferredType = strengths[0] ? `${strengths[0]}이(가) 강한 협업형` : '목표 명확형';
+    const compareType = pitfalls[0] ? `${pitfalls[0]} 민감형` : '즉흥 반응형';
+    items.push(
+      `선호 유형(나와 어울리는 타입): '${preferredType}'과 궁합이 좋습니다. 명확한 기준을 제시해 주는 사람/환경과 함께할 때 실행 지속력이 커집니다.`,
+      `내 개선 포인트 ①: '${pitfalls[0] || '집중력 분산'}'이 보이면 즉시 할 일을 1개로 축소해 착수 시간을 5분 이내로 제한하세요.`,
+      `내 개선 포인트 ②: '${pitfalls[1] || '리듬 불안정'}' 구간에서는 결과 목표보다 과정 목표(횟수/시간)를 먼저 채우는 방식이 효과적입니다.`,
+      `대조/비교: '${resultTitle}'은(는) ${compareType}과 비교해 시작 속도는 빠르지만 중후반 페이스 관리가 관건입니다. 반대로 루틴이 고정되면 누적 성과는 더 크게 나타납니다.`
+    );
   }
   const ul = document.getElementById('reportList');
   ul.innerHTML = items.map(x => `<li>${x}</li>`).join('');
