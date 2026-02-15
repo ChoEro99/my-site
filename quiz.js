@@ -38,16 +38,45 @@ function makeOtherTestsLinks(){
 function getReportPrice(TEST, resultId, plan){
   const planPricing = TEST.reportPricing?.[resultId]?.[plan] || TEST.reportPricing?.default?.[plan];
   if (planPricing) return planPricing;
-  return plan === "starter" ? "900원" : "2,900원";
+  return plan === "starter" ? "900원" : "1,900원 ~ 2,900원";
 }
 
 function buildReportCheckoutUrl(TEST, resultId, plan){
-  const checkoutBase = TEST.reportCheckoutUrl || window.REPORT_CHECKOUT_URL || "/pay/report";
+  const checkoutBase = TEST.reportCheckoutUrl || window.REPORT_CHECKOUT_URL || "/pay/report.html";
   const url = new URL(checkoutBase, location.origin);
   url.searchParams.set("test", TEST.slug);
   url.searchParams.set("result", resultId);
   url.searchParams.set("plan", plan);
-  url.searchParams.set("format", "pdf");
+  return url.toString();
+}
+
+function saveReportDraft(TEST, resultId, plan, result){
+  const key = `reportDraft:${TEST.slug}:${resultId}:${plan}`;
+  const payload = {
+    slug: TEST.slug,
+    testTitle: TEST.ogTitle || document.title,
+    resultId,
+    resultTitle: result?.title || "결과",
+    plan,
+    createdAt: Date.now(),
+    result: {
+      emoji: result?.emoji || "",
+      desc: result?.desc || "",
+      tags: result?.tags || [],
+      strengths: result?.strengths || [],
+      pitfalls: result?.pitfalls || [],
+      routine: result?.routine || []
+    }
+  };
+  try {
+    localStorage.setItem(key, JSON.stringify(payload));
+  } catch (e) {}
+}
+
+function buildFullReportExampleUrl(TEST, resultId){
+  const url = new URL('/report/example-full.html', location.origin);
+  url.searchParams.set('test', TEST.slug);
+  url.searchParams.set('result', resultId);
   return url.toString();
 }
 
@@ -56,6 +85,7 @@ function makePremiumReportUpsell(TEST, resultId, result){
   const fullPrice = getReportPrice(TEST, resultId, "full");
   const starterLink = buildReportCheckoutUrl(TEST, resultId, "starter");
   const fullLink = buildReportCheckoutUrl(TEST, resultId, "full");
+  const fullExampleLink = buildFullReportExampleUrl(TEST, resultId);
   const resultTitle = result?.title || "결과";
 
   return `
@@ -81,6 +111,7 @@ function makePremiumReportUpsell(TEST, resultId, result){
         </ul>
         <p class="premium-price">💵 ${fullPrice}</p>
         <a class="go premium-cta" href="${fullLink}" data-plan="full" data-result-id="${resultId}">Full PDF 결제하기</a>
+        <a class="premium-example-link" href="${fullExampleLink}" target="_blank" rel="noopener">Full 리포트 예시 보기</a>
       </article>
     </div>
   </section>`;
@@ -308,11 +339,16 @@ function setPill(text){
     if (premiumUpsell) {
       premiumUpsell.innerHTML = makePremiumReportUpsell(TEST, resultId, r);
       premiumUpsell.querySelectorAll(".premium-cta").forEach((link) => {
-        link.onclick = () => {
+        link.onclick = (event) => {
+          const plan = link.dataset.plan || "starter";
+          saveReportDraft(TEST, resultId, plan, r);
+          const checkoutUrl = new URL(link.href);
+          checkoutUrl.searchParams.set("draft", `${TEST.slug}:${resultId}:${plan}`);
+          link.href = checkoutUrl.toString();
           track("report_checkout_click", {
             test_slug: TEST.slug,
             result_id: resultId,
-            plan: link.dataset.plan,
+            plan,
             href: link.href,
             page_type: "result"
           });
