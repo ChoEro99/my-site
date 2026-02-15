@@ -38,7 +38,7 @@ function makeOtherTestsLinks(){
 function getReportPrice(TEST, resultId, plan){
   const planPricing = TEST.reportPricing?.[resultId]?.[plan] || TEST.reportPricing?.default?.[plan];
   if (planPricing) return planPricing;
-  return plan === "starter" ? "900원" : "1,900원 ~ 2,900원";
+  return plan === "starter" ? "900원" : "1,900원";
 }
 
 function buildReportCheckoutUrl(TEST, resultId, plan){
