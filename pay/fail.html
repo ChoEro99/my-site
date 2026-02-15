@@ -1,0 +1,19 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>결제 실패</title>
+<link rel="stylesheet" href="/style.css"/>
+</head><body>
+<div class="wrap"><div class="grid" style="grid-template-columns:minmax(0,1fr)">
+<main class="card hero">
+  <h1>결제가 완료되지 않았습니다</h1>
+  <p id="failMessage">잠시 후 다시 시도해주세요.</p>
+  <div class="btns">
+    <button class="primary" onclick="history.back()">이전으로</button>
+    <a class="pill" href="/">🏠 홈</a>
+  </div>
+</main></div></div>
+<script>
+const msg = new URLSearchParams(location.search).get('message');
+if (msg) document.getElementById('failMessage').textContent = msg;
+</script>
+</body></html>
