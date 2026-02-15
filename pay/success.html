@@ -1,0 +1,43 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>결제 완료</title>
+<link rel="stylesheet" href="/style.css"/>
+</head><body>
+<div class="wrap"><div class="grid" style="grid-template-columns:minmax(0,1fr)">
+<main class="card hero">
+  <h1>결제가 완료되었습니다 ✅</h1>
+  <p id="successSummary">주문 정보를 확인 중입니다.</p>
+  <div class="btns">
+    <a class="go" id="btnReport" href="#">PDF 받으러 가기</a>
+    <a class="pill" href="/">🏠 홈</a>
+  </div>
+</main></div></div>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const test = p.get('test') || '';
+  const result = p.get('result') || '';
+  const plan = p.get('plan') || 'starter';
+  const draft = p.get('draft') || `${test}:${result}:${plan}`;
+  const paymentId = p.get('paymentId') || `demo_${Date.now()}`;
+  const purchaseKey = `reportPurchase:${draft}`;
+
+  localStorage.setItem(purchaseKey, JSON.stringify({
+    paid: true,
+    paymentId,
+    purchasedAt: Date.now(),
+    test,
+    result,
+    plan
+  }));
+
+  document.getElementById('successSummary').textContent = `${test} / ${result} / ${plan.toUpperCase()} 구매 완료`;
+  const reportUrl = new URL('/report/pdf.html', location.origin);
+  reportUrl.searchParams.set('test', test);
+  reportUrl.searchParams.set('result', result);
+  reportUrl.searchParams.set('plan', plan);
+  reportUrl.searchParams.set('draft', draft);
+  document.getElementById('btnReport').href = reportUrl.toString();
+})();
+</script>
+</body></html>
