@@ -190,6 +190,29 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .mini h4{margin:0 0 8px;font-size:14px}
 .mini li,.mini p{color:var(--muted);font-size:16px}
 .mini ul{margin:0;padding-left:18px}
+.premium-upsell{
+  margin-top:12px;
+  padding:14px;
+  border-radius:16px;
+  border:1px solid rgba(110,231,255,.35);
+  background:linear-gradient(135deg, rgba(110,231,255,.08), rgba(167,139,250,.08));
+}
+.premium-upsell h4{margin:0 0 6px;font-size:16px}
+.premium-sub{margin:0 0 10px;color:var(--muted);font-size:14px;line-height:1.5}
+.premium-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.premium-plan{
+  padding:12px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:rgba(5,12,24,.65);
+}
+.premium-label{margin:0 0 6px;font-weight:800}
+.premium-plan ul{margin:0;padding-left:18px}
+.premium-plan li{font-size:15px;color:var(--text)}
+.premium-price{margin:10px 0 0;font-weight:800;color:#ffe08a}
+.premium-cta{display:block;text-align:center;margin-top:10px}
+.premium-plan-full{border-color:rgba(167,139,250,.45)}
+@media (max-width:560px){.premium-grid{grid-template-columns:1fr}}
 .footer{margin-top:18px;color:var(--muted);font-size:14px}
 
 .toast{
