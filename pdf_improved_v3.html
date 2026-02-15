@@ -1,0 +1,1034 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>심층 분석 PDF</title>
+<link rel="stylesheet" href="/style.css"/>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head><body>
+<div class="wrap"><div class="grid" style="grid-template-columns:minmax(0,1fr)">
+<main class="card hero" id="reportCard">
+  <h1 id="title">리포트 준비 중…</h1>
+  <p id="meta"></p>
+  <div class="premium-upsell">
+    <p class="premium-label">리포트 미리보기</p>
+    <ul id="reportList"></ul>
+  </div>
+  <div class="btns">
+    <button class="primary" id="btnPdf">PDF 다운로드</button>
+    <a class="pill" href="/">🏠 홈</a>
+  </div>
+</main></div></div>
+
+<script>
+(function () {
+  const p = new URLSearchParams(location.search);
+  const test = p.get('test') || '';
+  const result = p.get('result') || '';
+  const plan = p.get('plan') || 'starter';
+  const draft = p.get('draft') || `${test}:${result}:${plan}`;
+
+  // NOTE: 현재 결제 검증이 localStorage 기반이라 우회가 매우 쉽습니다.
+  // 실제 유료 서비스라면 서버에서 결제 검증(영수증/웹훅) 후 토큰을 발급하는 방식으로 바꾸는 것을 권장합니다.
+  const purchase = JSON.parse(localStorage.getItem(`reportPurchase:${draft}`) || 'null');
+  if (!purchase?.paid) {
+    alert('결제 정보가 확인되지 않아 리포트를 열 수 없습니다.');
+    location.href = '/';
+    return;
+  }
+
+  const draftData = JSON.parse(localStorage.getItem(`reportDraft:${draft}`) || 'null');
+  const resultTitle = draftData?.resultTitle || result || '결과';
+  const testTitle = draftData?.testTitle || test || '테스트';
+  const data = draftData?.result || {};
+
+  const planName = plan === 'full' ? 'Full' : 'Starter';
+  document.getElementById('title').textContent = `${resultTitle} ${planName} PDF 리포트`;
+  const today = new Date();
+  document.getElementById('meta').textContent = `${testTitle} · 결제번호 ${purchase.paymentId} · 생성일 ${today.toLocaleDateString('ko-KR')}`;
+
+  // ---------- helpers ----------
+  const escapeHtml = (s) =>
+    String(s ?? '').replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+
+  const hashString = (str) => {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  };
+
+  const mulberry32 = (a) => () => {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+
+
+  // ✅ seed 강화: draft가 고정이어도 test/result/plan이 섞여서 멘트가 덜 겹치게 함
+  const seedBase = `${draft}:${test}:${result}:${plan}:${resultTitle}`;
+  const rng = mulberry32(hashString(seedBase));
+  const pick = (arr, fallback = '') => (Array.isArray(arr) && arr.length ? arr[Math.floor(rng() * arr.length)] : fallback);
+
+  // section-specific deterministic RNG (prevents some sections from feeling "copy-paste")
+  const RNGS = Object.create(null);
+  const rngFor = (key) => {
+    if (!RNGS[key]) RNGS[key] = mulberry32(hashString(`${seedBase}:${key}`));
+    return RNGS[key];
+  };
+  const pickK = (key, arr, fallback = '') => {
+    const r = rngFor(key);
+    return (Array.isArray(arr) && arr.length) ? arr[Math.floor(r() * arr.length)] : fallback;
+  };
+  const shuffleK = (key, arr) => {
+    const r = rngFor(key);
+    const a = (arr || []).slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(r() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+  const uniq = (arr) => Array.from(new Set((arr || []).filter(Boolean).map(x => String(x).trim()).filter(Boolean)));
+
+  const toArray = (v) => Array.isArray(v) ? v : [];
+  const strengths = toArray(data.strengths);
+  const pitfalls = toArray(data.pitfalls);
+  const routine = toArray(data.routine);
+  const keywords = uniq(toArray(data.keywords));
+
+  // ---------- domain profile ----------
+  const TEST_PROFILES = {
+    travel:{focus:'여행',outcome:'만족도',context:'일정/동선'},
+    love:{focus:'관계',outcome:'관계 안정감',context:'감정/소통'},
+    spend:{focus:'소비',outcome:'지출 효율',context:'구매/결제'},
+    stress:{focus:'스트레스',outcome:'회복 탄력성',context:'업무 압박'},
+    money:{focus:'자산관리',outcome:'저축 지속률',context:'예산/저축'},
+    work:{focus:'업무',outcome:'성과 재현성',context:'협업/실행'},
+    spendlevel:{focus:'소비 레벨',outcome:'체감 만족',context:'가격/가치'},
+    office:{focus:'직장 생존',outcome:'조직 적응력',context:'관계/성과'},
+    habit:{focus:'루틴',outcome:'실천 유지율',context:'착수/지속'},
+    invest:{focus:'투자',outcome:'변동성 대응력',context:'진입/청산'},
+    gift:{focus:'선물',outcome:'선택 정확도',context:'취향/상황'},
+    mood:{focus:'회복',outcome:'정서 회복속도',context:'피로/감정'},
+    sleep:{focus:'수면',outcome:'컨디션 안정성',context:'취침/기상'},
+    study:{focus:'학습',outcome:'학습 누적량',context:'계획/복습'},
+    exercise:{focus:'운동',outcome:'운동 지속성',context:'강도/빈도'},
+    food:{focus:'식사',outcome:'식습관 균형',context:'메뉴/패턴'},
+    friend:{focus:'친구관계',outcome:'관계 만족도',context:'대화/거리감'},
+    weekend:{focus:'주말활용',outcome:'주간 회복력',context:'휴식/활동'},
+    communication:{focus:'소통',outcome:'전달 정확도',context:'표현/경청'},
+    fashion:{focus:'패션',outcome:'스타일 일관성',context:'선택/조합'},
+    pet:{focus:'반려',outcome:'돌봄 안정성',context:'교감/관리'},
+    movie:{focus:'콘텐츠 취향',outcome:'만족 재현성',context:'선택/감상'}
+  };
+  const profile = TEST_PROFILES[test] || {focus:'일상',outcome:'실행 만족도',context:'선택/실행'};
+
+  const CATEGORY_BY_TEST = {
+    // 관계
+    love:'relationship', friend:'relationship', communication:'relationship',
+    // 돈
+    spend:'money', money:'money', invest:'money', spendlevel:'money',
+    // 일/학습
+    work:'work', office:'work', study:'work',
+    // 웰빙
+    stress:'wellbeing', mood:'wellbeing', sleep:'wellbeing', exercise:'wellbeing', food:'wellbeing', habit:'wellbeing', weekend:'wellbeing',
+    // 라이프
+    travel:'lifestyle', fashion:'lifestyle', gift:'lifestyle', movie:'lifestyle', pet:'lifestyle'
+  };
+  const category = CATEGORY_BY_TEST[test] || 'general';
+
+  const PLAYBOOKS = {
+    relationship: {
+      metrics: ['경계 설정', '감정 표현의 명료도', '갈등 후 복구 속도'],
+      goodMoves: [
+        '감정을 “사실+느낌+요청” 3단으로 말하기',
+        '좋았던 행동을 먼저 칭찬한 뒤 개선점 1개만 제안하기',
+        '연락/만남의 기준을 숫자로 합의하기(주 n회 등)'
+      ],
+      recovery: [
+        '지금 결론을 내리기보다 “정리 후 다시 얘기”를 선언',
+        '상대의 의도를 추측하지 말고 질문 1개로 확인',
+        '내가 원하는 행동을 한 문장으로 구체화'
+      ],
+      scripts: [
+        '나는 (사실)을 보고 (느낌)이 들었어. 다음엔 (요청)해줄 수 있을까?',
+        '지금은 감정이 올라와서 정리가 필요해. 30분 뒤에 다시 얘기하자.',
+        '내가 중요하게 생각하는 건 (기준)이야. 우리 기준을 맞춰보자.'
+      ]
+    },
+    money: {
+      metrics: ['고정비 관리', '충동구매 빈도', '저축 자동화 수준'],
+      goodMoves: [
+        '예산을 “고정비/필수/만족” 3통장으로 분리',
+        '구매 전 24시간 룰(장바구니 숙성) 적용',
+        '한 달 1회 “카테고리별 결산”으로 패턴 찾기'
+      ],
+      recovery: [
+        '이번 달 목표를 “금액” 대신 “횟수”로 전환(예: 외식 4회)',
+        '지출 트리거(피곤/스트레스/세일) 하나만 먼저 차단',
+        '결제 수단을 1개로 고정해 기록 누락 줄이기'
+      ],
+      scripts: [
+        '오늘은 예산 범위 안에서 “만족 지출” 1개만 선택할게.',
+        '이건 24시간 뒤에 다시 보면 진짜 필요한지 알 수 있어.',
+        '이번 주는 지출 대신 “기분 회복”을 돈 안 드는 방식으로 하자.'
+      ]
+    },
+    work: {
+      metrics: ['우선순위 선명도', '협업 마찰 비용', '실행 지속력'],
+      goodMoves: [
+        '오늘 목표를 “3줄(목표/산출물/마감)”로 쪼개기',
+        '회의는 “결정/담당/기한” 3개만 남기고 끝내기',
+        '착수 장벽을 5분으로 줄이는 “첫 행동” 정의'
+      ],
+      recovery: [
+        '업무를 “지금/이번 주/나중”으로 재분류',
+        '막히면 질문을 “예/아니오”로 답할 수 있게 좁히기',
+        '완벽 기준을 낮추고 “초안→피드백” 루프로 전환'
+      ],
+      scripts: [
+        '이번 건의 완료 기준은 (A)이고, (B)는 다음 단계로 미뤄도 될까요?',
+        '제가 오늘 낼 수 있는 산출물은 (X)이고, 기한은 (Y)입니다.',
+        '이건 지금 결정이 필요해요? 아니면 정보만 공유하면 되나요?'
+      ]
+    },
+    wellbeing: {
+      metrics: ['수면/컨디션', '회복 루틴', '스트레스 신호 인지'],
+      goodMoves: [
+        '컨디션을 10점 만점으로 매일 기록(3초)',
+        '카페인/야식/스크린 시간을 “하나만” 줄이기',
+        '짧은 산책 10분으로 리셋 트리거 만들기'
+      ],
+      recovery: [
+        '오늘은 “유지 모드”: 최소 루틴만 수행하고 빨리 마무리',
+        '몸 신호(어깨/턱/호흡) 1개를 기준으로 과부하 감지',
+        '내일의 나를 위해 수면 먼저 확보'
+      ],
+      scripts: [
+        '오늘은 컨디션이 낮아서 최소 루틴만 하고 쉬겠습니다.',
+        '지금 과부하 신호가 와서 잠깐 리셋이 필요해요.',
+        '내일 컨디션을 위해 오늘은 여기까지 하겠습니다.'
+      ]
+    },
+    lifestyle: {
+      metrics: ['선택 기준의 일관성', '만족 재현성', '피로 관리'],
+      goodMoves: [
+        '선택 기준을 2개만 고정(예: 가성비+편안함)',
+        '리스트를 “필수 3개 + 옵션”으로 나눠 과부하 줄이기',
+        '후회 포인트를 기록해 다음 선택에 반영'
+      ],
+      recovery: [
+        '기준이 흔들릴 땐 “하나만 확실히” 전략으로 전환',
+        '선택을 미루기보다 “충분히 좋은” 선택을 빠르게 확정',
+        '피로가 누적되면 만족도는 내려가니 휴식 먼저'
+      ],
+      scripts: [
+        '이번 선택은 (기준1)/(기준2) 두 가지만 보고 결정할게.',
+        '옵션은 좋아도 오늘은 “필수 3개”만 챙기자.',
+        '충분히 좋은 선택이면 지금 확정하고 즐기자.'
+      ]
+    },
+    general: {
+      metrics: ['선택-실행 연결', '리듬 유지', '회복 속도'],
+      goodMoves: [
+        '목표를 “작게 시작해 크게 늘리기”로 설계',
+        '지금 필요한 정보 1개만 수집하고 실행',
+        '끝내는 습관(마감)부터 만들기'
+      ],
+      recovery: [
+        '우선순위를 1개로 줄이고 착수부터',
+        '과부하 신호가 오면 속도를 낮추고 유지',
+        '내일 다시 할 수 있게 에너지 관리'
+      ],
+      scripts: [
+        '지금은 한 가지만 먼저 하고, 나머지는 다음으로 넘기자.',
+        '일단 5분만 시작해보자. 싫으면 그만해도 돼.',
+        '완벽 말고 “완료”를 목표로 하자.'
+      ]
+    }
+  };
+  const pb = PLAYBOOKS[category] || PLAYBOOKS.general;
+
+  // ---------- archetype inference (결과별 느낌 차이를 만드는 핵심) ----------
+  const ARCHETYPES = [
+    { key:'planner', name:'설계형', tone:'구조와 기준', strengths:['구조화', '우선순위', '리스크 관리'], pitfalls:['과잉 계획', '실행 지연'], routines:['착수 기준을 1문장으로 정하기', '완료 정의(DoD) 먼저 적기'] },
+    { key:'explorer', name:'탐험형', tone:'새로움과 경험', strengths:['기회 포착', '유연한 전환', '몰입'], pitfalls:['충동 선택', '마무리 약함'], routines:['선택 기준 2개만 고정', '마감 10분 전에 정리'] },
+    { key:'empath', name:'공감형', tone:'관계와 분위기', strengths:['공감', '배려', '조율'], pitfalls:['눈치 과다', '경계 흐림'], routines:['내 기준을 먼저 말하기', '요청을 한 문장으로 구체화'] },
+    { key:'analyst', name:'분석형', tone:'근거와 합리성', strengths:['분석', '검증', '정확도'], pitfalls:['과도한 비교', '불안 회피'], routines:['정보 수집 시간을 제한', '결정 시점(데드라인) 설정'] },
+    { key:'driver', name:'추진형', tone:'속도와 성과', strengths:['결단', '실행', '주도'], pitfalls:['과열', '피로 누적'], routines:['속도 조절(페이스) 규칙', '중간 점검 타임박스'] },
+    { key:'stabilizer', name:'안정형', tone:'지속과 균형', strengths:['꾸준함', '안정감', '신중함'], pitfalls:['변화 회피', '결정 지연'], routines:['작게 실험하기', '변경을 1개만 허용'] }
+  ];
+
+  const inferArchetype = () => {
+    const hay = `${resultTitle} ${strengths.join(' ')} ${pitfalls.join(' ')}`.toLowerCase();
+    const has = (kw) => hay.includes(kw);
+    const score = (a) => a.key === 'planner' ? ['계획','전략','루틴','정리','관리','체계'].filter(has).length
+                     : a.key === 'explorer' ? ['즉흥','자유','감각','모험','도전','새로'].filter(has).length
+                     : a.key === 'empath' ? ['감성','공감','배려','관계','따뜻','눈치'].filter(has).length
+                     : a.key === 'analyst' ? ['분석','논리','팩트','데이터','이성','검증'].filter(has).length
+                     : a.key === 'driver' ? ['리더','주도','결단','속도','직진','성과'].filter(has).length
+                     : ['안정','신중','꾸준','차분','균형','보수'].filter(has).length;
+
+    const scored = ARCHETYPES.map(a => ({a, s: score(a)})).sort((x,y) => y.s - x.s);
+    if (scored[0].s > 0) return scored[0].a;
+    // 키워드 매칭이 없으면 draft 기반 랜덤(하지만 고정됨)
+    return pick(ARCHETYPES, ARCHETYPES[0]);
+  };
+
+  const archetype = inferArchetype();
+
+  const summaryTemplates = [
+    `${resultTitle} 타입은 ${profile.focus}에서 "${archetype.tone}"을(를) 기준으로 판단할 때 ${profile.outcome}이 높아집니다.`,
+    `${profile.context}가 복잡해질수록 ${resultTitle} 타입은 "${pick(archetype.strengths)}"으로(로) 흐름을 정리해 ${profile.outcome}을 올리는 경향이 있습니다.`,
+    `${resultTitle} 타입은 ${profile.focus} 선택에서 "${pick(archetype.strengths)}"이(가) 핵심 레버입니다. 이 레버를 잘 쓰면 만족도가 안정적으로 재현됩니다.`
+  ];
+
+  const fallbackStrength = () => pick(archetype.strengths, '상황 파악');
+  const fallbackPitfall = () => pick(archetype.pitfalls, '우선순위 혼선');
+  const fallbackRoutine = () => pick(archetype.routines, '핵심 1가지만 먼저 하기');
+
+  const leadStrength = strengths[0] || fallbackStrength();
+  const supportStrength = strengths[1] || pick([...archetype.strengths, ...pb.metrics], fallbackStrength());
+  const leadPitfall = pitfalls[0] || fallbackPitfall();
+  const supportPitfall = pitfalls[1] || pick([...archetype.pitfalls], fallbackPitfall());
+  const leadRoutine = routine[0] || fallbackRoutine();
+  const supportRoutine = routine[1] || pick([...pb.goodMoves, ...pb.recovery], fallbackRoutine());
+
+  
+  const buildChecklist = () => {
+    // ---------- helpers ----------
+    const metric = pickK('chk_metric_name', pb.metrics, (pb.metrics && pb.metrics[0]) ? pb.metrics[0] : '지표');
+    const topTag = (toArray(data.tags || data?.result?.tags || keywords).map(x => String(x)).find(Boolean) || '').trim();
+
+    // “결과가 비슷해도” 방향성이 달라지도록: 카테고리별 테마를 고정 선택(하지만 draft마다 다름)
+    const THEMES_BY_CATEGORY = {
+      relationship: ['expression','boundary','repair','pace','trust','clarity'],
+      money:        ['budget','impulse','tracking','goal','risk','simplicity'],
+      work:         ['priorities','communication','focus','quality','ownership','energy'],
+      wellbeing:    ['sleep','recovery','stress','movement','food','rhythm'],
+      lifestyle:    ['selection','planning','spontaneity','balance','story','comfort'],
+      general:      ['focus','finish','reset','simplicity']
+    };
+    const theme = pickK(`theme_${category}`, THEMES_BY_CATEGORY[category] || THEMES_BY_CATEGORY.general, 'focus');
+
+    // 테스트별 “말투/상황”을 확 갈라주는 문항 풀 (22개)
+    const TEST_POOLS = {
+      travel: [
+        '동선(이동/환승/대기)에서 “무리 없는 구간”을 먼저 잡았나요?',
+        '숙소/교통/식사 중 1가지는 “안전빵”으로 고정했나요?',
+        '여행에서 꼭 하고 싶은 1가지를 “우선순위 1번”으로 정했나요?',
+        '예상치 못한 변수(비/지연) 대비로 플랜 B를 1줄로 적었나요?'
+      ],
+      love: [
+        '연락/만남 빈도를 “감”이 아니라 “기준”으로 맞췄나요? (주 n회 등)',
+        '상대가 원하는 걸 추측하지 말고 질문 1개로 확인했나요?',
+        '서운함은 “사실+느낌+요청”으로 짧게 말했나요?',
+        '오늘은 애정 표현을 “행동 1개”로 보여줬나요?'
+      ],
+      friend: [
+        '모임/연락에서 내가 편한 거리감을 먼저 정했나요?',
+        '불편했던 포인트를 쌓아두지 말고 “한 문장”으로 정리했나요?',
+        '오늘은 먼저 안부 1개 + 제안 1개(만나기/통화)만 했나요?',
+        '서로의 일정/에너지에 맞춰 “무리 없는 약속”으로 조정했나요?'
+      ],
+      communication: [
+        '말이 길어질 때 결론을 먼저 말했나요? (요약 → 근거)',
+        '요청은 “행동 + 기한”으로 구체화했나요?',
+        '논쟁이 되면 ‘문제/사람’을 분리해서 말했나요?',
+        '상대 말 1문장을 그대로 되짚어(리플렉션) 확인했나요?'
+      ],
+      spend: [
+        '결제 전에 10초 멈추고 “왜 사고 싶은지” 한 줄로 확인했나요?',
+        '장바구니 숙성(하루/주말) 규칙을 지켰나요?',
+        '오늘은 “만족 지출 1개”만 허용했나요?',
+        '구매 트리거(스트레스/세일/피곤)를 피하는 대체 행동을 준비했나요?'
+      ],
+      spendlevel: [
+        '가격이 아니라 “쓸 장면”을 먼저 떠올렸나요?',
+        '고정 기준 2개(예: 내구성/핏)만 놓고 비교했나요?',
+        '상향 구매는 “총비용(관리/수선/배송)”까지 계산했나요?',
+        '지금의 예산에서 ‘후회 최소’ 선택을 빠르게 확정했나요?'
+      ],
+      money: [
+        '자동이체/저축(또는 저축통장)처럼 “자동 장치”를 점검했나요?',
+        '이번 달 목표를 “금액 1개”로 단순화했나요?',
+        '가계부는 완벽 대신 “큰 항목 3개”만이라도 기록했나요?',
+        '충동 지출을 막는 “결제 수단 1개” 규칙을 지켰나요?'
+      ],
+      invest: [
+        '오늘의 판단이 “정보 과잉/불안”에서 나온 건 아닌지 점검했나요?',
+        '리스크 한도(손실/비중)를 숫자로 정해두었나요?',
+        '단기 변동에 흔들리면 “관찰 기간”을 먼저 확보했나요?',
+        '기록: 왜 들어갔는지/왜 나오는지 한 줄로 남겼나요?'
+      ],
+      work: [
+        '오늘 산출물 1개를 먼저 정하고 나머지는 보조로 뒀나요?',
+        '회의는 “결정/담당/기한” 3개만 남겼나요?',
+        '막혔을 때 질문을 “예/아니오”로 답할 수 있게 줄였나요?',
+        '완벽 대신 초안→피드백 루프로 갔나요?'
+      ],
+      office: [
+        '요즘 내 평판/성과를 한 문장으로 정의할 수 있나요?',
+        '관계 이슈는 “사실(행동) 기준”으로만 말했나요?',
+        '업무 우선순위가 충돌하면 상위자에게 ‘선택 요청’을 했나요?',
+        '불필요한 야근/과열을 막기 위해 경계선을 세웠나요?'
+      ],
+      stress: [
+        '스트레스 신호(몸/생각/수면) 중 1개를 인지했나요?',
+        '오늘은 해결보다 “회복”을 우선하는 선택을 했나요?',
+        '짧은 리셋(호흡/산책/스트레칭) 10분을 넣었나요?',
+        '해야 할 일은 줄이고, “필수 1개”만 남겼나요?'
+      ],
+      mood: [
+        '감정 이름을 1~2단어로 붙였나요? (예: 답답/불안)',
+        '기분이 흔들릴 때 ‘몸’을 먼저 리셋했나요? (물/걷기/호흡)',
+        '오늘의 기분 트리거 1개를 기록했나요?',
+        '내가 회복되는 행동을 “최소 버전”으로라도 했나요?'
+      ],
+      sleep: [
+        '취침 60분 전 스크린/카페인 중 1개를 줄였나요?',
+        '기상 시간을 고정하고 낮잠/야식을 조절했나요?',
+        '침대는 잠/휴식 용도로만 쓰는 규칙을 지켰나요?',
+        '잠이 안 오면 “20분 룰(일어나서 리셋)”을 적용했나요?'
+      ],
+      study: [
+        '오늘 학습의 목표를 “문제 n개/단원 1개”로 구체화했나요?',
+        '복습(회상) 시간을 확보했나요? (읽기만 X)',
+        '집중이 깨지면 25분 타이머로 다시 시작했나요?',
+        '진도를 늘리기보다 ‘오답/약점 1개’를 고쳤나요?'
+      ],
+      exercise: [
+        '운동 강도/빈도를 “내가 지속 가능한 수준”으로 맞췄나요?',
+        '오늘은 몸 상태에 맞춰 강도 조절(가볍게/유지)을 했나요?',
+        '회복(수면/스트레칭/단백질)을 같이 챙겼나요?',
+        '기록: 어떤 운동을 얼마나 했는지 한 줄로 남겼나요?'
+      ],
+      food: [
+        '오늘 식사는 “단백질/채소/탄수” 밸런스를 의식했나요?',
+        '폭식 트리거(피곤/스트레스)를 대체 행동으로 바꿨나요?',
+        '간식은 ‘정해진 시간/양’으로 제한했나요?',
+        '배고픔/포만감을 0~10으로 체크했나요?'
+      ],
+      habit: [
+        '루틴의 시작을 2분짜리로 더 줄였나요?',
+        '실패했어도 다음 행동을 “바로 재개”했나요?',
+        '방해 요소(알림/동선)를 1개 제거했나요?',
+        '연속 기록(스트릭)보다 “재시작 능력”을 챙겼나요?'
+      ],
+      weekend: [
+        '주말의 목표를 “회복 1개 + 즐거움 1개”로 정했나요?',
+        '월요일을 위해 과소비/과로를 줄였나요?',
+        '사람/일정이 많으면 ‘빈 시간’을 확보했나요?',
+        '휴식이 죄책감이 되지 않게 “휴식 계획”도 넣었나요?'
+      ],
+      fashion: [
+        '오늘의 기준 2개(예: 편함/포인트)만 고정했나요?',
+        '옷장에 있는 아이템으로 조합을 먼저 해봤나요?',
+        '충동 구매 대신 “필요 리스트”를 업데이트했나요?',
+        '내 스타일을 대표하는 색/실루엣 1개를 유지했나요?'
+      ],
+      gift: [
+        '받는 사람의 상황(요즘/필요/취향)을 3단어로 정리했나요?',
+        '예산 상한을 정하고 그 안에서 고르나요?',
+        '선물의 목적(감사/축하/응원)을 한 문장으로 적었나요?',
+        '포장/메시지 카드처럼 ‘마무리 경험’까지 챙겼나요?'
+      ],
+      pet: [
+        '급식/산책/놀이/청결 중 오늘의 우선 1개를 했나요?',
+        '컨디션 이상 신호(식욕/배변/활력)를 체크했나요?',
+        '루틴 시간을 고정해서 반려가 안정감을 느끼게 했나요?',
+        '즐거운 상호작용(칭찬/놀이) 5분을 넣었나요?'
+      ],
+      movie: [
+        '오늘은 “보고 싶은 이유”로 고르나요, “평점/트렌드”로 고르나요?',
+        '선택 피로가 오면 장르/러닝타임 기준을 먼저 고정했나요?',
+        '보고 난 뒤 한 줄 감상을 남겨 다음 선택에 반영했나요?',
+        '취향이 맞는 작품 1개를 ‘재시청/비슷한 추천’으로 연결했나요?'
+      ]
+    };
+
+    // 테마별 풀 (같은 카테고리 안에서도 느낌을 갈라줌)
+    const THEME_POOLS = {
+      relationship: {
+        expression: [
+          '표현은 길게 말하기보다 “행동 1개”로 보여주세요.',
+          '칭찬 1개 후 요청 1개만 말해도 충분합니다.',
+          '감정은 숨기기보다 짧게 이름 붙여 공유하세요.'
+        ],
+        boundary: [
+          '가능/불가능을 먼저 말하면 관계가 더 편해집니다.',
+          '부담이 되는 요청은 “대안 1개”를 붙여 거절해보세요.',
+          '경계는 차갑게가 아니라 “명확하게” 세우는 거예요.'
+        ],
+        repair: [
+          '갈등은 이기기보다 “복구 속도”가 중요합니다.',
+          '감정이 올라오면 잠깐 멈추고 다시 잡아도 늦지 않아요.',
+          '사과/수정은 “구체적 행동”으로 마무리하세요.'
+        ],
+        pace: [
+          '속도를 맞추면 불안이 줄고 안정감이 올라갑니다.',
+          '연락/만남의 빈도는 “규칙 1개”만 합의해도 좋아요.',
+          '관계의 페이스는 ‘지속 가능’이 기준입니다.'
+        ],
+        trust: [
+          '신뢰는 말보다 “반복되는 작은 약속”에서 생깁니다.',
+          '확인하고 싶은 건 추측 대신 질문으로 풀어보세요.',
+          '투명한 공유가 오해를 줄입니다.'
+        ],
+        clarity: [
+          '요청은 ‘원하는 행동’을 구체적으로 말할수록 통합니다.',
+          '논점이 흐려지면 한 문장으로 요약하고 다시 시작하세요.',
+          '길어지면 “결론 → 이유 1개”로 줄이세요.'
+        ]
+      },
+      money: {
+        budget: [
+          '예산은 “완벽”이 아니라 “지켜지는 구조”가 핵심입니다.',
+          '큰 항목 3개만 잡아도 돈 흐름이 보입니다.',
+          '자동화(이체/저축)로 의지 소모를 줄이세요.'
+        ],
+        impulse: [
+          '충동은 의지가 아니라 ‘환경’으로 막는 게 잘 됩니다.',
+          '세일/피곤/스트레스는 대표 트리거예요. 하나만 차단해도 효과가 커요.',
+          '장바구니 숙성은 가장 쉬운 방어선입니다.'
+        ],
+        tracking: [
+          '기록은 디테일보다 “놓치지 않는 것”이 중요해요.',
+          '결제 수단을 줄이면 기록 누락이 줄어듭니다.',
+          '주 1회 5분만 정리해도 흐름이 안정됩니다.'
+        ],
+        goal: [
+          '목표는 크기보다 “지속 가능”이 승리합니다.',
+          '한 번에 많이보다 ‘매주 조금씩’이 더 강합니다.',
+          '성과는 “횟수/루틴”으로 관리하면 흔들림이 줄어요.'
+        ],
+        risk: [
+          '불확실할수록 규칙(비중/한도)이 당신을 지켜줍니다.',
+          '정보를 더 보기보다 “결정 시점”을 정하세요.',
+          '기록이 쌓이면 다음 선택이 더 쉬워집니다.'
+        ],
+        simplicity: [
+          '카드/계좌/규칙을 줄이면 꾸준함이 올라갑니다.',
+          '딱 1개의 기준만 지켜도 시스템이 됩니다.',
+          '복잡해지면 다시 ‘핵심 1개’로 돌아가세요.'
+        ]
+      },
+      work: {
+        priorities: [
+          '우선순위를 줄이는 게 성과를 올립니다.',
+          '오늘의 산출물 1개만 확정해도 절반은 끝난 거예요.',
+          '해야 할 일을 “지금/나중”으로만 나눠도 속도가 납니다.'
+        ],
+        communication: [
+          '요약 → 근거 순서가 가장 빠릅니다.',
+          '결정/담당/기한 3개가 남으면 회의는 성공이에요.',
+          '질문을 좁히면 답도 빨라집니다.'
+        ],
+        focus: [
+          '집중은 시간보다 “방해 제거 1개”가 더 큽니다.',
+          '25분만 몰입해도 충분히 진도가 나갑니다.',
+          '한 번에 한 가지가 결국 가장 빠릅니다.'
+        ],
+        quality: [
+          '완벽보다 “초안→피드백”이 품질을 올립니다.',
+          '완료 기준(DoD)을 정하면 끝내기가 쉬워집니다.',
+          '중요한 건 디테일이 아니라 “핵심 요구사항 충족”입니다.'
+        ],
+        ownership: [
+          '담당은 “내가 할 것/요청할 것”을 나누는 순간 선명해집니다.',
+          '결정이 필요하면 선택지를 2개로 줄여 제안하세요.',
+          '의존성이 있으면 먼저 공유하고 잠금 해제부터 하세요.'
+        ],
+        energy: [
+          '지속 가능한 페이스가 성과를 재현합니다.',
+          '피로 신호가 오면 범위를 줄이고 핵심만 하세요.',
+          '회복 시간을 확보하면 내일이 쉬워집니다.'
+        ]
+      },
+      wellbeing: {
+        sleep: [
+          '컨디션은 수면이 1순위 레버입니다.',
+          '기상 시간 고정이 수면을 안정시킵니다.',
+          '잠은 “시도”보다 “환경”이 좌우해요.'
+        ],
+        recovery: [
+          '회복은 길게가 아니라 짧게라도 자주가 효율적입니다.',
+          '몸을 먼저 리셋하면 마음도 따라옵니다.',
+          '최소 루틴만 지켜도 유지력이 생깁니다.'
+        ],
+        stress: [
+          '스트레스는 해결보다 “낮추는 장치”가 필요합니다.',
+          '해야 할 일을 줄이는 게 회복의 시작입니다.',
+          '호흡/산책 같은 즉시 리셋을 자주 쓰세요.'
+        ],
+        movement: [
+          '움직임은 기분/집중을 동시에 올립니다.',
+          '강도보다 ‘지속’이 결과를 만듭니다.',
+          '가벼운 움직임도 충분히 의미 있어요.'
+        ],
+        food: [
+          '식사는 규칙(시간/구성)이 흔들림을 줄여줍니다.',
+          '폭식은 의지가 아니라 트리거 관리로 줄어듭니다.',
+          '완벽한 식단보다 균형이 우선입니다.'
+        ],
+        rhythm: [
+          '리듬(기상/식사/움직임)이 안정되면 전체가 편해집니다.',
+          '하루 1개의 기준만 지켜도 체감이 달라집니다.',
+          '무리보다 꾸준함이 훨씬 강합니다.'
+        ]
+      },
+      lifestyle: {
+        selection: [
+          '선택은 기준을 줄일수록 만족이 올라갑니다.',
+          '옵션을 늘리기보다 “충분히 좋은 선택”을 확정하세요.',
+          '후회 포인트를 기록하면 다음이 쉬워집니다.'
+        ],
+        planning: [
+          '계획은 길게보다 “필수 3개”만으로도 충분합니다.',
+          '플랜 B를 한 줄만 적어도 안정감이 생겨요.',
+          '준비는 불안을 줄여주는 장치입니다.'
+        ],
+        spontaneity: [
+          '즉흥은 좋지만, 기준 1개는 고정하면 더 즐겁습니다.',
+          '새로운 시도는 1개만 남기면 에너지가 남아요.',
+          '가벼운 선택 + 확실한 마무리가 베스트입니다.'
+        ],
+        balance: [
+          '빡빡한 일정은 만족을 깎습니다. 빈 칸이 필요해요.',
+          '휴식과 활동을 1:1로 섞어보세요.',
+          '피로가 누적되면 “유지 모드”로 전환하세요.'
+        ],
+        story: [
+          '기억에 남는 건 ‘많이’가 아니라 ‘한 가지 포인트’입니다.',
+          '사진/기록을 남기면 만족 재현성이 올라갑니다.',
+          '오늘의 하이라이트 1개만 정해도 충분합니다.'
+        ],
+        comfort: [
+          '편안함을 확보하면 선택이 쉬워집니다.',
+          '기본을 안전하게 잡고, 포인트를 1개만 주세요.',
+          '몸이 편하면 마음도 훨씬 덜 흔들려요.'
+        ]
+      },
+      general: {
+        focus: ['오늘은 우선순위를 1개로 줄이세요.', '지금 당장 할 1행동만 정하세요.', '완벽 대신 완료를 선택하세요.'],
+        finish:['끝내기 기준을 정하고 마무리하세요.', '마감 시간을 짧게 잡아 마무리 루프를 돌리세요.', '정리 1개를 하고 끝내세요.'],
+        reset: ['과부하면 범위를 줄이고 리셋하세요.', '호흡/물/산책 같은 즉시 리셋을 하세요.', '내일을 위해 에너지를 남기세요.'],
+        simplicity:['복잡해지면 기준 2개로 돌아가세요.', '선택지를 줄이면 속도가 납니다.', '딱 1개의 규칙만 지켜도 됩니다.']
+      }
+    };
+
+    // 결과의 키워드/태그가 빈약해도 “느낌”을 바꾸는 문구 (간단 매핑)
+    const HINT_BY_TOKEN = {
+      '즉흥': ['즉흥은 1개만 남기고 나머지는 고정해보세요.', '흥미가 떨어지기 전에 마무리 규칙을 하나 두세요.'],
+      '계획': ['계획은 길게보다 “필수 3개”만 남겨보세요.', '완료 기준을 먼저 적으면 실행이 쉬워집니다.'],
+      '공감': ['상대의 의도를 추측하지 말고 질문으로 확인해보세요.', '배려가 과해질 땐 경계를 한 문장으로 세워보세요.'],
+      '분석': ['정보 수집 시간을 제한하고 결정 시점을 정하세요.', '불확실하면 작은 실험으로 검증해보세요.'],
+      '리더': ['속도보다 페이스 규칙을 먼저 정해보세요.', '중간 점검 타임박스를 넣어 과열을 막으세요.'],
+      '안정': ['변경은 1개만 허용하고 나머지는 유지하세요.', '작은 실험으로 안전하게 변화를 넣어보세요.']
+    };
+    const hintTokens = uniq([topTag, resultTitle, leadStrength, leadPitfall].flatMap(x => String(x||'').split(/\s+/))).slice(0, 8);
+    const hints = [];
+    hintTokens.forEach(tok => {
+      Object.keys(HINT_BY_TOKEN).forEach(k => {
+        if (tok.includes(k)) hints.push(...HINT_BY_TOKEN[k]);
+      });
+    });
+
+    const CATEGORY_POOLS = {
+      relationship: [
+        '의도를 추측하지 말고 질문 1개로 확인하기',
+        '칭찬 1개 → 요청 1개만 말하기',
+        '감정이 올라오면 “정리 후 다시 얘기”를 선언하기',
+        '연락/만남 기준을 숫자로 맞추기(주 n회 등)',
+        '경계(가능/불가능)를 한 문장으로 말하기',
+        '원하는 행동을 “구체적으로” 요청하기'
+      ],
+      money: [
+        '구매 전 24시간 룰(장바구니 숙성) 적용하기',
+        '예산을 “고정비/필수/만족”으로 나누기',
+        '지출 트리거(피곤/스트레스/세일) 1개 차단하기',
+        '결제 수단을 1개로 고정해 기록 누락 줄이기',
+        '이번 주 목표를 “금액” 대신 “횟수”로 관리하기',
+        '만족 지출은 1개만 선택하기'
+      ],
+      work: [
+        '목표/산출물/마감 3줄을 적기',
+        '회의는 “결정/담당/기한”만 남기기',
+        '막힐 땐 질문을 “예/아니오”로 좁히기',
+        '완벽 대신 “초안→피드백” 루프 타기',
+        '업무를 “지금/이번 주/나중”으로 재분류하기',
+        '착수 장벽을 5분으로 줄이기'
+      ],
+      wellbeing: [
+        '컨디션을 10점 만점으로 3초 기록하기',
+        '카페인/야식/스크린 중 1가지를 줄이기',
+        '짧은 산책 10분으로 리셋하기',
+        '몸 신호(어깨/턱/호흡) 1개 체크하기',
+        '오늘은 최소 루틴만 하고 빨리 마무리하기',
+        '수면을 먼저 확보하는 선택하기'
+      ],
+      lifestyle: [
+        '선택 기준 2개만 고정하기',
+        '리스트를 “필수 3개 + 옵션”으로 나누기',
+        '후회 포인트를 기록해 다음 선택에 반영하기',
+        '“충분히 좋은 선택”이면 빠르게 확정하기',
+        '피로가 누적될 땐 휴식을 먼저 확보하기',
+        '오늘의 만족 포인트 1개 메모하기'
+      ],
+      general: [
+        '우선순위를 1개로 줄이기',
+        '일단 5분만 시작하기',
+        '필요한 정보 1개만 수집하고 실행하기',
+        '완벽 대신 “완료”를 목표로 하기',
+        '끝내는 습관(마감)을 우선하기',
+        '내일 이어서 하기 쉽게 “정리 1개”하기'
+      ]
+    };
+
+    const ARCH_POOLS = {
+      planner: [
+        '완료 정의(DoD)를 먼저 적고 시작하기',
+        '리스크 1개를 미리 막는 장치 넣기',
+        '우선순위를 “지금/다음/나중”으로 분리하기',
+        '계획이 길어지면 일단 “첫 행동”부터 실행하기'
+      ],
+      explorer: [
+        '새로운 시도는 하되 기준 2개는 고정하기',
+        '흥미가 떨어지기 전에 “마감 10분 전 정리” 넣기',
+        '선택을 늘리기보다 “충분히 좋은 선택” 확정하기',
+        '시작은 가볍게, 마무리는 확실하게 하기'
+      ],
+      empath: [
+        '내 기준을 먼저 말하고 조율하기',
+        '배려가 과해지면 경계를 한 문장으로 세우기',
+        '감정 표현을 “사실+느낌+요청”으로 정리하기',
+        '상대 의도를 추측하지 않고 질문으로 확인하기'
+      ],
+      analyst: [
+        '정보 수집 시간을 제한하기',
+        '결정 시점(데드라인)을 정하고 선택하기',
+        '비교가 늘어나면 기준 2개로 줄이기',
+        '불확실하면 작은 실험으로 검증하기'
+      ],
+      driver: [
+        '속도를 올리기 전에 페이스 규칙 정하기',
+        '과열 신호가 오면 범위를 줄이고 핵심만 하기',
+        '중간 점검 타임박스를 넣기',
+        '빠르게 끝내되 회복 시간을 확보하기'
+      ],
+      stabilizer: [
+        '변경은 1개만 허용하고 유지하기',
+        '작게 실험하고 결과를 확인하기',
+        '결정이 늦어지면 “충분히 좋은 선택”으로 마무리하기',
+        '안전한 루틴을 지키면서도 작은 변화 1개 넣기'
+      ],
+      default: [
+        '오늘은 한 가지를 확실히 끝내기',
+        '과부하 신호가 오면 속도를 낮추기'
+      ]
+    };
+
+    // ---------- core (너무 많으면 다 비슷해 보이므로 “핵심만” 뽑음) ----------
+    const coreCandidates = [
+      pickK('chk_core_criteria', [
+        '오늘의 선택 기준을 2개로 줄였나요?',
+        '결정 기준을 한 문장으로 적어두었나요?',
+        '기준이 늘어났다면 “필수 2개 + 옵션”으로 정리했나요?'
+      ]),
+      pickK('chk_core_first', [
+        '첫 행동을 5분짜리로 쪼갰나요?',
+        '착수 장벽을 낮추기 위해 시작을 더 작게 만들었나요?',
+        '“지금 당장 할 1행동”을 정했나요?'
+      ]),
+      pickK('chk_core_dod', [
+        '오늘의 완료 기준(DoD)을 먼저 정했나요?',
+        '“어디까지 하면 완료인지”를 한 문장으로 확인했나요?',
+        '완료 정의를 적어두었나요?'
+      ]),
+      pickK('chk_core_strength', [
+        `오늘은 “${leadStrength}”을(를) 핵심 레버로 썼나요?`,
+        `주강점 “${leadStrength}”을(를) 의식적으로 사용했나요?`,
+        `“${leadStrength}”이(가) 필요한 순간에 한 번이라도 꺼내 썼나요?`
+      ]),
+      pickK('chk_core_pitfall', [
+        `“${leadPitfall}” 신호가 왔을 때 속도/범위를 줄였나요?`,
+        `“${leadPitfall}” 트리거를 감지했을 때 즉시 리셋했나요?`,
+        `“${leadPitfall}”이(가) 올라올 때 회복 스위치를 눌렀나요?`
+      ]),
+      pickK('chk_core_routine', [
+        `오늘 “${leadRoutine}”을(를) 최소 버전으로라도 했나요?`,
+        `“${leadRoutine}”을(를) 실행했나요?`,
+        `루틴을 1회라도 실천했나요?`
+      ]),
+      pickK('chk_core_metric', [
+        `오늘 “${metric}”을 0~10점으로 체크했나요?`,
+        `“${metric}”이(가) 흔들린 상황을 한 줄로 메모했나요?`,
+        `오늘의 “${metric}” 점수를 기록했나요?`
+      ]),
+      pickK('chk_core_review', [
+        '기록은 “잘한 1개/고칠 1개”만 남겼나요?',
+        '오늘의 한 줄 회고(잘한 1개, 다음 1개)를 했나요?',
+        '너무 길게 쓰지 않고 핵심만 기록했나요?'
+      ])
+    ].filter(Boolean);
+
+    const core = shuffleK('chk_core_pick', uniq(coreCandidates)).slice(0, 5);
+
+    // ---------- add-ons (카테고리/테스트/테마/아키타입으로 느낌 차이를 크게) ----------
+    const catPool = CATEGORY_POOLS[category] || CATEGORY_POOLS.general;
+    const testPool = TEST_POOLS[test] || [];
+    const themePool =
+      (THEME_POOLS[category] && THEME_POOLS[category][theme]) ||
+      (THEME_POOLS.general && THEME_POOLS.general[theme]) ||
+      [];
+
+    const archPool = ARCH_POOLS[archetype.key] || ARCH_POOLS.default;
+
+    const items = uniq([
+      ...core,
+      ...shuffleK(`chk_theme_${category}_${theme}`, themePool).slice(0, 2),
+      ...shuffleK(`chk_cat_${category}`, catPool).slice(0, 2),
+      ...shuffleK(`chk_test_${test}`, testPool).slice(0, 2),
+      ...shuffleK(`chk_hint_${category}`, hints).slice(0, 1),
+      ...shuffleK(`chk_arch_${archetype.key}`, archPool).slice(0, 2),
+      // 짧은 “오늘의 규칙” 1개로 복붙 느낌을 줄임
+      pickK('chk_rule', [
+        `오늘의 규칙: "${profile.context}"에서 기준은 2개만 유지하기.`,
+        `오늘의 규칙: "${profile.outcome}"을 올리는 행동 1개만 확실히 하기.`,
+        `오늘의 규칙: 피로가 오면 “유지 모드”로 전환하기.`
+      ])
+    ]);
+
+    // 9개 정도가 읽기 좋음
+    const final = shuffleK('chk_final', items).slice(0, 9);
+    return final.length ? final : ['오늘은 “한 가지”만 확실히 끝냈나요?'];
+  };
+
+
+  const buildGeneratedSections = () => {
+    const sections = [];
+    const summary = data.desc || pick(summaryTemplates, `${resultTitle} 타입은 ${profile.focus}에서 균형 잡힌 실행 흐름을 보입니다.`);
+    const kws = uniq([...keywords, leadStrength, archetype.name, profile.focus]).slice(0, 4);
+
+    sections.push({
+      title: '1) 핵심 요약',
+      bullets: [
+        summary,
+        `키워드: ${kws.join(' · ')}`,
+        `이번 리포트는 "${profile.context}" 상황에서 "${profile.outcome}"을 높이는 실전 포인트를 중심으로 구성했습니다.`
+      ]
+    });
+
+    sections.push({
+      title: '2) 강점이 작동하는 방식',
+      bullets: [
+        `주강점: "${leadStrength}" — ${profile.context}가 복잡해도 핵심을 잡아 ${profile.outcome}을 끌어올립니다.`,
+        `보강점: "${supportStrength}" — 주강점이 흔들릴 때 흐름을 다시 정렬해 주는 역할을 합니다.`,
+        `잘 풀리는 조건: ${pick(pb.metrics)}가 안정적일수록 성과/만족의 재현성이 올라갑니다.`
+      ]
+    });
+
+    sections.push({
+      title: '3) 흔들리는 지점(트리거)과 신호',
+      bullets: [
+        `주의 신호 ①: "${leadPitfall}" — 선택이 빨라지는 대신, 중후반 페이스 관리가 약해질 수 있습니다.`,
+        `주의 신호 ②: "${supportPitfall}" — 기준이 많아지면 실행이 끊기거나 과부하로 이어질 수 있습니다.`,
+        `회복 스위치: ${pick(pb.recovery)}`
+      ]
+    });
+
+    // Starter: 짧고 실전적인 루틴(3~5개)
+    const starterPlan = [
+      `D1(착수): "${leadRoutine}" — 시작을 5분 안에 끝내는 ‘첫 행동’을 정합니다.`,
+      `D2(정렬): "${supportRoutine}" — 기준을 2개만 남기고 나머지는 옵션으로 밀어둡니다.`,
+      `D3(마감): 마감 10분 전에 “잘한 1개/고칠 1개”만 기록합니다.`,
+      `보너스: ${pick(pb.goodMoves)}`
+    ];
+
+    sections.push({
+      title: plan === 'full' ? '4) 7일 실천 플랜(Starter 포함)' : '4) 3일 리셋 루틴',
+      bullets: plan === 'full'
+        ? [
+            starterPlan[0],
+            starterPlan[1],
+            starterPlan[2],
+            `D4~D7(유지): ${pick(pb.goodMoves)}를 주 3회 반복해 패턴을 고정합니다.`,
+            `측정 포인트: ${pick(pb.metrics)}를 10점 만점으로 기록하면 변화가 눈에 보입니다.`
+          ]
+        : starterPlan
+    });
+
+    const goodScenario = pick([
+      `${profile.focus} 선택이 필요한 순간, "${leadStrength}"로 빠르게 방향을 잡고 실행으로 연결합니다.`,
+      `${profile.context}가 정리되어 있을 때, "${supportStrength}" 덕분에 만족도가 안정적으로 재현됩니다.`,
+      `기준이 명확할 때, "${leadStrength}"가 빛나며 ${profile.outcome}이 크게 올라갑니다.`
+    ]);
+
+    const wobbleScenario = pick([
+      `${profile.context}가 복잡해지면 "${leadPitfall}"이 나타날 수 있습니다. 이때는 선택 범위를 줄이고 "${leadRoutine}"만 먼저 실행하세요.`,
+      `피로가 누적되면 "${supportPitfall}"이 겹쳐 흐름이 끊기기 쉽습니다. “유지 모드(최소 루틴)”로 전환하면 회복이 빠릅니다.`,
+      `외부 변수(시간/예산/관계)가 늘어날수록 우선순위가 흔들립니다. 기준을 2개로 고정하면 복구가 쉬워집니다.`
+    ]);
+
+    sections.push({
+      title: '5) 상황 예시(잘 될 때 vs 흔들릴 때)',
+      bullets: [
+        `잘 될 때: ${goodScenario}`,
+        `흔들릴 때: ${wobbleScenario}`,
+        `바로 쓰는 한 문장: "${pick(pb.scripts)}"`
+      ]
+    });
+
+    // Full 전용: 더 깊은 개인화 + 대본 + 30일 플랜 + 궁합
+    if (plan === 'full') {
+      const motive = pick([
+        `${profile.focus}에서 가장 중요하게 여기는 것은 “${pick(pb.metrics)}”입니다.`,
+        `당신의 만족은 “${profile.outcome}”이(가) 눈에 보일 때 커집니다.`,
+        `선택의 기준이 흔들리면 스트레스가 올라가므로, 기준을 ‘문장’으로 고정하는 것이 도움됩니다.`
+      ]);
+
+      sections.push({
+        title: '6) 심층 분석(동기/욕구/방어 패턴)',
+        bullets: [
+          motive,
+          `스트레스가 높을 때 나타나는 패턴: "${leadPitfall}" → "${supportPitfall}" 순으로 확률이 올라갑니다.`,
+          `성장 레버: "${leadStrength}"를 유지하되, "${pick(pb.recovery)}"로 페이스를 조절하면 장기 성과가 커집니다.`
+        ]
+      });
+
+      const preferredType = strengths[0] ? `${strengths[0]}을(를) 잘 살려주는 타입` : `${archetype.name}과(와) 리듬이 비슷한 타입`;
+      const frictionType = pitfalls[0] ? `"${pitfalls[0]}"을(를) 자주 자극하는 타입` : `속도/기준이 너무 다른 타입`;
+
+      sections.push({
+        title: '7) 궁합/협업 지도(사람·환경)',
+        bullets: [
+          `잘 맞는 쪽: ${preferredType} — 기준을 명확히 주거나 실행을 도와주는 환경에서 강점이 극대화됩니다.`,
+          `마찰이 생기기 쉬운 쪽: ${frictionType} — 이때는 “기준 1개 + 요청 1개”로 대화를 단순화하세요.`,
+          `추천 대본: "${pick(pb.scripts)}"`
+        ]
+      });
+
+      sections.push({
+        title: '8) 30일 업그레이드 플랜',
+        bullets: [
+          `1주차: 기준 만들기 — ${pick(pb.goodMoves)}`,
+          `2주차: 반복 만들기 — ${pick(pb.goodMoves)}`,
+          `3주차: 회복 장치 — ${pick(pb.recovery)}`,
+          `4주차: 재현성 강화 — ${pick(pb.metrics)}를 기록하고 ‘잘 된 조건’을 고정합니다.`
+        ]
+      });
+
+      sections.push({
+        title: '9) 상황별 문장/대본 5개',
+        bullets: uniq([
+          pick(pb.scripts),
+          pick(pb.scripts),
+          pick(pb.scripts),
+          pickK('scripts_fixed_a', [
+            '지금은 과부하라서 범위를 줄이고 핵심만 하겠습니다.',
+            '지금은 속도를 낮추고 최소 루틴으로 유지하겠습니다.',
+            '오늘은 “충분히 좋은 완료”를 목표로 하겠습니다.',
+            '지금은 결론을 내리기보다 정리 후 다시 이어가겠습니다.'
+          ]),
+          pickK('scripts_fixed_b', [
+            '완료 기준을 먼저 맞춘 다음, 디테일은 다음 단계로 넘기겠습니다.',
+            '지금은 초안을 먼저 내고 피드백으로 다듬겠습니다.',
+            '먼저 끝내고, 더 좋은 버전은 다음 라운드에 하겠습니다.',
+            '이건 지금 결정이 필요해요? 아니면 정보 공유만 하면 되나요?'
+          ])
+        ]).slice(0, 5)
+      });
+
+      sections.push({
+        title: '10) 체크리스트(실전용)',
+        bullets: buildChecklist()
+      });
+    }
+
+    sections.push({
+      title: '안내',
+      bullets: [
+        '본 리포트는 재미와 자기이해를 위한 참고 자료이며, 의학적/심리학적 진단이나 치료를 대체하지 않습니다.',
+        '오늘의 상태(수면, 스트레스, 일정)에 따라 결과 체감이 달라질 수 있으니, “패턴” 중심으로 활용해 주세요.'
+      ]
+    });
+
+    return sections;
+  };
+
+  const normalizeCustomSections = (raw) => {
+    // 기대 형태: [{title, bullets:[]}] / 또는 [{title, items:[]}] 지원
+    return (raw || []).map((s, idx) => {
+      const title = s?.title || `섹션 ${idx + 1}`;
+      const bullets = Array.isArray(s?.bullets) ? s.bullets : (Array.isArray(s?.items) ? s.items : []);
+      return { title: String(title), bullets: bullets.map(x => String(x)) };
+    }).filter(s => s.bullets.length);
+  };
+
+  const renderSections = (sections) => {
+    return sections.map((sec) => {
+      const title = escapeHtml(sec.title);
+      const bullets = (sec.bullets || []).map(b => `<li>${escapeHtml(b)}</li>`).join('');
+      return `<li class="report-sec"><div style="margin:12px 0 6px"><strong>${title}</strong></div><ul>${bullets}</ul></li>`;
+    }).join('');
+  };
+
+  // ---------- choose content ----------
+  const custom = data?.report?.[plan]?.sections || data?.reportSections?.[plan] || null;
+  const sections = Array.isArray(custom) && custom.length
+    ? normalizeCustomSections(custom)
+    : buildGeneratedSections();
+
+  const ul = document.getElementById('reportList');
+  ul.innerHTML = renderSections(sections);
+
+  // ---------- PDF ----------
+  document.getElementById('btnPdf').onclick = async function () {
+    const btn = this;
+    btn.disabled = true;
+    const prevLabel = btn.textContent;
+    btn.textContent = 'PDF 생성 중...';
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'p' });
+
+    const reportCard = document.getElementById('reportCard');
+    const btns = reportCard.querySelector('.btns');
+    const prevDisplay = btns ? btns.style.display : '';
+    if (btns) btns.style.display = 'none';
+
+    try {
+      const canvas = await html2canvas(reportCard, {
+        backgroundColor: '#ffffff',
+        scale: Math.min(window.devicePixelRatio || 1, 2),
+        useCORS: true
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+      let renderedHeight = 0;
+
+      while (renderedHeight < imgHeight) {
+        if (renderedHeight > 0) doc.addPage();
+        doc.addImage(imgData, 'PNG', 0, -renderedHeight, pageWidth, imgHeight, undefined, 'FAST');
+        renderedHeight += pageHeight;
+      }
+
+      doc.save(`${test || 'test'}_${result || 'result'}_${plan}_report.pdf`);
+    } finally {
+      if (btns) btns.style.display = prevDisplay;
+      btn.disabled = false;
+      btn.textContent = prevLabel;
+    }
+  };
+})();
+</script>
+
+</body></html>
