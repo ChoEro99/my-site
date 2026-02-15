@@ -3,9 +3,10 @@
 <title>심층 분석 PDF</title>
 <link rel="stylesheet" href="/style.css"/>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head><body>
 <div class="wrap"><div class="grid" style="grid-template-columns:minmax(0,1fr)">
-<main class="card hero">
+<main class="card hero" id="reportCard">
   <h1 id="title">리포트 준비 중…</h1>
   <p id="meta"></p>
   <div class="premium-upsell">
@@ -53,27 +54,40 @@
   const ul = document.getElementById('reportList');
   ul.innerHTML = items.map(x => `<li>${x}</li>`).join('');
 
-  document.getElementById('btnPdf').onclick = function(){
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    let y = 15;
-    doc.setFontSize(16);
-    doc.text(`${resultTitle} ${plan === 'full' ? 'Full' : 'Starter'} PDF 리포트`, 12, y);
-    y += 8;
-    doc.setFontSize(10);
-    doc.text(`${testTitle} | payment: ${purchase.paymentId}`, 12, y);
-    y += 10;
+  document.getElementById('btnPdf').onclick = async function(){
+    const btn = this;
+    btn.disabled = true;
+    const prevLabel = btn.textContent;
+    btn.textContent = 'PDF 생성 중...';
 
-    const lines = items.flatMap((line) => doc.splitTextToSize(`- ${line}`, 180));
-    lines.forEach((line) => {
-      if (y > 280) {
-        doc.addPage();
-        y = 15;
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'p' });
+
+    try {
+      const reportCard = document.getElementById('reportCard');
+      const canvas = await html2canvas(reportCard, {
+        backgroundColor: '#ffffff',
+        scale: Math.min(window.devicePixelRatio || 1, 2),
+        useCORS: true
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+      let renderedHeight = 0;
+
+      while (renderedHeight < imgHeight) {
+        if (renderedHeight > 0) doc.addPage();
+        doc.addImage(imgData, 'PNG', 0, -renderedHeight, pageWidth, imgHeight, undefined, 'FAST');
+        renderedHeight += pageHeight;
       }
-      doc.text(line, 12, y);
-      y += 6;
-    });
-    doc.save(`${test}_${result}_${plan}_report.pdf`);
+
+      doc.save(`${test}_${result}_${plan}_report.pdf`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = prevLabel;
+    }
   };
 })();
 </script>
