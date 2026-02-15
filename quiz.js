@@ -111,7 +111,7 @@ function makePremiumReportUpsell(TEST, resultId, result){
         </ul>
         <p class="premium-price">💵 ${fullPrice}</p>
         <a class="go premium-cta" href="${fullLink}" data-plan="full" data-result-id="${resultId}">Full PDF 결제하기</a>
-        <a class="premium-example-link" href="${fullExampleLink}" target="_blank" rel="noopener">Full 리포트 예시 보기</a>
+        <a class="premium-example-link" href="${fullExampleLink}" target="_blank" rel="noopener">리포트 예시 보기</a>
       </article>
     </div>
   </section>`;
