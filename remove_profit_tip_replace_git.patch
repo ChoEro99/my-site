@@ -1,0 +1,140 @@
+diff --git a/tests/gift.html b/tests/gift.html
+index 3e6caf4..7d51b0f 100644
+--- a/tests/gift.html
++++ b/tests/gift.html
+@@ -41,9 +41,11 @@
+ <div class="note" id="shareHint"></div><div id="otherTests"></div>
+ </main>
+ 
+-<aside class="card side"><h3>수익 팁</h3>
+-<ul><li>선물 추천 제휴 링크랑 찰떡</li><li>기념일 시즌 트래픽</li></ul>
+-<div class="adbox"><b>[광고 자리]</b></div></aside>
++<aside class="card side">
++<h3>한 줄 팁</h3>
++<ul><li>결과를 친구와 공유하면 더 재밌어요.</li><li>홈에서 다른 테스트도 이어서 해보세요.</li></ul>
++<div class="adbox"><b>[광고 자리]</b></div>
++</aside>
+ 
+ </div></div><div class="toast" id="toast"></div>
+ 
+diff --git a/tests/love.html b/tests/love.html
+index 6c1393c..5c33143 100644
+--- a/tests/love.html
++++ b/tests/love.html
+@@ -58,8 +58,8 @@
+ </main>
+ 
+ <aside class="card side">
+-<h3>수익 팁</h3>
+-<ul><li>연애 키워드 공유 잘 됨</li><li>결과 하단에 다른 테스트 유도</li></ul>
++<h3>한 줄 팁</h3>
++<ul><li>결과를 친구와 공유하면 더 재밌어요.</li><li>홈에서 다른 테스트도 이어서 해보세요.</li></ul>
+ <div class="adbox"><b>[광고 자리]</b></div>
+ </aside>
+ 
+diff --git a/tests/money.html b/tests/money.html
+index 1ebdab9..6581434 100644
+--- a/tests/money.html
++++ b/tests/money.html
+@@ -47,7 +47,8 @@
+ </main>
+ 
+ <aside class="card side">
+-<h3>수익 팁</h3><ul><li>“저축/돈관리” SEO 가능</li><li>문의/개인정보 페이지와 함께 애드센스 준비</li></ul>
++<h3>한 줄 팁</h3>
++<ul><li>결과를 친구와 공유하면 더 재밌어요.</li><li>홈에서 다른 테스트도 이어서 해보세요.</li></ul>
+ <div class="adbox"><b>[광고 자리]</b></div>
+ </aside>
+ 
+diff --git a/tests/office.html b/tests/office.html
+index adf74a3..dd4caae 100644
+--- a/tests/office.html
++++ b/tests/office.html
+@@ -42,9 +42,11 @@
+ <div class="note" id="shareHint"></div><div id="otherTests"></div>
+ </main>
+ 
+-<aside class="card side"><h3>수익 팁</h3>
+-<ul><li>직장 키워드는 SEO 유입 좋음</li><li>업무도구/책 제휴 가능</li></ul>
+-<div class="adbox"><b>[광고 자리]</b></div></aside>
++<aside class="card side">
++<h3>한 줄 팁</h3>
++<ul><li>결과를 친구와 공유하면 더 재밌어요.</li><li>홈에서 다른 테스트도 이어서 해보세요.</li></ul>
++<div class="adbox"><b>[광고 자리]</b></div>
++</aside>
+ 
+ </div></div><div class="toast" id="toast"></div>
+ 
+diff --git a/tests/spend.html b/tests/spend.html
+index 571915d..fe88a91 100644
+--- a/tests/spend.html
++++ b/tests/spend.html
+@@ -49,8 +49,8 @@
+ </main>
+ 
+ <aside class="card side">
+-<h3>수익 팁</h3>
+-<ul><li>“가계부/절약” SEO 유입 좋음</li><li>결과별 추천템 제휴 가능</li></ul>
++<h3>한 줄 팁</h3>
++<ul><li>결과를 친구와 공유하면 더 재밌어요.</li><li>홈에서 다른 테스트도 이어서 해보세요.</li></ul>
+ <div class="adbox"><b>[광고 자리]</b></div>
+ </aside>
+ 
+diff --git a/tests/spendlevel.html b/tests/spendlevel.html
+index 65a0c00..6f714dc 100644
+--- a/tests/spendlevel.html
++++ b/tests/spendlevel.html
+@@ -44,8 +44,8 @@
+ </main>
+ 
+ <aside class="card side">
+-<h3>수익 팁</h3>
+-<ul><li>소비 레벨은 공유/SEO 모두 괜찮음</li><li>결과별 추천템/카드 제휴</li></ul>
++<h3>한 줄 팁</h3>
++<ul><li>결과를 친구와 공유하면 더 재밌어요.</li><li>홈에서 다른 테스트도 이어서 해보세요.</li></ul>
+ <div class="adbox"><b>[광고 자리]</b></div>
+ </aside>
+ 
+diff --git a/tests/stress.html b/tests/stress.html
+index abd6161..4ac80e5 100644
+--- a/tests/stress.html
++++ b/tests/stress.html
+@@ -48,7 +48,8 @@
+ </main>
+ 
+ <aside class="card side">
+-<h3>수익 팁</h3><ul><li>직장 키워드 SEO 유입 좋음</li><li>결과 하단 내부링크 고정</li></ul>
++<h3>한 줄 팁</h3>
++<ul><li>결과를 친구와 공유하면 더 재밌어요.</li><li>홈에서 다른 테스트도 이어서 해보세요.</li></ul>
+ <div class="adbox"><b>[광고 자리]</b></div>
+ </aside>
+ 
+diff --git a/tests/travel.html b/tests/travel.html
+index 9485428..1362653 100644
+--- a/tests/travel.html
++++ b/tests/travel.html
+@@ -58,8 +58,8 @@
+ </main>
+ 
+ <aside class="card side">
+-<h3>수익 팁</h3>
+-<ul><li>여행/액티비티 제휴 넣기 좋음</li><li>결과 하단 내부링크 고정</li></ul>
++<h3>한 줄 팁</h3>
++<ul><li>결과를 친구와 공유하면 더 재밌어요.</li><li>홈에서 다른 테스트도 이어서 해보세요.</li></ul>
+ <div class="adbox"><b>[광고 자리]</b></div>
+ </aside>
+ 
+diff --git a/tests/work.html b/tests/work.html
+index c63b426..c107d64 100644
+--- a/tests/work.html
++++ b/tests/work.html
+@@ -48,7 +48,8 @@
+ </main>
+ 
+ <aside class="card side">
+-<h3>수익 팁</h3><ul><li>직장/업무 키워드 공유 잘 됨</li><li>결과 하단 내부링크 고정</li></ul>
++<h3>한 줄 팁</h3>
++<ul><li>결과를 친구와 공유하면 더 재밌어요.</li><li>홈에서 다른 테스트도 이어서 해보세요.</li></ul>
+ <div class="adbox"><b>[광고 자리]</b></div>
+ </aside>
+ 
