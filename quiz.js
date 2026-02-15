@@ -1,6 +1,8 @@
 // quiz.js (FINAL) - Kakao share + shareUrl + absolute OG image + other tests
 const $ = (id) => document.getElementById(id);
 
+const ENABLE_PREMIUM_REPORT_UPSELL = false; // 임시: 유료 리포트 UI 숨김
+
 function track(eventName, data = {}) {
     if (typeof window.trackEvent === "function") {
     window.trackEvent(eventName, data);
@@ -337,23 +339,27 @@ function setPill(text){
       }
     }
     if (premiumUpsell) {
-      premiumUpsell.innerHTML = makePremiumReportUpsell(TEST, resultId, r);
-      premiumUpsell.querySelectorAll(".premium-cta").forEach((link) => {
-        link.onclick = (event) => {
-          const plan = link.dataset.plan || "starter";
-          saveReportDraft(TEST, resultId, plan, r);
-          const checkoutUrl = new URL(link.href);
-          checkoutUrl.searchParams.set("draft", `${TEST.slug}:${resultId}:${plan}`);
-          link.href = checkoutUrl.toString();
-          track("report_checkout_click", {
-            test_slug: TEST.slug,
-            result_id: resultId,
-            plan,
-            href: link.href,
-            page_type: "result"
-          });
-        };
-      });
+      if (!ENABLE_PREMIUM_REPORT_UPSELL) {
+        premiumUpsell.innerHTML = "";
+      } else {
+        premiumUpsell.innerHTML = makePremiumReportUpsell(TEST, resultId, r);
+        premiumUpsell.querySelectorAll(".premium-cta").forEach((link) => {
+          link.onclick = (event) => {
+            const plan = link.dataset.plan || "starter";
+            saveReportDraft(TEST, resultId, plan, r);
+            const checkoutUrl = new URL(link.href);
+            checkoutUrl.searchParams.set("draft", `${TEST.slug}:${resultId}:${plan}`);
+            link.href = checkoutUrl.toString();
+            track("report_checkout_click", {
+              test_slug: TEST.slug,
+              result_id: resultId,
+              plan,
+              href: link.href,
+              page_type: "result"
+            });
+          };
+        });
+      }
     }
 
     // 저장
