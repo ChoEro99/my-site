@@ -1,0 +1,85 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PDF 리포트 결제</title>
+<link rel="stylesheet" href="/style.css"/>
+<script src="/analytics-consent.js" defer></script>
+<script src="/pay-config.js"></script>
+<script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+</head><body>
+<div class="wrap"><div class="grid" style="grid-template-columns:minmax(0,1fr)">
+<main class="card hero">
+  <h1>심층 분석 PDF 결제</h1>
+  <p id="paySummary">주문 정보를 불러오는 중…</p>
+  <div class="premium-upsell" id="payCard"></div>
+  <div class="btns">
+    <button class="primary" id="btnPay">결제하고 PDF 받기</button>
+    <a class="pill" href="/">🏠 홈</a>
+  </div>
+  <p class="note">* PortOne(아임포트) 설정이 없으면 데모 결제로 동작합니다.</p>
+</main></div></div>
+<script>
+(function(){
+  const params = new URLSearchParams(location.search);
+  const test = params.get('test') || '';
+  const result = params.get('result') || '';
+  const plan = params.get('plan') || 'starter';
+  const draft = params.get('draft') || `${test}:${result}:${plan}`;
+  const key = `reportDraft:${draft}`;
+
+  let draftData = null;
+  try { draftData = JSON.parse(localStorage.getItem(key) || 'null'); } catch(e) {}
+
+  const prices = {
+    starter: Number((window.REPORT_PRICES && window.REPORT_PRICES.starter) || 900),
+    full: Number((window.REPORT_PRICES && window.REPORT_PRICES.full) || 1900)
+  };
+  const amount = prices[plan] || prices.starter;
+  const orderName = `${draftData?.resultTitle || result || '결과'} ${plan === 'full' ? 'Full' : 'Starter'} PDF`;
+
+  document.getElementById('paySummary').textContent = `${draftData?.testTitle || test} · ${orderName}`;
+  document.getElementById('payCard').innerHTML = `
+    <p class="premium-label">결제 금액</p>
+    <p class="premium-price">💵 ${amount.toLocaleString()}원</p>
+    <p class="premium-sub">결제 완료 후 바로 PDF 다운로드 페이지로 이동합니다.</p>
+  `;
+
+  function goSuccess(paymentId){
+    const success = new URL('/pay/success.html', location.origin);
+    success.searchParams.set('test', test);
+    success.searchParams.set('result', result);
+    success.searchParams.set('plan', plan);
+    success.searchParams.set('draft', draft);
+    success.searchParams.set('paymentId', paymentId || `demo_${Date.now()}`);
+    location.href = success.toString();
+  }
+
+  document.getElementById('btnPay').onclick = function(){
+    const impCode = window.PAY_CONFIG?.portone?.impCode;
+    const pg = plan === 'full' ? window.PAY_CONFIG?.portone?.pgFull : window.PAY_CONFIG?.portone?.pgStarter;
+    if (!impCode || !pg || !window.IMP) {
+      goSuccess();
+      return;
+    }
+
+    const IMP = window.IMP;
+    IMP.init(impCode);
+    IMP.request_pay({
+      pg,
+      pay_method: 'card',
+      merchant_uid: `report_${test}_${result}_${plan}_${Date.now()}`,
+      name: orderName,
+      amount,
+      m_redirect_url: location.href
+    }, function(rsp){
+      if (rsp.success) {
+        goSuccess(rsp.imp_uid || rsp.merchant_uid);
+      } else {
+        const fail = new URL('/pay/fail.html', location.origin);
+        fail.searchParams.set('message', rsp.error_msg || '결제에 실패했습니다.');
+        location.href = fail.toString();
+      }
+    });
+  };
+})();
+</script>
+</body></html>
