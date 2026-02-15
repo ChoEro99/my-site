@@ -1,1 +1,1 @@
-trigger deploy1
+trigger deploy
