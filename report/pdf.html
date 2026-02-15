@@ -1,0 +1,80 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>심층 분석 PDF</title>
+<link rel="stylesheet" href="/style.css"/>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</head><body>
+<div class="wrap"><div class="grid" style="grid-template-columns:minmax(0,1fr)">
+<main class="card hero">
+  <h1 id="title">리포트 준비 중…</h1>
+  <p id="meta"></p>
+  <div class="premium-upsell">
+    <p class="premium-label">리포트 미리보기</p>
+    <ul id="reportList"></ul>
+  </div>
+  <div class="btns">
+    <button class="primary" id="btnPdf">PDF 다운로드</button>
+    <a class="pill" href="/">🏠 홈</a>
+  </div>
+</main></div></div>
+<script>
+(function(){
+  const p = new URLSearchParams(location.search);
+  const test = p.get('test') || '';
+  const result = p.get('result') || '';
+  const plan = p.get('plan') || 'starter';
+  const draft = p.get('draft') || `${test}:${result}:${plan}`;
+
+  const purchase = JSON.parse(localStorage.getItem(`reportPurchase:${draft}`) || 'null');
+  if (!purchase?.paid) {
+    alert('결제 정보가 확인되지 않아 리포트를 열 수 없습니다.');
+    location.href = '/';
+    return;
+  }
+
+  const draftData = JSON.parse(localStorage.getItem(`reportDraft:${draft}`) || 'null');
+  const resultTitle = draftData?.resultTitle || result || '결과';
+  const testTitle = draftData?.testTitle || test || '테스트';
+  const data = draftData?.result || {};
+
+  document.getElementById('title').textContent = `${resultTitle} ${plan === 'full' ? 'Full' : 'Starter'} PDF 리포트`;
+  document.getElementById('meta').textContent = `${testTitle} · 결제번호 ${purchase.paymentId}`;
+
+  const items = [
+    `요약: ${data.desc || '-'}`,
+    `강점: ${(data.strengths || []).join(', ') || '-'}`,
+    `주의: ${(data.pitfalls || []).join(', ') || '-'}`,
+    `루틴: ${(data.routine || []).join(', ') || '-'}`
+  ];
+  if (plan === 'full') {
+    items.push(`선호 유형 해석: ${resultTitle}의 관계/행동 패턴을 구체적으로 해석합니다.`);
+    items.push(`대조/비교: 다른 주요 유형과의 차이점을 비교해 개선 포인트를 제시합니다.`);
+  }
+  const ul = document.getElementById('reportList');
+  ul.innerHTML = items.map(x => `<li>${x}</li>`).join('');
+
+  document.getElementById('btnPdf').onclick = function(){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    let y = 15;
+    doc.setFontSize(16);
+    doc.text(`${resultTitle} ${plan === 'full' ? 'Full' : 'Starter'} PDF 리포트`, 12, y);
+    y += 8;
+    doc.setFontSize(10);
+    doc.text(`${testTitle} | payment: ${purchase.paymentId}`, 12, y);
+    y += 10;
+
+    const lines = items.flatMap((line) => doc.splitTextToSize(`- ${line}`, 180));
+    lines.forEach((line) => {
+      if (y > 280) {
+        doc.addPage();
+        y = 15;
+      }
+      doc.text(line, 12, y);
+      y += 6;
+    });
+    doc.save(`${test}_${result}_${plan}_report.pdf`);
+  };
+})();
+</script>
+</body></html>
