@@ -211,6 +211,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .premium-plan li{font-size:15px;color:var(--text)}
 .premium-price{margin:10px 0 0;font-weight:800;color:#ffe08a}
 .premium-cta{display:block;text-align:center;margin-top:10px}
+.premium-example-link{display:inline-block;margin-top:8px;font-size:14px;color:var(--accent);text-decoration:underline}
 .premium-plan-full{border-color:rgba(167,139,250,.45)}
 @media (max-width:560px){.premium-grid{grid-template-columns:1fr}}
 .footer{margin-top:18px;color:var(--muted);font-size:14px}
