@@ -34,6 +34,57 @@ function makeOtherTestsLinks(){
     </ul>
   </div>`;
 }
+
+function getReportPrice(TEST, resultId, plan){
+  const planPricing = TEST.reportPricing?.[resultId]?.[plan] || TEST.reportPricing?.default?.[plan];
+  if (planPricing) return planPricing;
+  return plan === "starter" ? "900원" : "2,900원";
+}
+
+function buildReportCheckoutUrl(TEST, resultId, plan){
+  const checkoutBase = TEST.reportCheckoutUrl || window.REPORT_CHECKOUT_URL || "/pay/report";
+  const url = new URL(checkoutBase, location.origin);
+  url.searchParams.set("test", TEST.slug);
+  url.searchParams.set("result", resultId);
+  url.searchParams.set("plan", plan);
+  url.searchParams.set("format", "pdf");
+  return url.toString();
+}
+
+function makePremiumReportUpsell(TEST, resultId, result){
+  const starterPrice = getReportPrice(TEST, resultId, "starter");
+  const fullPrice = getReportPrice(TEST, resultId, "full");
+  const starterLink = buildReportCheckoutUrl(TEST, resultId, "starter");
+  const fullLink = buildReportCheckoutUrl(TEST, resultId, "full");
+  const resultTitle = result?.title || "결과";
+
+  return `
+  <section class="premium-upsell" aria-label="심층 보고서 안내">
+    <h4>${resultTitle} PDF 심층 분석 보고서</h4>
+    <p class="premium-sub">현재 결과에 맞춘 맞춤형 PDF를 결제 후 바로 확인할 수 있어요.</p>
+    <div class="premium-grid">
+      <article class="premium-plan">
+        <p class="premium-label">Starter 보고서</p>
+        <ul>
+          <li>✔︎ 기본 심층 분석</li>
+          <li>✔︎ 예시 사례 포함</li>
+        </ul>
+        <p class="premium-price">💵 ${starterPrice}</p>
+        <a class="go premium-cta" href="${starterLink}" data-plan="starter" data-result-id="${resultId}">Starter PDF 결제하기</a>
+      </article>
+      <article class="premium-plan premium-plan-full">
+        <p class="premium-label">Full 보고서</p>
+        <ul>
+          <li>✔︎ 선호 유형 해석</li>
+          <li>✔︎ 개선 포인트</li>
+          <li>✔︎ 대조/비교 챕터</li>
+        </ul>
+        <p class="premium-price">💵 ${fullPrice}</p>
+        <a class="go premium-cta" href="${fullLink}" data-plan="full" data-result-id="${resultId}">Full PDF 결제하기</a>
+      </article>
+    </div>
+  </section>`;
+}
  
 
 function upsertMeta(selector, attr, value) {
@@ -244,6 +295,30 @@ function setPill(text){
 
     const s3=$("rRoutine"); s3.innerHTML="";
     (r.routine||[]).forEach(x=>{ const li=document.createElement("li"); li.textContent=x; s3.appendChild(li); });
+
+    let premiumUpsell = $("premiumUpsell");
+    if (!premiumUpsell) {
+      premiumUpsell = document.createElement("div");
+      premiumUpsell.id = "premiumUpsell";
+      const routineCard = s3 && s3.closest(".card.mini");
+      if (routineCard && routineCard.parentNode) {
+        routineCard.parentNode.insertBefore(premiumUpsell, routineCard.nextSibling);
+      }
+    }
+    if (premiumUpsell) {
+      premiumUpsell.innerHTML = makePremiumReportUpsell(TEST, resultId, r);
+      premiumUpsell.querySelectorAll(".premium-cta").forEach((link) => {
+        link.onclick = () => {
+          track("report_checkout_click", {
+            test_slug: TEST.slug,
+            result_id: resultId,
+            plan: link.dataset.plan,
+            href: link.href,
+            page_type: "result"
+          });
+        };
+      });
+    }
 
     // 저장
     localStorage.setItem(TEST.storageKey, resultId);
