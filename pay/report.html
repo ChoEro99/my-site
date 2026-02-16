@@ -5,8 +5,9 @@
 <script src="/analytics-consent.js" defer></script>
 <script src="/pay-config.js"></script>
 <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+<script src="/utils.js"></script>
 </head><body>
-<div class="wrap"><div class="grid" style="grid-template-columns:minmax(0,1fr)">
+<div class="wrap"><button class="theme-toggle" id="themeToggle" aria-label="테마 전환" style="position:fixed;top:20px;right:20px;z-index:1000">��</button><div class="grid" style="grid-template-columns:minmax(0,1fr)">
 <main class="card hero">
   <h1>심층 분석 PDF 결제</h1>
   <p id="paySummary">주문 정보를 불러오는 중…</p>
@@ -81,5 +82,14 @@
     });
   };
 })();
+</script>
+<script>
+// Initialize theme toggle
+const themeToggle = document.getElementById("themeToggle");
+if (themeToggle) {
+  const isLight = document.documentElement.classList.contains("light-theme");
+  themeToggle.textContent = isLight ? "☀️" : "🌙";
+  themeToggle.addEventListener("click", toggleTheme);
+}
 </script>
 </body></html>
