@@ -494,6 +494,14 @@ function setPill(text){
     track('outbound_click', { test_slug: TEST.slug, href: link.href, page_type: 'quiz' });
   });
 
+  // Initialize theme toggle button
+  const themeToggle = $("themeToggle");
+  if (themeToggle) {
+    const isLight = document.documentElement.classList.contains("light-theme");
+    themeToggle.textContent = isLight ? "☀️" : "🌙";
+    themeToggle.addEventListener("click", toggleTheme);
+  }
+
   setPill("");
   switchScreen("start");
 }
