@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://pagead2.googlesyndication.com https://t1.kakaocdn.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com; font-src 'self' data:; frame-src https:;" />
   <title>심리테스트 모음 | 2~3분 재미 테스트</title>
   <meta name="description" content="AI가 테스트 결과, 성향에 따라 루틴을 추천해주는 2~3분 심리테스트 모음" />
   <meta property="og:title" content="AI 심리테스트 모음" />
@@ -16,6 +17,7 @@
   <meta name="twitter:image" content="https://my-site-five-ecru.vercel.app/og.png" />
   <meta name="ga-measurement-id" content="G-XXXXXXX" />
   <link rel="stylesheet" href="/style.css" />
+  <script src="/utils.js"></script>
   <script src="/analytics-consent.js" defer></script>
  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6051453612452994"
      crossorigin="anonymous"></script>
@@ -118,11 +120,6 @@
    <script>
      document.getElementById("year").textContent = new Date().getFullYear();
 
-         function track(eventName, data = {}) {
-      if (typeof window.trackEvent === "function") window.trackEvent(eventName, data);
-      else if (typeof gtag === "function") gtag("event", eventName, data);
-    }
-
     function dedupeHomeTools(){
       const toolBlocks = Array.from(document.querySelectorAll(".home-tools"));
       if (toolBlocks.length <= 1) return;
@@ -154,19 +151,9 @@
     const sortSelect = document.getElementById("sortSelect");
     const latestTestsList = document.getElementById("latestTestsList");
 
-    function getCompletionStats(slug){
-      try {
-        const raw = localStorage.getItem(`quizStats:${slug}`);
-        const parsed = raw ? JSON.parse(raw) : null;
-        return { starts: parsed?.starts || 0, completions: parsed?.completions || 0 };
-      } catch (e) {
-        return { starts: 0, completions: 0 };
-      }
-    }
-
     function getCardScore(card){
       const slug = card.dataset.slug || "";
-      const stats = getCompletionStats(slug);
+      const stats = getQuizStats(slug);
       return (stats.completions * 3) + stats.starts;
     }
 
@@ -224,6 +211,20 @@
         if (matched) visibleCount += 1;
       });
 
+      // Show/hide no results message
+      let noResultsMsg = document.getElementById("noResultsMsg");
+      if (visibleCount === 0 && keyword) {
+        if (!noResultsMsg) {
+          noResultsMsg = document.createElement("div");
+          noResultsMsg.id = "noResultsMsg";
+          noResultsMsg.className = "no-results";
+          noResultsMsg.innerHTML = '<p>😔 검색 결과가 없습니다</p><p class="search-hint">다른 키워드로 시도해보세요</p>';
+          cardsWrap?.appendChild(noResultsMsg);
+        }
+      } else {
+        noResultsMsg?.remove();
+      }
+
       updateSearchMeta(visibleCount, keyword);
     }
 
@@ -242,9 +243,14 @@
     sortCards();
     renderLatestTests();
     filterCards();
+    
+    const debouncedSearch = debounce(() => {
+      track("search_test", { keyword: (searchInput?.value || "").trim().slice(0, 40) });
+    }, 300);
+    
     searchInput?.addEventListener("input", () => {
       filterCards();
-      track("search_test", { keyword: (searchInput?.value || "").trim().slice(0, 40) });
+      debouncedSearch();
     });
     randomBtn?.addEventListener("click", moveToRandomTest);
     sortSelect?.addEventListener("change", () => {

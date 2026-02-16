@@ -3,23 +3,7 @@ const $ = (id) => document.getElementById(id);
 
 const ENABLE_PREMIUM_REPORT_UPSELL = false; // 임시: 유료 리포트 UI 숨김
 
-function track(eventName, data = {}) {
-    if (typeof window.trackEvent === "function") {
-    window.trackEvent(eventName, data);
-    return;
-  }
-  if (typeof gtag === "function") {
-    gtag('event', eventName, data);
-  }
-}
-
-function showToast(msg){
-  const t = $("toast");
-  if (!t) return;
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"), 1200);
-}
+// showToast and track are now in utils.js
 
 function makeOtherTestsLinks(){
   return `
@@ -185,18 +169,13 @@ function initQuiz(){
 
     applySeoMeta(TEST);
 
+  // Use shared utility functions from utils.js
   function readStats(){
-    try {
-      const raw = localStorage.getItem(`quizStats:${TEST.slug}`);
-      const parsed = raw ? JSON.parse(raw) : null;
-      return { starts: parsed?.starts || 0, completions: parsed?.completions || 0 };
-    } catch (e) {
-      return { starts: 0, completions: 0 };
-    }
+    return getQuizStats(TEST.slug);
   }
 
   function saveStats(stats){
-    localStorage.setItem(`quizStats:${TEST.slug}`, JSON.stringify(stats));
+    saveQuizStats(TEST.slug, stats);
   }
 
   function updateStats(type){
