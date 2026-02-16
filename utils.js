@@ -98,7 +98,7 @@ function initTheme() {
   }
   
   // Otherwise, use system preference
-  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   if (!prefersDark) {
     document.documentElement.classList.add("light-theme");
   }
