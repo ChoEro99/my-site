@@ -151,9 +151,9 @@
     const sortSelect = document.getElementById("sortSelect");
     const latestTestsList = document.getElementById("latestTestsList");
     
-    // Load saved sort preference
+    // Load saved sort preference with validation
     const savedSort = sessionStorage.getItem('sortPreference');
-    if (savedSort && sortSelect) {
+    if (savedSort && sortSelect && ['popular', 'latest'].includes(savedSort)) {
       sortSelect.value = savedSort;
     }
     
@@ -167,7 +167,6 @@
           const badge = document.createElement('span');
           badge.className = 'completion-badge';
           badge.textContent = '✓ 완료';
-          badge.setAttribute('aria-label', '완료한 테스트');
           card.insertBefore(badge, card.firstChild);
         }
       });
