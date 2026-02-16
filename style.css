@@ -10,6 +10,18 @@
   --accent2:#a78bfa;
 }
 
+:root.light-theme{
+  --bg:#ede7d9;
+  --bg2:#e5dfd1;
+  --card:#f5f1e9;
+  --card2:#ebe5d5;
+  --muted:#736b60;
+  --text:#2a2520;
+  --line:rgba(115,107,96,.2);
+  --accent:#a49694;
+  --accent2:#736b60;
+}
+
 *{box-sizing:border-box}
 
 body{
@@ -22,6 +34,14 @@ body{
     radial-gradient(900px 500px at 22% 4%, rgba(68,211,255,.18), transparent 60%),
     radial-gradient(1100px 700px at 80% 42%, rgba(126,112,250,.17), transparent 62%),
     linear-gradient(180deg, #020715 0%, #040c1f 46%, #020715 100%);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+:root.light-theme body{
+  background:
+    radial-gradient(900px 500px at 22% 4%, rgba(164,150,148,.08), transparent 60%),
+    radial-gradient(1100px 700px at 80% 42%, rgba(115,107,96,.08), transparent 62%),
+    linear-gradient(180deg, #ede7d9 0%, #e5dfd1 46%, #ede7d9 100%);
 }
 
 a{color:var(--accent); text-decoration:none}
@@ -61,6 +81,12 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
 }
 .pill:hover{background:rgba(255,255,255,.09);border-color:rgba(110,231,255,.45);transform:translateY(-1px)}
 
+:root.light-theme .pill{
+  background:rgba(164,150,148,.1);
+  box-shadow:0 10px 24px rgba(0,0,0,.08);
+}
+:root.light-theme .pill:hover{background:rgba(164,150,148,.2);border-color:rgba(164,150,148,.6);}
+
 .grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,.95fr);gap:18px;align-items:start}
 @media (max-width:1200px){.grid{grid-template-columns:1fr}}
 
@@ -72,6 +98,14 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
   box-shadow:
     0 20px 44px rgba(0,0,0,.35),
     inset 0 1px 0 rgba(255,255,255,.06);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+:root.light-theme .card{
+  background:linear-gradient(145deg, rgba(245,241,233,.9) 0%, rgba(235,229,213,.95) 56%, rgba(245,241,233,.98) 100%);
+  box-shadow:
+    0 20px 44px rgba(0,0,0,.08),
+    inset 0 1px 0 rgba(255,255,255,.5);
 }
 
 .hero h1{margin:2px 0 10px;font-size:28px;line-height:1.25;letter-spacing:-.01em}
@@ -88,6 +122,13 @@ button{
   background-color:rgba(255,255,255,.05);
   color:var(--text);
   font-size:18px;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+:root.light-theme .home-tools input,
+:root.light-theme .home-tools select,
+:root.light-theme button{
+  background-color:rgba(255,255,255,.5);
 }
 .home-tools input{
   flex:1 1 460px;
@@ -113,6 +154,11 @@ button.primary,
   background:linear-gradient(90deg,var(--accent),var(--accent2));
   color:#081024;
   font-weight:900;
+}
+
+:root.light-theme button.primary,
+:root.light-theme .go{
+  color:#ffffff;
 }
 button:disabled{opacity:.55;cursor:not-allowed}
 .note{font-size:18px;color:var(--muted);margin-top:10px}
@@ -168,6 +214,10 @@ button:disabled{opacity:.55;cursor:not-allowed}
   flex-direction:column;
   min-height:208px;
   position:relative;
+}
+
+:root.light-theme .tcard{
+  background:linear-gradient(180deg, rgba(255,255,255,.6), rgba(255,255,255,.3));
 }
 .completion-badge{
   position:absolute;
@@ -267,6 +317,18 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
 
 #pill{display:none !important}
+
+.theme-toggle{
+  cursor:pointer;
+  font-size:24px;
+  line-height:1;
+  padding:0;
+  border:none;
+  background:transparent;
+  min-height:auto;
+  transition:transform .2s ease;
+}
+.theme-toggle:hover{transform:scale(1.1)}
 
 @media (max-width:1024px){
   .wrap{padding:22px 16px 46px}

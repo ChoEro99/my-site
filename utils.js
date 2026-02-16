@@ -81,3 +81,35 @@ function showToast(msg, toastId = 'toast') {
   t.classList.add("show");
   setTimeout(() => t.classList.remove("show"), 1200);
 }
+
+/**
+ * Initialize theme from localStorage
+ * Should be called as early as possible to prevent flash
+ */
+function initTheme() {
+  const savedTheme = localStorage.getItem("theme") || "dark";
+  if (savedTheme === "light") {
+    document.documentElement.classList.add("light-theme");
+  }
+}
+
+/**
+ * Toggle between light and dark theme
+ */
+function toggleTheme() {
+  const root = document.documentElement;
+  const isLight = root.classList.toggle("light-theme");
+  localStorage.setItem("theme", isLight ? "light" : "dark");
+  
+  // Update theme toggle button if it exists
+  const themeToggle = document.getElementById("themeToggle");
+  if (themeToggle) {
+    themeToggle.textContent = isLight ? "☀️" : "🌙";
+  }
+  
+  track("theme_toggle", { theme: isLight ? "light" : "dark" });
+  return isLight;
+}
+
+// Initialize theme immediately on script load
+initTheme();

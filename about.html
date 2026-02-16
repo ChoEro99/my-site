@@ -18,6 +18,7 @@
     <b>사이트 소개</b>
     <span>심리 테스트 콘텐츠 플랫폼</span>
   </div>
+  <button class="theme-toggle" id="themeToggle" aria-label="테마 전환">🌙</button>
   <div class="pill"><a href="/">홈</a></div>
 </header>
 
@@ -40,6 +41,14 @@
 </div>
 <script>
 document.getElementById("year").textContent = new Date().getFullYear();
+
+// Initialize theme toggle
+const themeToggle = document.getElementById("themeToggle");
+if (themeToggle) {
+  const isLight = document.documentElement.classList.contains("light-theme");
+  themeToggle.textContent = isLight ? "☀️" : "🌙";
+  themeToggle.addEventListener("click", toggleTheme);
+}
 document.getElementById("btnConsentSettings")?.addEventListener("click", function (event) {
   event.preventDefault();
   if (typeof window.openConsentSettings === "function") window.openConsentSettings();
