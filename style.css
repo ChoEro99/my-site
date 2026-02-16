@@ -378,6 +378,10 @@ button:disabled{opacity:.55;cursor:not-allowed}
   padding:14px;
   box-shadow:0 12px 30px rgba(0,0,0,.35);
 }
+:root.light-theme .consent-banner{
+  background:rgba(245,241,233,.96);
+  box-shadow:0 12px 30px rgba(0,0,0,.15);
+}
 .consent-banner p{margin:0 0 10px;color:var(--text);font-size:14px;line-height:1.5}
 .consent-actions{display:flex;gap:8px;flex-wrap:wrap}
 .consent-actions button{min-height:40px;padding:8px 14px;font-size:14px}
