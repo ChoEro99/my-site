@@ -4,8 +4,9 @@
 <link rel="stylesheet" href="/style.css"/>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="/utils.js"></script>
 </head><body>
-<div class="wrap"><div class="grid" style="grid-template-columns:minmax(0,1fr)">
+<div class="wrap"><button class="theme-toggle" id="themeToggle" aria-label="테마 전환" style="position:fixed;top:20px;right:20px;z-index:1000">🌙</button><div class="grid" style="grid-template-columns:minmax(0,1fr)">
 <main class="card hero" id="reportCard">
   <h1 id="title">리포트 준비 중…</h1>
   <p id="meta"></p>
@@ -1031,4 +1032,14 @@
 })();
 </script>
 
+
+<script>
+// Initialize theme toggle
+const themeToggle = document.getElementById("themeToggle");
+if (themeToggle) {
+  const isLight = document.documentElement.classList.contains("light-theme");
+  themeToggle.textContent = isLight ? "☀️" : "🌙";
+  themeToggle.addEventListener("click", toggleTheme);
+}
+</script>
 </body></html>
