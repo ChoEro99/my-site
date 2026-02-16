@@ -150,6 +150,28 @@
     const randomBtn = document.getElementById("btnRandomTest");
     const sortSelect = document.getElementById("sortSelect");
     const latestTestsList = document.getElementById("latestTestsList");
+    
+    // Load saved sort preference
+    const savedSort = sessionStorage.getItem('sortPreference');
+    if (savedSort && sortSelect) {
+      sortSelect.value = savedSort;
+    }
+    
+    // Add completion badges to cards
+    function addCompletionBadges(){
+      cards.forEach(card => {
+        const slug = card.dataset.slug || "";
+        const stats = getQuizStats(slug);
+        
+        if (stats.completions > 0 && !card.querySelector('.completion-badge')) {
+          const badge = document.createElement('span');
+          badge.className = 'completion-badge';
+          badge.textContent = '✓ 완료';
+          badge.setAttribute('aria-label', '완료한 테스트');
+          card.insertBefore(badge, card.firstChild);
+        }
+      });
+    }
 
     function getCardScore(card){
       const slug = card.dataset.slug || "";
@@ -159,6 +181,12 @@
 
     function sortCards(){
       const mode = sortSelect?.value || "popular";
+      
+      // Save sort preference
+      if (mode) {
+        sessionStorage.setItem('sortPreference', mode);
+      }
+      
       const sorted = [...cards].sort((a, b) => {
         if (mode === "latest") {
           return new Date(b.dataset.created || 0) - new Date(a.dataset.created || 0);
@@ -240,6 +268,7 @@
       location.href = picked;
     }
 
+    addCompletionBadges();
     sortCards();
     renderLatestTests();
     filterCards();
