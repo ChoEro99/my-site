@@ -83,12 +83,23 @@ function showToast(msg, toastId = 'toast') {
 }
 
 /**
- * Initialize theme from localStorage
+ * Initialize theme from localStorage or system preference
  * Should be called as early as possible to prevent flash
  */
 function initTheme() {
-  const savedTheme = localStorage.getItem("theme") || "dark";
-  if (savedTheme === "light") {
+  const savedTheme = localStorage.getItem("theme");
+  
+  // If user has saved preference, use it
+  if (savedTheme) {
+    if (savedTheme === "light") {
+      document.documentElement.classList.add("light-theme");
+    }
+    return;
+  }
+  
+  // Otherwise, use system preference
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (!prefersDark) {
     document.documentElement.classList.add("light-theme");
   }
 }
