@@ -3,6 +3,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'; font-src 'self' data:; frame-src https:;" />
 <title>결제 완료</title>
 <link rel="stylesheet" href="/style.css"/>
+<script src="/pay-config.js"></script>
 <script src="/utils.js"></script>
 </head><body>
 <div class="wrap"><button class="theme-toggle" id="themeToggle" aria-label="테마 전환" style="position:fixed;top:20px;right:20px;z-index:1000">🌙</button><div class="grid" style="grid-template-columns:minmax(0,1fr)">
@@ -22,7 +23,28 @@
   const plan = p.get('plan') || 'starter';
   const draft = p.get('draft') || `${test}:${result}:${plan}`;
   const paymentId = p.get('paymentId') || `demo_${Date.now()}`;
+  const creditsByPlan = {
+    starter: Number((window.REPORT_CREDITS && window.REPORT_CREDITS.starter) || 1),
+    full: Number((window.REPORT_CREDITS && window.REPORT_CREDITS.full) || 2)
+  };
+  const purchasedCredits = creditsByPlan[plan] || creditsByPlan.starter;
   const purchaseKey = `reportPurchase:${draft}`;
+  const packKey = `reportPack:${plan}`;
+
+  let pack = null;
+  try { pack = JSON.parse(localStorage.getItem(packKey) || 'null'); } catch (e) {}
+  if (!pack || typeof pack !== 'object') {
+    pack = { plan, remaining: 0, purchased: 0, usedDrafts: {} };
+  }
+  const usedDrafts = (pack.usedDrafts && typeof pack.usedDrafts === 'object') ? pack.usedDrafts : {};
+
+  pack.plan = plan;
+  pack.remaining = Number(pack.remaining || 0) + purchasedCredits;
+  pack.purchased = Number(pack.purchased || 0) + purchasedCredits;
+  pack.lastPaymentId = paymentId;
+  pack.updatedAt = Date.now();
+  pack.usedDrafts = usedDrafts;
+  localStorage.setItem(packKey, JSON.stringify(pack));
 
   localStorage.setItem(purchaseKey, JSON.stringify({
     paid: true,
@@ -30,10 +52,12 @@
     purchasedAt: Date.now(),
     test,
     result,
-    plan
+    plan,
+    credits: purchasedCredits,
+    packKey
   }));
 
-  document.getElementById('successSummary').textContent = `${test} / ${result} / ${plan.toUpperCase()} 구매 완료`;
+  document.getElementById('successSummary').textContent = `${test} / ${result} / ${plan.toUpperCase()} 구매 완료 · AI 리포트 ${purchasedCredits}회 지급`;
   const reportUrl = new URL('/report/pdf.html', location.origin);
   reportUrl.searchParams.set('test', test);
   reportUrl.searchParams.set('result', result);

@@ -89,14 +89,14 @@ function makePremiumReportUpsell(TEST, resultId, result){
         <a class="go premium-cta" href="${starterLink}" data-plan="starter" data-result-id="${resultId}">Starter PDF 결제하기</a>
       </article>
       <article class="premium-plan premium-plan-full">
-        <p class="premium-label">Full 보고서</p>
+        <p class="premium-label">Full 보고서 (2회권)</p>
         <ul>
           <li>✔︎ 선호 유형 해석</li>
           <li>✔︎ 개선 포인트</li>
-          <li>✔︎ 대조/비교 챕터</li>
+          <li>✔︎ AI 심층 리포트 2회</li>
         </ul>
         <p class="premium-price">💵 ${fullPrice}</p>
-        <a class="go premium-cta" href="${fullLink}" data-plan="full" data-result-id="${resultId}">Full PDF 결제하기</a>
+        <a class="go premium-cta" href="${fullLink}" data-plan="full" data-result-id="${resultId}">Full 2회권 결제하기</a>
         <a class="premium-example-link" href="${fullExampleLink}" target="_blank" rel="noopener">리포트 예시 보기</a>
       </article>
     </div>

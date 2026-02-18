@@ -11,3 +11,9 @@ window.REPORT_PRICES = window.REPORT_PRICES || {
   starter: 900,
   full: 1900
 };
+
+// 플랜별 리포트 생성 가능 횟수
+window.REPORT_CREDITS = window.REPORT_CREDITS || {
+  starter: 1,
+  full: 2
+};
