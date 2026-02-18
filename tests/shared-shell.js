@@ -16,7 +16,7 @@
         <span>${questionCount}문항 · 결과 공유</span>
       </div>
       <button class="theme-toggle" id="themeToggle" aria-label="테마 전환">🌙</button>
-      <div class="pill" id="pill">로딩…</div>
+      <div class="pill" id="pill" style="display:none" aria-hidden="true"></div>
     </header>
     <div class="grid">
       <main class="card hero" id="screenStart">

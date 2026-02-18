@@ -210,12 +210,10 @@ function initQuiz(){
   };
 
 function setPill(text){
-  if (!text) {
-    $("pill").style.display = "none";
-    return;
-  }
-  $("pill").style.display = "inline-block";
-  $("pill").textContent = text;
+  const pill = $("pill");
+  if (!pill) return;
+  pill.style.display = "none";
+  pill.textContent = "";
 }
 
 
