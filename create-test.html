@@ -90,6 +90,15 @@
       }
     }
 
+    function initGeneratorStatus() {
+      const status = $("genStatus");
+      if (!status) return;
+      const hasKey = !!String(window.GEMINI_API_KEY || "").trim();
+      status.textContent = hasKey
+        ? "준비 완료. 주제/대상을 입력하고 생성 버튼을 눌러주세요."
+        : "설정 오류: Gemini API 키를 읽지 못했습니다.";
+    }
+
     function slugify(text) {
       return String(text || "")
         .trim()
@@ -373,6 +382,7 @@
     });
 
     setThemeToggle();
+    initGeneratorStatus();
   </script>
 </body>
 </html>
