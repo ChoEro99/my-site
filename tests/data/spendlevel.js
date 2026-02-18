@@ -1,0 +1,36 @@
+window.TEST={
+slug:"spendlevel",badge:"소비 레벨",storageKey:"lastResult_spendlevel",
+ogTitle:"소비 레벨 테스트",ogDesc:"라이트/밸런스/프리미엄/플렉스 중 나는?",ogImage: location.origin + "/og.png",
+types:["light","balance","premium","flex"],
+results:{
+light:{emoji:"🧾",title:"라이트 레벨",desc:"필요한 건 사되, 불필요한 소비는 줄이는 타입.",tags:["절제","현실","가성비"],
+strengths:["지출 통제 좋음","후회 구매 적음","목표 저축 가능"],
+pitfalls:["가끔 재미가 부족","보상 소비가 늦게 폭발"],
+routine:["월 1회 소확행 예산","고정비 점검","충동은 24시간 룰"]},
+balance:{emoji:"⚖️",title:"밸런스 레벨",desc:"아끼는 것과 쓰는 것의 균형이 좋은 타입.",tags:["균형","만족","관리"],
+strengths:["스트레스 적음","계획적 소비","생활 만족도 유지"],
+pitfalls:["슬쩍 새는 돈","구독/소액 누적"],
+routine:["구독 월 1회 정리","큰 지출만 체크리스트","주1회 5분 결산"]},
+premium:{emoji:"🛍️",title:"프리미엄 레벨",desc:"가치 있다고 느끼면 확실히 투자하는 타입.",tags:["가치소비","취향","퀄리티"],
+strengths:["만족감 높은 소비","취향이 뚜렷","물건 오래 씀"],
+pitfalls:["카테고리 중복 구매","가끔 과소비"],
+routine:["카테고리별 상한선","비슷템 보유 체크","큰 소비는 1주 고민"]},
+flex:{emoji:"💎",title:"플렉스 레벨",desc:"경험/브랜드/기분에 과감! 순간 행복이 중요한 타입.",tags:["플렉스","경험","즉시만족"],
+strengths:["삶의 재미 큼","경험치 빠르게 쌓음","결정 빠름"],
+pitfalls:["월말 불안","지출이 계획을 이김"],
+routine:["저축 먼저 떼기","주간 예산 쪼개기","결제 전 ‘대체’ 1개"]},
+},
+questions:[
+{q:"세일을 보면?",c:[{t:"필요한 것만 산다",s:{light:2}},{t:"필요+가끔 보상",s:{balance:2}},{t:"가치 있으면 산다",s:{premium:2}},{t:"지금 아니면 못 참지",s:{flex:2}}]},
+{q:"배달/외식은?",c:[{t:"최소화",s:{light:2}},{t:"주 1~2회",s:{balance:2}},{t:"맛있으면 OK",s:{premium:2}},{t:"자주",s:{flex:2}}]},
+{q:"비싼 물건 살 때?",c:[{t:"대체품 찾기",s:{light:2}},{t:"비교 후 선택",s:{balance:2}},{t:"퀄리티면 투자",s:{premium:2}},{t:"기분이면 결제",s:{flex:2}}]},
+{q:"카페는?",c:[{t:"거의 안 감",s:{light:2}},{t:"가끔",s:{balance:2}},{t:"좋은 카페 선호",s:{premium:2}},{t:"자주",s:{flex:2}}]},
+{q:"구독 서비스는?",c:[{t:"최소만",s:{light:2}},{t:"필요한 것만",s:{balance:2}},{t:"편하면 유지",s:{premium:2}},{t:"여러 개",s:{flex:2}}]},
+{q:"충동구매 경험은?",c:[{t:"거의 없음",s:{light:2}},{t:"가끔",s:{balance:2}},{t:"취향이면 종종",s:{premium:2}},{t:"자주",s:{flex:2}}]},
+{q:"월말 통장 보면?",c:[{t:"대체로 안정",s:{light:2}},{t:"대체로 괜찮",s:{balance:2}},{t:"지출은 컸지만 만족",s:{premium:2}},{t:"위험…",s:{flex:2}}]},
+{q:"친구가 놀자면?",c:[{t:"저렴한 선택",s:{light:2}},{t:"적당히",s:{balance:2}},{t:"좋은 곳이면",s:{premium:2}},{t:"플렉스하자",s:{flex:2}}]},
+{q:"쇼핑 기준은?",c:[{t:"가격/필요",s:{light:2}},{t:"가성비/만족",s:{balance:2}},{t:"가치/취향",s:{premium:2}},{t:"기분/브랜드",s:{flex:2}}]},
+{q:"내 소비 한 줄",c:[{t:"아끼는 게 편함",s:{light:2}},{t:"균형이 최고",s:{balance:2}},{t:"가치엔 투자",s:{premium:2}},{t:"지금 행복",s:{flex:2}}]},
+]
+};
+

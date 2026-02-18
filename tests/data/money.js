@@ -1,0 +1,38 @@
+window.TEST={
+slug:"money",badge:"돈 테스트",storageKey:"lastResult_money",
+ogTitle:"돈 모으는 스타일 테스트",
+ogDesc:"공격/안정/틈새/무계획 중 나는 어떤 타입?",
+ogImage: location.origin + "/og.png",
+types:["aggressive","steady","hacker","chaos"],
+results:{
+aggressive:{emoji:"🚀",title:"공격 성장형",desc:"목표를 잡으면 속도감 있게 밀어붙이는 타입.",tags:["목표","성장","속도"],
+strengths:["실행 빠름","기회 포착","목표 지향"],
+pitfalls:["리스크 과대","변동에 흔들림","집착 가능"],
+routine:["목표는 숫자 1개","리스크는 비중으로 제한","주 1회만 점검"]},
+steady:{emoji:"🧱",title:"안정 축적형",desc:"꾸준함이 무기. 루틴으로 천천히 크게 만드는 타입.",tags:["루틴","안정","분산"],
+strengths:["멘탈 안정","지속력","계획적 소비"],
+pitfalls:["속도가 느려 답답","기회 비용"],
+routine:["선저축 자동이체","고정비 점검 월 1회","분기마다 리밸런스"]},
+hacker:{emoji:"🧩",title:"틈새 최적화형",desc:"쿠폰/포인트/혜택으로 새는 돈을 막는 타입.",tags:["최적화","혜택","디테일"],
+strengths:["절약 효율","정보 탐색","가성비 감각"],
+pitfalls:["시간 과소모","작은 것 집착"],
+routine:["혜택 2~3개만 고정","월 1회 포인트 정리","큰 지출부터 최적화"]},
+chaos:{emoji:"🎢",title:"무계획 즉흥형",desc:"들쑥날쑥하지만 자유로운 타입. 시스템만 얹으면 성장!",tags:["자유","즉흥","변동"],
+strengths:["적응력","과감함","스트레스 적음"],
+pitfalls:["비상금 부족","월말 불안","저축이 남는 구조"],
+routine:["통장 2개(생활/저축)","월초 저축 먼저 떼기","주 1회 5분 결산"]},
+},
+questions:[
+{q:"월급 들어오면?",c:[{t:"목표로 바로 이동",s:{aggressive:2}},{t:"예산대로 자동이체",s:{steady:2}},{t:"혜택 체크 후 배분",s:{hacker:2}},{t:"일단 두고 쓴다",s:{chaos:2}}]},
+{q:"큰 지출이 생기면?",c:[{t:"더 벌 방법 찾기",s:{aggressive:2}},{t:"예산 재조정",s:{steady:2}},{t:"할인/포인트 최대화",s:{hacker:2}},{t:"일단 결제…",s:{chaos:2}}]},
+{q:"저축이 안 되면?",c:[{t:"수입 늘리기",s:{aggressive:2}},{t:"고정비 줄이기",s:{steady:2}},{t:"새는 돈 찾기",s:{hacker:2}},{t:"다음달부터…",s:{chaos:2}}]},
+{q:"가계부/앱은?",c:[{t:"핵심 지표만",s:{aggressive:2}},{t:"꾸준히 기록",s:{steady:2}},{t:"카드/포인트 연동",s:{hacker:2}},{t:"깔아만 둠",s:{chaos:2}}]},
+{q:"선호하는 방식은?",c:[{t:"성장 우선",s:{aggressive:2}},{t:"안정/분산 우선",s:{steady:2}},{t:"혜택/세제 고려",s:{hacker:2}},{t:"그때그때",s:{chaos:2}}]},
+{q:"돈 스트레스 오면?",c:[{t:"해결 플랜 짠다",s:{aggressive:2}},{t:"지출 조절",s:{steady:2}},{t:"내역 파고든다",s:{hacker:2}},{t:"현실 도피",s:{chaos:2}}]},
+{q:"세금/정산은?",c:[{t:"큰 그림만",s:{aggressive:2}},{t:"정리해둔다",s:{steady:2}},{t:"최적 공제 연구",s:{hacker:2}},{t:"마감 직전",s:{chaos:2}}]},
+{q:"절약의 의미는?",c:[{t:"성장을 위한 연료",s:{aggressive:2}},{t:"안정의 기반",s:{steady:2}},{t:"효율의 게임",s:{hacker:2}},{t:"가끔만",s:{chaos:2}}]},
+{q:"가장 중요한 건?",c:[{t:"속도",s:{aggressive:2}},{t:"꾸준함",s:{steady:2}},{t:"최적화",s:{hacker:2}},{t:"자유",s:{chaos:2}}]},
+{q:"딱 하나 바꾼다면?",c:[{t:"비중/규칙 만들기",s:{aggressive:2}},{t:"자동이체 늘리기",s:{steady:2}},{t:"혜택 단순화",s:{hacker:2}},{t:"저축 먼저 떼기",s:{chaos:2}}]},
+]
+};
+

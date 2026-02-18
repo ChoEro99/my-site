@@ -1,0 +1,36 @@
+window.TEST={
+slug:"habit",badge:"루틴 테스트",storageKey:"lastResult_habit",
+ogTitle:"루틴/습관 테스트",ogDesc:"시작/유지/몰입/회복 중 나는?",ogImage: location.origin + "/og.png",
+types:["starter","keeper","focus","recovery"],
+results:{
+starter:{emoji:"🚀",title:"시작형",desc:"새로운 걸 시작하는 에너지가 강한 타입. 첫 추진력이 최고!",tags:["스타트","도전","추진"],
+strengths:["착수 빠름","아이디어 많음","실행력"],
+pitfalls:["유지가 어려울 수","새로운 것에 분산"],
+routine:["루틴 1개만 고정","시작은 2분만","주간 1회 점검"]},
+keeper:{emoji:"🧱",title:"유지형",desc:"꾸준함이 무기. 한 번 만들면 오래 가는 타입.",tags:["꾸준","루틴","안정"],
+strengths:["지속력","생활 안정","성과 누적"],
+pitfalls:["변화에 둔감","지루함"],
+routine:["월 1회 작은 변화","체크리스트 유지","보상 루틴 추가"]},
+focus:{emoji:"🎯",title:"몰입형",desc:"집중하면 끝까지 파는 타입. 깊이와 성과가 강점.",tags:["몰입","깊이","성과"],
+strengths:["퀄리티 높음","성과 폭발","학습 빠름"],
+pitfalls:["번아웃","주변 소통 부족"],
+routine:["타이머 몰입 25/5","수면/식사 고정","마감 전 점검"]},
+recovery:{emoji:"🌿",title:"회복형",desc:"컨디션이 곧 생산성. 회복을 잘하면 오래 가는 타입.",tags:["회복","컨디션","리듬"],
+strengths:["번아웃 적음","자기관리","장기전 강함"],
+pitfalls:["속도가 느릴 수","결정 미루기"],
+routine:["루틴은 ‘가볍게’","하루 10분 산책","주 1회 완전 휴식"]},
+},
+questions:[
+{q:"새 계획을 세우면?",c:[{t:"바로 시작",s:{starter:2}},{t:"꾸준히 이어갈 방법부터",s:{keeper:2}},{t:"한 번에 몰입",s:{focus:2}},{t:"무리하지 않게 조절",s:{recovery:2}}]},
+{q:"작심삼일 경험?",c:[{t:"꽤 있다",s:{starter:2}},{t:"거의 없다",s:{keeper:2}},{t:"몰입할 땐 끝까지",s:{focus:2}},{t:"컨디션 따라 다름",s:{recovery:2}}]},
+{q:"해야 할 일이 쌓이면?",c:[{t:"일단 하나 착수",s:{starter:2}},{t:"체크리스트로 처리",s:{keeper:2}},{t:"몰아서 끝낸다",s:{focus:2}},{t:"쉬고 재정비",s:{recovery:2}}]},
+{q:"내 스타일은?",c:[{t:"시작이 반",s:{starter:2}},{t:"꾸준함이 답",s:{keeper:2}},{t:"몰입이 답",s:{focus:2}},{t:"회복이 답",s:{recovery:2}}]},
+{q:"아침 루틴은?",c:[{t:"가끔 바뀜",s:{starter:2}},{t:"대체로 고정",s:{keeper:2}},{t:"필요하면 몰입",s:{focus:2}},{t:"컨디션 우선",s:{recovery:2}}]},
+{q:"새 습관을 만들 때?",c:[{t:"동기 중요",s:{starter:2}},{t:"규칙 중요",s:{keeper:2}},{t:"환경 세팅 중요",s:{focus:2}},{t:"강도 조절 중요",s:{recovery:2}}]},
+{q:"중간에 흔들리면?",c:[{t:"다른 걸로 바꿈",s:{starter:2}},{t:"그래도 유지",s:{keeper:2}},{t:"다시 몰입",s:{focus:2}},{t:"쉬고 재개",s:{recovery:2}}]},
+{q:"성공 경험은?",c:[{t:"시작은 잘함",s:{starter:2}},{t:"루틴이 누적됨",s:{keeper:2}},{t:"몰입으로 크게 성공",s:{focus:2}},{t:"회복 후 꾸준",s:{recovery:2}}]},
+{q:"나에게 필요한 건?",c:[{t:"유지 시스템",s:{starter:2}},{t:"변화/자극",s:{keeper:2}},{t:"휴식",s:{focus:2}},{t:"착수 스위치",s:{recovery:2}}]},
+{q:"한 줄 요약",c:[{t:"시작형",s:{starter:2}},{t:"유지형",s:{keeper:2}},{t:"몰입형",s:{focus:2}},{t:"회복형",s:{recovery:2}}]},
+]
+};
+

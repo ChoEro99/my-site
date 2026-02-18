@@ -1,0 +1,36 @@
+window.TEST={
+slug:"office",badge:"직장 생존",storageKey:"lastResult_office",
+ogTitle:"직장 생존 유형 테스트",ogDesc:"정치/실력/네트워크/독립 중 나는?",ogImage: location.origin + "/og.png",
+types:["politic","skill","network","solo"],
+results:{
+politic:{emoji:"🧠",title:"정치형",desc:"판을 읽고 움직이는 타입. 관계/흐름을 잘 타요.",tags:["판읽기","전략","안전"],
+strengths:["위험 회피","정보 흐름 파악","협상력"],
+pitfalls:["피로 누적","말이 많아질 수"],
+routine:["중요 대화는 기록","라인/이해관계 정리","무리한 약속 줄이기"]},
+skill:{emoji:"🛠️",title:"실력형",desc:"말보다 결과. 실력으로 자리 잡는 타입.",tags:["결과","퀄리티","집중"],
+strengths:["신뢰도 높음","문제 해결","성과로 인정"],
+pitfalls:["홍보 부족","정치에 손해"],
+routine:["주간 성과 공유 1회","협업 로그 남기기","가시성 확보"]},
+network:{emoji:"🤝",title:"네트워크형",desc:"사람이 자산. 연결로 기회를 만드는 타입.",tags:["관계","연결","기회"],
+strengths:["협업 강함","정보 빠름","상호지원"],
+pitfalls:["일이 분산","피곤해질 수"],
+routine:["핵심 인맥 5명 유지","약속은 ‘목적’있게","업무 시간 보호"]},
+solo:{emoji:"🧊",title:"독립형",desc:"내 페이스가 중요. 혼자 몰입해 성과내는 타입.",tags:["독립","몰입","효율"],
+strengths:["집중력","감정소모 적음","속도"],
+pitfalls:["고립","소통 부족"],
+routine:["주 2회 진행 공유","요청은 문서화","혼자+협업 밸런스"]},
+},
+questions:[
+{q:"회의가 길어지면?",c:[{t:"흐름/의도부터 파악",s:{politic:2}},{t:"결론/액션만 원함",s:{skill:2}},{t:"사람 의견 묶기",s:{network:2}},{t:"필요한 말만",s:{solo:2}}]},
+{q:"인정받는 방식은?",c:[{t:"판을 잘 타기",s:{politic:2}},{t:"성과로 증명",s:{skill:2}},{t:"신뢰/관계",s:{network:2}},{t:"혼자 해결",s:{solo:2}}]},
+{q:"문제 터지면?",c:[{t:"관계/리스크 정리",s:{politic:2}},{t:"원인 해결",s:{skill:2}},{t:"사람 모아 해결",s:{network:2}},{t:"내가 처리",s:{solo:2}}]},
+{q:"상사 피드백?",c:[{t:"의도/배경 파악",s:{politic:2}},{t:"개선해서 보여줌",s:{skill:2}},{t:"대화로 맞춤",s:{network:2}},{t:"필요한 것만 반영",s:{solo:2}}]},
+{q:"점심은?",c:[{t:"누구와 먹는지가 중요",s:{politic:2}},{t:"빨리 먹고 일",s:{skill:2}},{t:"사람들과 자주",s:{network:2}},{t:"혼밥 선호",s:{solo:2}}]},
+{q:"협업할 때?",c:[{t:"이해관계 조정",s:{politic:2}},{t:"역할/품질 명확",s:{skill:2}},{t:"분위기/관계 관리",s:{network:2}},{t:"필요 최소 소통",s:{solo:2}}]},
+{q:"내가 싫은 건?",c:[{t:"라인 무시",s:{politic:2}},{t:"대충 결과",s:{skill:2}},{t:"소통 단절",s:{network:2}},{t:"쓸데없는 회의",s:{solo:2}}]},
+{q:"성장 방식?",c:[{t:"판/기회 선택",s:{politic:2}},{t:"스킬업",s:{skill:2}},{t:"사람/경험",s:{network:2}},{t:"깊게 파기",s:{solo:2}}]},
+{q:"평소 메시지?",c:[{t:"맥락 길게",s:{politic:2}},{t:"핵심만",s:{skill:2}},{t:"리액션 많음",s:{network:2}},{t:"짧고 단답",s:{solo:2}}]},
+{q:"한 줄 요약",c:[{t:"판을 읽는 타입",s:{politic:2}},{t:"실력으로 간다",s:{skill:2}},{t:"사람이 자산",s:{network:2}},{t:"혼자 몰입",s:{solo:2}}]},
+]
+};
+

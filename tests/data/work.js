@@ -1,0 +1,38 @@
+window.TEST={
+slug:"work",badge:"업무 테스트",storageKey:"lastResult_work",
+ogTitle:"업무 스타일 테스트",
+ogDesc:"리더/장인/조율/스프린터 중 나는 어떤 타입?",
+ogImage: location.origin + "/og.png",
+types:["leader","craft","harmonizer","sprinter"],
+results:{
+leader:{emoji:"🧭",title:"리더형",desc:"큰 그림을 잡고 방향을 제시하는 타입. 우선순위/결정이 빠릅니다.",tags:["방향","우선순위","결정"],
+strengths:["정리/의사결정 빠름","팀을 앞으로 끌어감","리스크를 미리 봄"],
+pitfalls:["세부가 헐거워질 수","속도가 부담될 수"],
+routine:["목표 1문장으로","주간 TOP3","결정은 기록으로"]},
+craft:{emoji:"🛠️",title:"장인형",desc:"디테일과 완성도를 끝까지 챙기는 타입. 결과물 신뢰도가 높아요.",tags:["완성도","디테일","퀄리티"],
+strengths:["결과물이 탄탄","실수/버그 적음","신뢰도 높음"],
+pitfalls:["완벽주의로 지연","과도한 몰입"],
+routine:["80%에서 공유","체크리스트 마감","완벽 기준 2단계"]},
+harmonizer:{emoji:"🤝",title:"조율형",desc:"사람과 흐름을 맞추는 타입. 커뮤니케이션/협업에 강합니다.",tags:["협업","조율","소통"],
+strengths:["갈등을 줄임","정보를 연결","팀 분위기 안정"],
+pitfalls:["결정이 늦어질 수","눈치로 피로"],
+routine:["결정 필요사항 리스트","회의는 결론부터","합의는 텍스트로"]},
+sprinter:{emoji:"⚡",title:"스프린터형",desc:"짧게 집중해 빠르게 끝내는 타입. 속도/추진력이 강점!",tags:["속도","집중","추진"],
+strengths:["착수 빠름","단기간 성과","위기 대응"],
+pitfalls:["마무리 디테일 부족","지속 페이스 어려움"],
+routine:["25분 집중+5분 휴식","DoD(끝 기준) 명확히","마감 전 점검 10분"]},
+},
+questions:[
+{q:"새 업무를 받으면?",c:[{t:"목표/우선순위부터",s:{leader:2}},{t:"요구/디테일부터",s:{craft:2}},{t:"관련자 싱크부터",s:{harmonizer:2}},{t:"바로 착수",s:{sprinter:2}}]},
+{q:"회의 스타일은?",c:[{t:"결론/결정 중심",s:{leader:2}},{t:"디테일 검증",s:{craft:2}},{t:"의견 수렴/정리",s:{harmonizer:2}},{t:"짧게 하고 실행",s:{sprinter:2}}]},
+{q:"마감 촉박하면?",c:[{t:"범위를 조정",s:{leader:2}},{t:"핵심 품질 지키기",s:{craft:2}},{t:"협업으로 쪼개기",s:{harmonizer:2}},{t:"집중으로 밀기",s:{sprinter:2}}]},
+{q:"피드백 받으면?",c:[{t:"방향 수정 반영",s:{leader:2}},{t:"퀄리티 올리기",s:{craft:2}},{t:"맥락/관계 정리",s:{harmonizer:2}},{t:"바로 적용",s:{sprinter:2}}]},
+{q:"싫어하는 건?",c:[{t:"우선순위 없는 일",s:{leader:2}},{t:"대충 마감",s:{craft:2}},{t:"소통 단절",s:{harmonizer:2}},{t:"질질 끄는 것",s:{sprinter:2}}]},
+{q:"문제 터지면?",c:[{t:"결정권/방향 정리",s:{leader:2}},{t:"원인 파고듦",s:{craft:2}},{t:"관련자 조율",s:{harmonizer:2}},{t:"응급처치 먼저",s:{sprinter:2}}]},
+{q:"방해 많으면?",c:[{t:"우선순위 재정렬",s:{leader:2}},{t:"집중환경 세팅",s:{craft:2}},{t:"조율로 방해 줄임",s:{harmonizer:2}},{t:"짧게 쪼개기",s:{sprinter:2}}]},
+{q:"성과 내는 방식?",c:[{t:"팀을 움직임",s:{leader:2}},{t:"탄탄한 결과물",s:{craft:2}},{t:"협업 흐름 개선",s:{harmonizer:2}},{t:"빠른 실행",s:{sprinter:2}}]},
+{q:"내 강점 한 줄",c:[{t:"결정/방향",s:{leader:2}},{t:"완성도",s:{craft:2}},{t:"조율",s:{harmonizer:2}},{t:"속도",s:{sprinter:2}}]},
+{q:"키우면 좋은 건?",c:[{t:"세부 체크",s:{leader:2}},{t:"속도/공유",s:{craft:2}},{t:"결정력",s:{harmonizer:2}},{t:"마무리 디테일",s:{sprinter:2}}]},
+]
+};
+
