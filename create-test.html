@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://generativelanguage.googleapis.com; font-src 'self' data:; frame-src https:;" />
+  <title>AI 심리테스트 제작기</title>
+  <meta name="description" content="Gemini API로 심리테스트 데이터를 생성하고 바로 다운로드하세요." />
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/utils.js"></script>
+  <script src="/analytics-consent.js" defer></script>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <b>AI 심리테스트 제작기</b>
+        <span>Gemini API로 테스트 데이터 생성</span>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <button class="theme-toggle" id="themeToggle" aria-label="테마 전환">🌙</button>
+        <a class="pill" href="/">🏠 홈</a>
+      </div>
+    </header>
+
+    <div class="grid" style="grid-template-columns:minmax(0,1.4fr) minmax(300px,.9fr)">
+      <main class="card hero">
+        <h1>원하는 주제로 테스트 생성</h1>
+        <p>API 키는 브라우저에만 사용됩니다. 진단/의료 표현은 자동으로 제한합니다.</p>
+
+        <div class="home-tools" style="margin-top:14px">
+          <input id="apiKey" type="password" placeholder="Gemini API Key" aria-label="Gemini API Key" />
+          <select id="model" aria-label="모델 선택">
+            <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+            <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+          </select>
+        </div>
+
+        <div class="home-tools">
+          <input id="topic" type="text" placeholder="주제 (예: 연애 갈등 대화 스타일)" aria-label="테스트 주제" />
+          <input id="audience" type="text" placeholder="대상 (예: 20~30대 직장인)" aria-label="타깃 대상" />
+        </div>
+
+        <div class="home-tools">
+          <input id="tone" type="text" placeholder="톤 (예: 가볍고 현실적인 조언)" aria-label="톤" />
+          <select id="questionCount" aria-label="문항 수">
+            <option value="8">8문항</option>
+            <option value="10" selected>10문항</option>
+            <option value="12">12문항</option>
+          </select>
+          <button class="primary" id="btnGenerate" type="button">AI 생성</button>
+        </div>
+
+        <p id="genStatus" class="search-meta">입력 후 AI 생성을 눌러주세요.</p>
+
+        <div class="card mini" style="padding:14px;margin-top:12px">
+          <h4>생성 결과(JSON)</h4>
+          <textarea id="resultJson" style="width:100%;min-height:340px;background:rgba(0,0,0,.15);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px"></textarea>
+          <div class="btns">
+            <button id="btnCopyJson" type="button">JSON 복사</button>
+            <button id="btnDownloadData" type="button">tests/data용 JS 다운로드</button>
+            <button id="btnDownloadHtml" type="button">tests용 HTML 다운로드</button>
+          </div>
+        </div>
+      </main>
+
+      <aside class="card side">
+        <h3>사용 순서</h3>
+        <ol class="top-list">
+          <li>주제/톤 입력 후 생성</li>
+          <li>결과 검토 후 다운로드</li>
+          <li>`tests/data/{slug}.js`에 추가</li>
+          <li>`tests/{slug}.html` 파일 생성</li>
+          <li>홈 카드/사이트맵에 링크 추가</li>
+        </ol>
+        <h3 style="margin-top:16px">주의</h3>
+        <ul class="top-list">
+          <li>의학적 진단 문구 금지</li>
+          <li>낙인/혐오 표현 금지</li>
+          <li>재미/콘텐츠용 고지 유지</li>
+        </ul>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function setThemeToggle() {
+      const themeToggle = $("themeToggle");
+      if (!themeToggle) return;
+      const isLight = document.documentElement.classList.contains("light-theme");
+      themeToggle.textContent = isLight ? "☀️" : "🌙";
+      themeToggle.addEventListener("click", toggleTheme);
+    }
+
+    function slugify(text) {
+      return String(text || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9가-힣\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "") || "new-test";
+    }
+
+    function sanitizeKeyName(text, idx) {
+      const k = String(text || "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9가-힣]/g, "");
+      return k || `type${idx + 1}`;
+    }
+
+    function extractJson(text) {
+      const raw = String(text || "").trim();
+      if (!raw) throw new Error("응답이 비어 있습니다.");
+      const fence = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+      const candidate = fence ? fence[1].trim() : raw;
+      return JSON.parse(candidate);
+    }
+
+    function validateAndNormalize(testObj, fallbackSlug) {
+      if (!testObj || typeof testObj !== "object") throw new Error("JSON 객체가 아닙니다.");
+
+      const typesRaw = Array.isArray(testObj.types) ? testObj.types.slice(0, 4) : [];
+      if (typesRaw.length < 4) throw new Error("types는 4개가 필요합니다.");
+
+      const typeKeys = typesRaw.map((x, i) => sanitizeKeyName(x, i));
+      const typeSet = new Set(typeKeys);
+      if (typeSet.size !== 4) throw new Error("types 키가 중복되었습니다.");
+
+      const normalized = {
+        slug: slugify(testObj.slug || fallbackSlug),
+        badge: String(testObj.badge || "테스트"),
+        storageKey: "",
+        ogTitle: String(testObj.ogTitle || testObj.title || "AI 심리테스트"),
+        ogDesc: String(testObj.ogDesc || "AI로 생성한 심리테스트"),
+        ogImage: 'location.origin + "/og.png"',
+        types: typeKeys,
+        results: {},
+        questions: []
+      };
+      normalized.storageKey = `lastResult_${normalized.slug}`;
+
+      if (!testObj.results || typeof testObj.results !== "object") {
+        throw new Error("results 객체가 필요합니다.");
+      }
+      typeKeys.forEach((k, i) => {
+        const source = testObj.results[k] || Object.values(testObj.results)[i] || {};
+        normalized.results[k] = {
+          emoji: String(source.emoji || "✨"),
+          title: String(source.title || `${k}형`),
+          desc: String(source.desc || "설명 준비 중"),
+          tags: Array.isArray(source.tags) ? source.tags.slice(0, 4).map(String) : [],
+          strengths: Array.isArray(source.strengths) ? source.strengths.slice(0, 4).map(String) : [],
+          pitfalls: Array.isArray(source.pitfalls) ? source.pitfalls.slice(0, 4).map(String) : [],
+          routine: Array.isArray(source.routine) ? source.routine.slice(0, 4).map(String) : []
+        };
+      });
+
+      const qs = Array.isArray(testObj.questions) ? testObj.questions : [];
+      if (qs.length < 6) throw new Error("questions는 최소 6개 이상 필요합니다.");
+
+      normalized.questions = qs.map((q, qIndex) => {
+        const choices = Array.isArray(q.c) ? q.c : [];
+        if (choices.length < 4) throw new Error(`${qIndex + 1}번 문항 선택지는 4개 필요합니다.`);
+        return {
+          q: String(q.q || `${qIndex + 1}번 질문`),
+          c: choices.slice(0, 4).map((ch, cIndex) => {
+            const score = {};
+            typeKeys.forEach((k) => {
+              const v = ch?.s?.[k];
+              score[k] = Number.isFinite(v) ? Number(v) : 0;
+            });
+            if (!Object.values(score).some((v) => v > 0)) {
+              score[typeKeys[cIndex % 4]] = 2;
+            }
+            return {
+              t: String(ch?.t || `선택지 ${cIndex + 1}`),
+              s: score
+            };
+          })
+        };
+      });
+
+      return normalized;
+    }
+
+    function toDataJsText(obj) {
+      return "window.TEST=" + JSON.stringify(obj, null, 2) + ";\n";
+    }
+
+    function toTestHtmlText(obj) {
+      return `<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://pagead2.googlesyndication.com https://t1.kakaocdn.net https://developers.kakao.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://kapi.kakao.com; font-src 'self' data:; frame-src https:;" />
+<title>${obj.ogTitle} | 2~3분</title>
+<meta name="description" content="${obj.ogDesc}"/>
+<meta property="og:title" content="${obj.ogTitle}" />
+<meta property="og:description" content="${obj.ogDesc}" />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="https://my-site-five-ecru.vercel.app/og.png" />
+<link rel="stylesheet" href="/style.css"/><script src="/utils.js"></script><script src="/analytics-consent.js" defer></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6051453612452994" crossorigin="anonymous"></script>
+</head><body>
+<script src="/tests/data/${obj.slug}.js"></script>
+<script src="/tests/shared-shell.js"></script>
+</body></html>
+`;
+    }
+
+    function downloadText(filename, text) {
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function generateWithGemini() {
+      const apiKey = ($("apiKey").value || "").trim();
+      const model = $("model").value;
+      const topic = ($("topic").value || "").trim();
+      const audience = ($("audience").value || "").trim();
+      const tone = ($("tone").value || "").trim();
+      const questionCount = Number($("questionCount").value || 10);
+      const status = $("genStatus");
+
+      if (!apiKey) throw new Error("API Key를 입력해주세요.");
+      if (!topic) throw new Error("주제를 입력해주세요.");
+
+      const systemPrompt =
+`너는 한국어 심리테스트 기획자다.
+반드시 JSON만 출력해라. 코드블록/설명/주석 금지.
+의학적 진단/치료를 암시하지 말고 재미/콘텐츠 톤으로 작성해라.
+편견, 혐오, 차별 표현 금지.
+구조:
+{
+  "slug":"영문소문자-하이픈",
+  "badge":"짧은 배지",
+  "ogTitle":"테스트 제목",
+  "ogDesc":"한 줄 소개",
+  "types":["type1","type2","type3","type4"],
+  "results":{
+    "type1":{"emoji":"✨","title":"...형","desc":"...","tags":["","",""],"strengths":["","",""],"pitfalls":["",""],"routine":["","",""]},
+    "type2":{...},
+    "type3":{...},
+    "type4":{...}
+  },
+  "questions":[
+    {"q":"질문","c":[
+      {"t":"선택지1","s":{"type1":2,"type2":0,"type3":0,"type4":0}},
+      {"t":"선택지2","s":{"type1":0,"type2":2,"type3":0,"type4":0}},
+      {"t":"선택지3","s":{"type1":0,"type2":0,"type3":2,"type4":0}},
+      {"t":"선택지4","s":{"type1":0,"type2":0,"type3":0,"type4":2}}
+    ]}
+  ]
+}`;
+
+      const userPrompt =
+`주제: ${topic}
+대상: ${audience || "일반 사용자"}
+톤: ${tone || "가볍고 이해 쉬운"}
+문항 수: ${questionCount}
+출력은 반드시 위 JSON 형식만.`;
+
+      status.textContent = "AI 생성 중...";
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const resp = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
+          generationConfig: {
+            temperature: 0.7,
+            responseMimeType: "application/json"
+          }
+        })
+      });
+      if (!resp.ok) {
+        const txt = await resp.text();
+        throw new Error(`Gemini API 오류: ${resp.status} ${txt.slice(0, 180)}`);
+      }
+      const json = await resp.json();
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const parsed = extractJson(text);
+      const normalized = validateAndNormalize(parsed, slugify(topic));
+
+      $("resultJson").value = JSON.stringify(normalized, null, 2);
+      status.textContent = `완료: ${normalized.ogTitle} (${normalized.questions.length}문항)`;
+      return normalized;
+    }
+
+    let latest = null;
+
+    $("btnGenerate").addEventListener("click", async () => {
+      try {
+        latest = await generateWithGemini();
+      } catch (e) {
+        $("genStatus").textContent = `실패: ${e.message || e}`;
+      }
+    });
+
+    $("btnCopyJson").addEventListener("click", async () => {
+      const text = $("resultJson").value || "";
+      if (!text.trim()) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("JSON 복사 완료");
+      } catch (e) {}
+    });
+
+    $("btnDownloadData").addEventListener("click", () => {
+      if (!latest) {
+        try {
+          latest = validateAndNormalize(JSON.parse($("resultJson").value), "new-test");
+        } catch (e) {
+          $("genStatus").textContent = `다운로드 실패: ${e.message || e}`;
+          return;
+        }
+      }
+      downloadText(`${latest.slug}.js`, toDataJsText(latest));
+    });
+
+    $("btnDownloadHtml").addEventListener("click", () => {
+      if (!latest) {
+        try {
+          latest = validateAndNormalize(JSON.parse($("resultJson").value), "new-test");
+        } catch (e) {
+          $("genStatus").textContent = `다운로드 실패: ${e.message || e}`;
+          return;
+        }
+      }
+      downloadText(`${latest.slug}.html`, toTestHtmlText(latest));
+    });
+
+    setThemeToggle();
+  </script>
+</body>
+</html>
