@@ -8,6 +8,7 @@
   <meta name="description" content="Gemini API로 심리테스트 데이터를 생성하고 바로 다운로드하세요." />
   <link rel="stylesheet" href="/style.css" />
   <script src="/utils.js"></script>
+  <script src="/gemini-config.js"></script>
   <script src="/analytics-consent.js" defer></script>
 </head>
 <body>
@@ -92,6 +93,14 @@
       const isLight = document.documentElement.classList.contains("light-theme");
       themeToggle.textContent = isLight ? "☀️" : "🌙";
       themeToggle.addEventListener("click", toggleTheme);
+    }
+
+    function setApiKeyFromConfig() {
+      const apiInput = $("apiKey");
+      if (!apiInput) return;
+      if (window.GEMINI_API_KEY && !apiInput.value) {
+        apiInput.value = String(window.GEMINI_API_KEY);
+      }
     }
 
     function slugify(text) {
@@ -340,6 +349,7 @@
     });
 
     setThemeToggle();
+    setApiKeyFromConfig();
   </script>
 </body>
 </html>
