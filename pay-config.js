@@ -17,3 +17,10 @@ window.REPORT_CREDITS = window.REPORT_CREDITS || {
   starter: 1,
   full: 2
 };
+
+// AI 테스트 생성 결제 패키지
+window.TEST_GENERATION_PACKAGE = window.TEST_GENERATION_PACKAGE || {
+  price: 1900,
+  generationCredits: 1,
+  reportDownloadsPerTest: 2
+};

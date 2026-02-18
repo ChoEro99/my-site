@@ -13,6 +13,7 @@
   <script>
     (function () {
       const raw = sessionStorage.getItem("generatedTestDraft");
+      const metaRaw = sessionStorage.getItem("generatedTestMeta");
       if (!raw) {
         document.body.innerHTML = `
         <div class="wrap">
@@ -29,8 +30,10 @@
       }
 
       let test = null;
+      let meta = null;
       try {
         test = JSON.parse(raw);
+        meta = metaRaw ? JSON.parse(metaRaw) : null;
       } catch (e) {
         document.body.innerHTML = "<p style='padding:20px'>테스트 데이터를 읽을 수 없습니다.</p>";
         return;
@@ -46,6 +49,13 @@
       if (!test.ogTitle) test.ogTitle = "AI 생성 테스트";
       if (!test.ogDesc) test.ogDesc = "AI가 생성한 심리테스트";
       if (!test.ogImage) test.ogImage = location.origin + "/og.png";
+      if (meta && typeof meta === "object") {
+        test.generatedMeta = {
+          id: String(meta.id || ""),
+          paid: !!meta.paid,
+          reportDownloadsRemaining: Number(meta.reportDownloadsRemaining || 0)
+        };
+      }
 
       window.TEST = test;
 

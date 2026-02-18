@@ -29,6 +29,8 @@
   const result = p.get('result') || '';
   const plan = p.get('plan') || 'starter';
   const draft = p.get('draft') || `${test}:${result}:${plan}`;
+  const source = p.get('source') || 'standard';
+  const generatedId = p.get('generatedId') || '';
   const packKey = `reportPack:${plan}`;
   const fallbackCreditsByPlan = {
     starter: Number((window.REPORT_CREDITS && window.REPORT_CREDITS.starter) || 1),
@@ -37,6 +39,25 @@
   const purchasedCredits = fallbackCreditsByPlan[plan] || fallbackCreditsByPlan.starter;
 
   const purchase = JSON.parse(localStorage.getItem(`reportPurchase:${draft}`) || 'null');
+  const generatedTestsKey = 'generatedTestsV1';
+  let generatedRecord = null;
+
+  function getGeneratedRecord() {
+    const all = JSON.parse(localStorage.getItem(generatedTestsKey) || '[]');
+    if (!Array.isArray(all)) return null;
+    return all.find((x) => String(x?.id || '') === String(generatedId || '')) || null;
+  }
+
+  function saveGeneratedRecord(updatedRecord) {
+    const all = JSON.parse(localStorage.getItem(generatedTestsKey) || '[]');
+    if (!Array.isArray(all)) return;
+    const next = all.map((item) => {
+      if (String(item?.id || '') === String(updatedRecord?.id || '')) return updatedRecord;
+      return item;
+    });
+    localStorage.setItem(generatedTestsKey, JSON.stringify(next));
+  }
+
   let pack = null;
   try { pack = JSON.parse(localStorage.getItem(packKey) || 'null'); } catch (e) {}
   if (!pack || typeof pack !== 'object') {
@@ -46,19 +67,33 @@
     pack.usedDrafts = {};
   }
 
-  const hasDraftAccess = !!pack.usedDrafts[draft];
-  const hasCredits = Number(pack.remaining || 0) > 0;
-  if (!hasDraftAccess && !hasCredits) {
-    alert('결제 정보가 확인되지 않아 리포트를 열 수 없습니다.');
-    location.href = '/';
-    return;
-  }
-  if (!hasDraftAccess) {
-    pack.usedDrafts[draft] = { usedAt: Date.now(), test, result, plan };
-    pack.remaining = Math.max(0, Number(pack.remaining || 0) - 1);
-    pack.purchased = Math.max(Number(pack.purchased || 0), purchasedCredits);
-    pack.updatedAt = Date.now();
-    localStorage.setItem(packKey, JSON.stringify(pack));
+  if (source === 'generated') {
+    generatedRecord = getGeneratedRecord();
+    if (!generatedRecord?.paid) {
+      alert('생성 결제 기록이 확인되지 않아 리포트를 열 수 없습니다.');
+      location.href = '/create-test.html';
+      return;
+    }
+    if (Number(generatedRecord.reportDownloadsRemaining || 0) <= 0) {
+      alert('리포트 다운로드 가능 횟수(2회)를 모두 사용했습니다.');
+      location.href = '/create-test.html';
+      return;
+    }
+  } else {
+    const hasDraftAccess = !!pack.usedDrafts[draft];
+    const hasCredits = Number(pack.remaining || 0) > 0;
+    if (!hasDraftAccess && !hasCredits) {
+      alert('결제 정보가 확인되지 않아 리포트를 열 수 없습니다.');
+      location.href = '/';
+      return;
+    }
+    if (!hasDraftAccess) {
+      pack.usedDrafts[draft] = { usedAt: Date.now(), test, result, plan };
+      pack.remaining = Math.max(0, Number(pack.remaining || 0) - 1);
+      pack.purchased = Math.max(Number(pack.purchased || 0), purchasedCredits);
+      pack.updatedAt = Date.now();
+      localStorage.setItem(packKey, JSON.stringify(pack));
+    }
   }
 
   const draftData = JSON.parse(localStorage.getItem(`reportDraft:${draft}`) || 'null');
@@ -70,7 +105,10 @@
   document.getElementById('title').textContent = `${resultTitle} ${planName} PDF 리포트`;
   const today = new Date();
   const paymentText = purchase?.paymentId ? `결제번호 ${purchase.paymentId}` : '결제정보 확인';
-  document.getElementById('meta').textContent = `${testTitle} · ${paymentText} · 생성일 ${today.toLocaleDateString('ko-KR')} · 남은 횟수 ${Number(pack.remaining || 0)}회`;
+  const remainingText = source === 'generated'
+    ? `남은 다운로드 ${Number(generatedRecord?.reportDownloadsRemaining || 0)}회`
+    : `남은 횟수 ${Number(pack.remaining || 0)}회`;
+  document.getElementById('meta').textContent = `${testTitle} · ${paymentText} · 생성일 ${today.toLocaleDateString('ko-KR')} · ${remainingText}`;
 
   // ---------- helpers ----------
   const escapeHtml = (s) =>
@@ -1015,6 +1053,11 @@
 
   // ---------- PDF ----------
   document.getElementById('btnPdf').onclick = async function () {
+    if (source === 'generated' && Number(generatedRecord?.reportDownloadsRemaining || 0) <= 0) {
+      alert('리포트 다운로드 가능 횟수(2회)를 모두 사용했습니다.');
+      return;
+    }
+
     const btn = this;
     btn.disabled = true;
     const prevLabel = btn.textContent;
@@ -1048,6 +1091,15 @@
       }
 
       doc.save(`${test || 'test'}_${result || 'result'}_${plan}_report.pdf`);
+
+      if (source === 'generated' && generatedRecord) {
+        generatedRecord.reportDownloadsRemaining = Math.max(0, Number(generatedRecord.reportDownloadsRemaining || 0) - 1);
+        generatedRecord.updatedAt = Date.now();
+        saveGeneratedRecord(generatedRecord);
+        const paymentTextNow = purchase?.paymentId ? `결제번호 ${purchase.paymentId}` : '결제정보 확인';
+        const todayNow = new Date();
+        document.getElementById('meta').textContent = `${testTitle} · ${paymentTextNow} · 생성일 ${todayNow.toLocaleDateString('ko-KR')} · 남은 다운로드 ${Number(generatedRecord.reportDownloadsRemaining || 0)}회`;
+      }
     } finally {
       if (btns) btns.style.display = prevDisplay;
       btn.disabled = false;

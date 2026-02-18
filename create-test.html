@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://generativelanguage.googleapis.com; font-src 'self' data:; frame-src https:;" />
   <title>AI 심리테스트 만들기</title>
-  <meta name="description" content="주제만 입력하면 AI가 심리테스트를 만들고 바로 진행할 수 있습니다." />
+  <meta name="description" content="로그인 후 결제로 AI 심리테스트를 생성하고 보관할 수 있습니다." />
   <link rel="stylesheet" href="/style.css" />
   <script src="/utils.js"></script>
+  <script src="/auth.js"></script>
+  <script src="/pay-config.js"></script>
   <script src="/gemini-config.js"></script>
   <script src="/analytics-consent.js" defer></script>
 </head>
@@ -16,7 +18,7 @@
     <header>
       <div class="brand">
         <b>AI 심리테스트 만들기</b>
-        <span>주제 입력 → 생성 → 바로 테스트 시작</span>
+        <span>로그인 + 결제 생성권으로 테스트 생성/보관</span>
       </div>
       <div style="display:flex;gap:12px;align-items:center">
         <button class="theme-toggle" id="themeToggle" aria-label="테마 전환">🌙</button>
@@ -27,45 +29,73 @@
     <div class="grid" style="grid-template-columns:minmax(0,1fr)">
       <main class="card hero">
         <h1>원하는 테스트를 바로 만들어보세요</h1>
-        <p>의학적 진단이 아닌 재미/콘텐츠용 테스트로 생성됩니다.</p>
+        <p>생성권 1회로 테스트 1개 생성 + 심층 리포트 PDF 2회 다운로드 권한이 부여됩니다.</p>
 
-        <div class="home-tools" style="margin-top:14px">
-          <input id="topic" type="text" placeholder="주제 (예: 연애 갈등 대화 스타일)" aria-label="테스트 주제" />
-          <input id="audience" type="text" placeholder="대상 (예: 20~30대 직장인)" aria-label="타깃 대상" />
-        </div>
-
-        <div class="home-tools">
-          <input id="tone" type="text" placeholder="톤 (예: 가볍고 현실적인 조언)" aria-label="톤" />
-          <select id="questionCount" aria-label="문항 수">
-            <option value="8">8문항</option>
-            <option value="10" selected>10문항</option>
-            <option value="12">12문항</option>
-          </select>
-          <button class="primary" id="btnGenerate" type="button">AI로 만들기</button>
-        </div>
-
-        <p id="genStatus" class="search-meta">주제/대상을 입력하고 생성 버튼을 눌러주세요.</p>
-
-        <div class="card mini" id="resultCard" style="padding:14px;margin-top:12px;display:none">
-          <h4 id="resultTitle">생성 완료</h4>
-          <p id="resultMeta" class="note" style="margin:0 0 8px"></p>
-          <div class="btns">
-            <button class="primary" id="btnStartNow" type="button">바로 테스트 시작</button>
-            <button id="btnRegenerate" type="button">다시 생성</button>
+        <section class="card mini" id="authCard" style="padding:14px;margin-top:12px;display:none">
+          <h4>로그인</h4>
+          <div class="home-tools">
+            <input id="loginEmail" type="email" placeholder="이메일" />
+            <input id="loginPassword" type="password" placeholder="비밀번호 (6자 이상)" />
+            <button id="btnLogin" type="button">로그인</button>
+            <button id="btnSignup" type="button">회원가입</button>
           </div>
-        </div>
+          <p id="authStatus" class="search-meta">로그인 후 생성 기능을 사용할 수 있습니다.</p>
+        </section>
 
-        <details style="margin-top:12px">
-          <summary style="cursor:pointer;font-weight:700">고급 옵션 (JSON 확인/다운로드)</summary>
-          <div class="card mini" style="padding:14px;margin-top:10px">
-            <textarea id="resultJson" style="width:100%;min-height:260px;background:rgba(0,0,0,.15);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px"></textarea>
+        <section class="card mini" id="memberCard" style="padding:14px;margin-top:12px;display:none">
+          <h4 id="memberTitle">회원 정보</h4>
+          <p id="memberMeta" class="search-meta"></p>
+          <div class="btns">
+            <a class="go" href="/pay/generate.html">생성권 결제하기</a>
+            <button id="btnLogout" type="button">로그아웃</button>
+          </div>
+        </section>
+
+        <section id="generatorPanel" style="display:none">
+          <div class="home-tools" style="margin-top:14px">
+            <input id="topic" type="text" placeholder="주제 (예: 연애 갈등 대화 스타일)" />
+            <input id="audience" type="text" placeholder="대상 (예: 20~30대 직장인)" />
+          </div>
+
+          <div class="home-tools">
+            <input id="tone" type="text" placeholder="톤 (예: 가볍고 현실적인 조언)" />
+            <select id="questionCount">
+              <option value="8">8문항</option>
+              <option value="10" selected>10문항</option>
+              <option value="12">12문항</option>
+            </select>
+            <button class="primary" id="btnGenerate" type="button">AI로 만들기</button>
+          </div>
+
+          <p id="genStatus" class="search-meta">주제/대상을 입력하고 생성 버튼을 눌러주세요.</p>
+
+          <div class="card mini" id="resultCard" style="padding:14px;margin-top:12px;display:none">
+            <h4 id="resultTitle">생성 완료</h4>
+            <p id="resultMeta" class="note" style="margin:0 0 8px"></p>
             <div class="btns">
-              <button id="btnCopyJson" type="button">JSON 복사</button>
-              <button id="btnDownloadData" type="button">tests/data용 JS 다운로드</button>
-              <button id="btnDownloadHtml" type="button">tests용 HTML 다운로드</button>
+              <button class="primary" id="btnStartNow" type="button">바로 테스트 시작</button>
+              <button id="btnRegenerate" type="button">다시 생성</button>
             </div>
           </div>
-        </details>
+
+          <details style="margin-top:12px">
+            <summary style="cursor:pointer;font-weight:700">고급 옵션 (JSON 확인/다운로드)</summary>
+            <div class="card mini" style="padding:14px;margin-top:10px">
+              <textarea id="resultJson" style="width:100%;min-height:220px;background:rgba(0,0,0,.15);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px"></textarea>
+              <div class="btns">
+                <button id="btnCopyJson" type="button">JSON 복사</button>
+                <button id="btnDownloadData" type="button">tests/data용 JS 다운로드</button>
+                <button id="btnDownloadHtml" type="button">tests용 HTML 다운로드</button>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <section class="card mini" style="padding:14px;margin-top:12px">
+          <h4>내가 만든 테스트 보관함</h4>
+          <div id="libraryEmpty" class="note">아직 생성된 테스트가 없습니다.</div>
+          <div id="libraryList" class="choices"></div>
+        </section>
       </main>
     </div>
   </div>
@@ -73,68 +103,47 @@
   <script>
     const $ = (id) => document.getElementById(id);
     const GENERATED_TEST_KEY = "generatedTestDraft";
+    const GENERATED_TEST_META_KEY = "generatedTestMeta";
+    const GEN_TESTS_KEY = "generatedTestsV1";
+    const GEN_WALLET_KEY = "genCreditsV1";
+    let currentUser = null;
+    let latestRecord = null;
 
+    function safeParse(raw, fallback) { try { return JSON.parse(raw || ""); } catch (e) { return fallback; } }
     function setThemeToggle() {
-      const themeToggle = $("themeToggle");
-      if (!themeToggle) return;
+      const t = $("themeToggle");
+      if (!t) return;
       const isLight = document.documentElement.classList.contains("light-theme");
-      themeToggle.textContent = isLight ? "☀️" : "🌙";
-      if (typeof window.toggleTheme === "function") {
-        themeToggle.addEventListener("click", toggleTheme);
-      }
+      t.textContent = isLight ? "☀️" : "🌙";
+      if (typeof window.toggleTheme === "function") t.addEventListener("click", toggleTheme);
     }
+    function safeTrack(name, data) { if (typeof window.track === "function") window.track(name, data || {}); }
 
-    function safeTrack(eventName, data) {
-      if (typeof window.track === "function") {
-        window.track(eventName, data || {});
-      }
-    }
-
-    function initGeneratorStatus() {
-      const status = $("genStatus");
-      if (!status) return;
-      const hasKey = !!String(window.GEMINI_API_KEY || "").trim();
-      status.textContent = hasKey
-        ? "준비 완료. 주제/대상을 입력하고 생성 버튼을 눌러주세요."
-        : "설정 오류: Gemini API 키를 읽지 못했습니다.";
-    }
+    function getAllTests() { const v = safeParse(localStorage.getItem(GEN_TESTS_KEY), []); return Array.isArray(v) ? v : []; }
+    function saveAllTests(v) { localStorage.setItem(GEN_TESTS_KEY, JSON.stringify(v || [])); }
+    function getWallet() { const v = safeParse(localStorage.getItem(GEN_WALLET_KEY), {}); return v && typeof v === "object" ? v : {}; }
+    function getCredits(userId) { return Number(getWallet()[userId] || 0); }
+    function setCredits(userId, value) { const w = getWallet(); w[userId] = Math.max(0, Number(value || 0)); localStorage.setItem(GEN_WALLET_KEY, JSON.stringify(w)); }
 
     function slugify(text) {
-      return String(text || "")
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9가-힣\s-]/g, "")
-        .replace(/\s+/g, "-")
-        .replace(/-+/g, "-")
-        .replace(/^-|-$/g, "") || "new-test";
+      return String(text || "").trim().toLowerCase().replace(/[^a-z0-9가-힣\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "new-test";
     }
-
-    function sanitizeKeyName(text, idx) {
-      const k = String(text || "")
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9가-힣]/g, "");
-      return k || `type${idx + 1}`;
-    }
-
+    function sanitizeKeyName(text, idx) { const k = String(text || "").trim().toLowerCase().replace(/[^a-z0-9가-힣]/g, ""); return k || `type${idx + 1}`; }
     function extractJson(text) {
       const raw = String(text || "").trim();
       if (!raw) throw new Error("응답이 비어 있습니다.");
       const fence = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
-      const candidate = fence ? fence[1].trim() : raw;
-      return JSON.parse(candidate);
+      return JSON.parse((fence ? fence[1] : raw).trim());
     }
 
     function validateAndNormalize(testObj, fallbackSlug) {
       if (!testObj || typeof testObj !== "object") throw new Error("JSON 객체가 아닙니다.");
-
       const typesRaw = Array.isArray(testObj.types) ? testObj.types.slice(0, 4) : [];
       if (typesRaw.length < 4) throw new Error("types는 4개가 필요합니다.");
-
       const typeKeys = typesRaw.map((x, i) => sanitizeKeyName(x, i));
       if (new Set(typeKeys).size !== 4) throw new Error("types 키가 중복되었습니다.");
 
-      const normalized = {
+      const out = {
         slug: slugify(testObj.slug || fallbackSlug),
         badge: String(testObj.badge || "AI 테스트"),
         storageKey: "",
@@ -145,54 +154,39 @@
         results: {},
         questions: []
       };
-      normalized.storageKey = `lastResult_${normalized.slug}`;
+      out.storageKey = `lastResult_${out.slug}`;
 
-      if (!testObj.results || typeof testObj.results !== "object") {
-        throw new Error("results 객체가 필요합니다.");
-      }
-
+      const resultsObj = testObj.results || {};
       typeKeys.forEach((k, i) => {
-        const source = testObj.results[k] || Object.values(testObj.results)[i] || {};
-        normalized.results[k] = {
-          emoji: String(source.emoji || "✨"),
-          title: String(source.title || `${k}형`),
-          desc: String(source.desc || "설명 준비 중"),
-          tags: Array.isArray(source.tags) ? source.tags.slice(0, 4).map(String) : [],
-          strengths: Array.isArray(source.strengths) ? source.strengths.slice(0, 4).map(String) : [],
-          pitfalls: Array.isArray(source.pitfalls) ? source.pitfalls.slice(0, 4).map(String) : [],
-          routine: Array.isArray(source.routine) ? source.routine.slice(0, 4).map(String) : []
+        const s = resultsObj[k] || Object.values(resultsObj)[i] || {};
+        out.results[k] = {
+          emoji: String(s.emoji || "✨"), title: String(s.title || `${k}형`), desc: String(s.desc || "설명 준비 중"),
+          tags: Array.isArray(s.tags) ? s.tags.slice(0, 4).map(String) : [],
+          strengths: Array.isArray(s.strengths) ? s.strengths.slice(0, 4).map(String) : [],
+          pitfalls: Array.isArray(s.pitfalls) ? s.pitfalls.slice(0, 4).map(String) : [],
+          routine: Array.isArray(s.routine) ? s.routine.slice(0, 4).map(String) : []
         };
       });
 
       const qs = Array.isArray(testObj.questions) ? testObj.questions : [];
       if (qs.length < 6) throw new Error("questions는 최소 6개 이상 필요합니다.");
-
-      normalized.questions = qs.map((q, qIndex) => {
+      out.questions = qs.map((q, qi) => {
         const choices = Array.isArray(q.c) ? q.c : [];
-        if (choices.length < 4) throw new Error(`${qIndex + 1}번 문항 선택지는 4개 필요합니다.`);
+        if (choices.length < 4) throw new Error(`${qi + 1}번 문항 선택지는 4개 필요합니다.`);
         return {
-          q: String(q.q || `${qIndex + 1}번 질문`),
-          c: choices.slice(0, 4).map((ch, cIndex) => {
+          q: String(q.q || `${qi + 1}번 질문`),
+          c: choices.slice(0, 4).map((ch, ci) => {
             const score = {};
-            typeKeys.forEach((k) => {
-              const v = ch?.s?.[k];
-              score[k] = Number.isFinite(v) ? Number(v) : 0;
-            });
-            if (!Object.values(score).some((v) => v > 0)) {
-              score[typeKeys[cIndex % 4]] = 2;
-            }
-            return { t: String(ch?.t || `선택지 ${cIndex + 1}`), s: score };
+            typeKeys.forEach((k) => { const v = ch?.s?.[k]; score[k] = Number.isFinite(v) ? Number(v) : 0; });
+            if (!Object.values(score).some((v) => v > 0)) score[typeKeys[ci % 4]] = 2;
+            return { t: String(ch?.t || `선택지 ${ci + 1}`), s: score };
           })
         };
       });
-
-      return normalized;
+      return out;
     }
 
-    function toDataJsText(obj) {
-      return "window.TEST=" + JSON.stringify(obj, null, 2) + ";\n";
-    }
-
+    function toDataJsText(obj) { return "window.TEST=" + JSON.stringify(obj, null, 2) + ";\n"; }
     function toTestHtmlText(obj) {
       return `<!doctype html><html lang="ko"><head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -203,35 +197,63 @@
 <meta property="og:description" content="${obj.ogDesc}" />
 <meta property="og:type" content="website" />
 <meta property="og:image" content="https://my-site-five-ecru.vercel.app/og.png" />
-<link rel="stylesheet" href="/style.css"/><script src="/utils.js"><\\/script><script src="/analytics-consent.js" defer><\\/script>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6051453612452994" crossorigin="anonymous"><\\/script>
+<link rel="stylesheet" href="/style.css"/><script src="/utils.js"><\/script><script src="/analytics-consent.js" defer><\/script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6051453612452994" crossorigin="anonymous"><\/script>
 </head><body>
 <script src="/tests/data/${obj.slug}.js"><\/script>
 <script src="/tests/shared-shell.js"><\/script>
-</body></html>
-`;
+</body></html>\n`;
     }
 
     function downloadText(filename, text) {
       const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     }
 
-    function saveGeneratedTest(testObj) {
-      sessionStorage.setItem(GENERATED_TEST_KEY, JSON.stringify(testObj));
+    function saveRecord(testObj) {
+      const id = "g_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+      const reportDownloads = Number((window.TEST_GENERATION_PACKAGE && window.TEST_GENERATION_PACKAGE.reportDownloadsPerTest) || 2);
+      const rec = { id, ownerId: currentUser.id, createdAt: Date.now(), paid: true, reportDownloadsRemaining: reportDownloads, test: testObj };
+      const all = getAllTests(); all.unshift(rec); saveAllTests(all); return rec;
     }
 
-    function startGeneratedTest() {
-      if (!latest) return;
-      saveGeneratedTest(latest);
+    function openRecord(rec) {
+      sessionStorage.setItem(GENERATED_TEST_KEY, JSON.stringify(rec.test));
+      sessionStorage.setItem(GENERATED_TEST_META_KEY, JSON.stringify({ id: rec.id, paid: !!rec.paid, reportDownloadsRemaining: Number(rec.reportDownloadsRemaining || 0) }));
       location.href = "/play-generated.html";
+    }
+
+    function renderLibrary() {
+      const list = $("libraryList"); const empty = $("libraryEmpty"); list.innerHTML = "";
+      if (!currentUser) { empty.style.display = "block"; empty.textContent = "로그인 후 생성한 테스트가 여기에 보관됩니다."; return; }
+      const mine = getAllTests().filter((x) => x.ownerId === currentUser.id);
+      if (!mine.length) { empty.style.display = "block"; empty.textContent = "아직 생성된 테스트가 없습니다."; return; }
+      empty.style.display = "none";
+      mine.forEach((it) => {
+        const d = document.createElement("div"); d.className = "choice";
+        d.innerHTML = `<div style="font-weight:700">${it.test?.ogTitle || "AI 생성 테스트"}</div><div class="note" style="margin:0">${(it.test?.questions||[]).length}문항 · 리포트 남은 다운로드 ${Number(it.reportDownloadsRemaining || 0)}회</div>`;
+        const b = document.createElement("button"); b.type = "button"; b.className = "primary"; b.textContent = "이 테스트 시작"; b.style.marginTop = "8px"; b.onclick = () => openRecord(it);
+        d.appendChild(b); list.appendChild(d);
+      });
+    }
+
+    function renderAuthState() {
+      currentUser = window.Auth && window.Auth.getCurrentUser ? window.Auth.getCurrentUser() : null;
+      const authCard = $("authCard"), memberCard = $("memberCard"), panel = $("generatorPanel"), status = $("genStatus");
+      if (!currentUser) {
+        authCard.style.display = "block"; memberCard.style.display = "none"; panel.style.display = "none";
+        status.textContent = "로그인 후 생성권 결제로 사용할 수 있습니다.";
+        renderLibrary(); return;
+      }
+      authCard.style.display = "none"; memberCard.style.display = "block"; panel.style.display = "block";
+      const credits = getCredits(currentUser.id);
+      $("memberTitle").textContent = `${currentUser.email} 님`;
+      $("memberMeta").textContent = `보유 생성권: ${credits}회`;
+      if (!String(window.GEMINI_API_KEY || "").trim()) status.textContent = "설정 오류: Gemini API 키를 읽지 못했습니다.";
+      else if (credits <= 0) status.textContent = "생성권이 없습니다. 생성권 결제하기를 눌러주세요.";
+      else status.textContent = "준비 완료. 생성권 1회가 차감됩니다.";
+      renderLibrary();
     }
 
     async function generateWithGemini() {
@@ -241,14 +263,17 @@
       const audience = ($("audience").value || "").trim();
       const tone = ($("tone").value || "").trim();
       const questionCount = Number($("questionCount").value || 10);
-      const status = $("genStatus");
-      const btnGenerate = $("btnGenerate");
-
+      const status = $("genStatus"); const btn = $("btnGenerate");
+      if (!currentUser) throw new Error("로그인이 필요합니다.");
       if (!apiKey) throw new Error("Gemini API 키 설정이 필요합니다.");
       if (!topic) throw new Error("주제를 입력해주세요.");
 
-      const systemPrompt =
-`너는 한국어 심리테스트 기획자다.
+      const before = getCredits(currentUser.id);
+      if (before <= 0) throw new Error("생성권이 부족합니다. 결제 후 다시 시도해주세요.");
+      setCredits(currentUser.id, before - 1);
+      renderAuthState();
+
+      const systemPrompt = `너는 한국어 심리테스트 기획자다.
 반드시 JSON만 출력해라. 코드블록/설명/주석 금지.
 의학적 진단/치료를 암시하지 말고 재미/콘텐츠 톤으로 작성해라.
 편견, 혐오, 차별 표현 금지.
@@ -263,126 +288,89 @@
     "type1":{"emoji":"✨","title":"...형","desc":"...","tags":["","",""] ,"strengths":["","",""] ,"pitfalls":["",""] ,"routine":["","",""]},
     "type2":{},"type3":{},"type4":{}
   },
-  "questions":[
-    {"q":"질문","c":[
-      {"t":"선택지1","s":{"type1":2,"type2":0,"type3":0,"type4":0}},
-      {"t":"선택지2","s":{"type1":0,"type2":2,"type3":0,"type4":0}},
-      {"t":"선택지3","s":{"type1":0,"type2":0,"type3":2,"type4":0}},
-      {"t":"선택지4","s":{"type1":0,"type2":0,"type3":0,"type4":2}}
-    ]}
-  ]
+  "questions":[{"q":"질문","c":[{"t":"선택지1","s":{"type1":2,"type2":0,"type3":0,"type4":0}},{"t":"선택지2","s":{"type1":0,"type2":2,"type3":0,"type4":0}},{"t":"선택지3","s":{"type1":0,"type2":0,"type3":2,"type4":0}},{"t":"선택지4","s":{"type1":0,"type2":0,"type3":0,"type4":2}}]}]
 }`;
+      const userPrompt = `주제: ${topic}\n대상: ${audience || "일반 사용자"}\n톤: ${tone || "가볍고 이해 쉬운"}\n문항 수: ${questionCount}\n출력은 반드시 JSON만.`;
 
-      const userPrompt =
-`주제: ${topic}
-대상: ${audience || "일반 사용자"}
-톤: ${tone || "가볍고 이해 쉬운"}
-문항 수: ${questionCount}
-출력은 반드시 JSON만.`;
-
-      status.textContent = "AI 생성 중...";
-      btnGenerate.disabled = true;
+      status.textContent = "AI 생성 중..."; btn.disabled = true;
       try {
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
         const resp = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
-            generationConfig: {
-              temperature: 0.7,
-              responseMimeType: "application/json"
-            }
-          })
+          body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }], generationConfig: { temperature: 0.7, responseMimeType: "application/json" } })
         });
-        if (!resp.ok) {
-          const txt = await resp.text();
-          throw new Error(`Gemini API 오류: ${resp.status} ${txt.slice(0, 180)}`);
-        }
-
+        if (!resp.ok) throw new Error(`Gemini API 오류: ${resp.status} ${(await resp.text()).slice(0, 180)}`);
         const json = await resp.json();
         const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || "";
         const parsed = extractJson(text);
         const normalized = validateAndNormalize(parsed, slugify(topic));
+        normalized.questions = normalized.questions.slice(0, questionCount);
 
         $("resultJson").value = JSON.stringify(normalized, null, 2);
         $("resultCard").style.display = "block";
         $("resultTitle").textContent = normalized.ogTitle;
         $("resultMeta").textContent = `${normalized.questions.length}문항 · ${normalized.types.length}유형 생성 완료`;
+
+        latestRecord = saveRecord(normalized);
         status.textContent = "생성 완료. 바로 테스트를 시작해보세요.";
-        safeTrack("ai_test_generated", {
-          slug: normalized.slug,
-          question_count: normalized.questions.length,
-          model
-        });
-        return normalized;
+        safeTrack("ai_test_generated", { slug: normalized.slug, question_count: normalized.questions.length, model });
+        renderAuthState();
+      } catch (e) {
+        setCredits(currentUser.id, before);
+        renderAuthState();
+        throw e;
       } finally {
-        btnGenerate.disabled = false;
+        btn.disabled = false;
       }
     }
 
-    let latest = null;
+    function parseRecordFromTextarea() {
+      const obj = validateAndNormalize(JSON.parse($("resultJson").value), "new-test");
+      latestRecord = { id: "manual", paid: true, reportDownloadsRemaining: 2, test: obj };
+      return latestRecord;
+    }
+
+    $("btnLogin").addEventListener("click", () => {
+      try { window.Auth.login($("loginEmail").value, $("loginPassword").value); $("authStatus").textContent = "로그인 완료"; renderAuthState(); }
+      catch (e) { $("authStatus").textContent = `실패: ${e.message || e}`; }
+    });
+    $("btnSignup").addEventListener("click", () => {
+      try { window.Auth.register($("loginEmail").value, $("loginPassword").value, ""); $("authStatus").textContent = "회원가입 및 로그인 완료"; renderAuthState(); }
+      catch (e) { $("authStatus").textContent = `실패: ${e.message || e}`; }
+    });
+    $("btnLogout").addEventListener("click", () => { window.Auth.logout(); latestRecord = null; renderAuthState(); });
 
     $("btnGenerate").addEventListener("click", async () => {
       $("genStatus").textContent = "요청 준비 중...";
-      try {
-        latest = await generateWithGemini();
-      } catch (e) {
-        $("genStatus").textContent = `실패: ${e.message || e}`;
-      }
+      try { await generateWithGemini(); }
+      catch (e) { $("genStatus").textContent = `실패: ${e.message || e}`; }
     });
 
     $("btnStartNow").addEventListener("click", () => {
-      if (!latest) {
-        $("genStatus").textContent = "먼저 테스트를 생성해주세요.";
-        return;
-      }
-      startGeneratedTest();
+      if (!latestRecord) { $("genStatus").textContent = "먼저 테스트를 생성해주세요."; return; }
+      openRecord(latestRecord);
     });
-
     $("btnRegenerate").addEventListener("click", async () => {
-      try {
-        latest = await generateWithGemini();
-      } catch (e) {
-        $("genStatus").textContent = `실패: ${e.message || e}`;
-      }
+      try { await generateWithGemini(); }
+      catch (e) { $("genStatus").textContent = `실패: ${e.message || e}`; }
     });
 
     $("btnCopyJson").addEventListener("click", async () => {
-      const text = $("resultJson").value || "";
-      if (!text.trim()) return;
-      try {
-        await navigator.clipboard.writeText(text);
-        showToast("JSON 복사 완료");
-      } catch (e) {}
+      const text = $("resultJson").value || ""; if (!text.trim()) return;
+      try { await navigator.clipboard.writeText(text); if (typeof showToast === "function") showToast("JSON 복사 완료"); } catch (e) {}
     });
-
     $("btnDownloadData").addEventListener("click", () => {
-      if (!latest) {
-        try {
-          latest = validateAndNormalize(JSON.parse($("resultJson").value), "new-test");
-        } catch (e) {
-          $("genStatus").textContent = `다운로드 실패: ${e.message || e}`;
-          return;
-        }
-      }
-      downloadText(`${latest.slug}.js`, toDataJsText(latest));
+      const rec = latestRecord || parseRecordFromTextarea();
+      downloadText(`${rec.test.slug}.js`, toDataJsText(rec.test));
     });
-
     $("btnDownloadHtml").addEventListener("click", () => {
-      if (!latest) {
-        try {
-          latest = validateAndNormalize(JSON.parse($("resultJson").value), "new-test");
-        } catch (e) {
-          $("genStatus").textContent = `다운로드 실패: ${e.message || e}`;
-          return;
-        }
-      }
-      downloadText(`${latest.slug}.html`, toTestHtmlText(latest));
+      const rec = latestRecord || parseRecordFromTextarea();
+      downloadText(`${rec.test.slug}.html`, toTestHtmlText(rec.test));
     });
 
     setThemeToggle();
-    initGeneratorStatus();
+    renderAuthState();
   </script>
 </body>
 </html>
