@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://generativelanguage.googleapis.com; font-src 'self' data:; frame-src https:;" />
-  <title>AI 심리테스트 제작기</title>
-  <meta name="description" content="Gemini API로 심리테스트 데이터를 생성하고 바로 다운로드하세요." />
+  <title>AI 심리테스트 만들기</title>
+  <meta name="description" content="주제만 입력하면 AI가 심리테스트를 만들고 바로 진행할 수 있습니다." />
   <link rel="stylesheet" href="/style.css" />
   <script src="/utils.js"></script>
   <script src="/gemini-config.js"></script>
@@ -15,8 +15,8 @@
   <div class="wrap">
     <header>
       <div class="brand">
-        <b>AI 심리테스트 제작기</b>
-        <span>Gemini API로 테스트 데이터 생성</span>
+        <b>AI 심리테스트 만들기</b>
+        <span>주제 입력 → 생성 → 바로 테스트 시작</span>
       </div>
       <div style="display:flex;gap:12px;align-items:center">
         <button class="theme-toggle" id="themeToggle" aria-label="테마 전환">🌙</button>
@@ -24,20 +24,12 @@
       </div>
     </header>
 
-    <div class="grid" style="grid-template-columns:minmax(0,1.4fr) minmax(300px,.9fr)">
+    <div class="grid" style="grid-template-columns:minmax(0,1fr)">
       <main class="card hero">
-        <h1>원하는 주제로 테스트 생성</h1>
-        <p>API 키는 브라우저에만 사용됩니다. 진단/의료 표현은 자동으로 제한합니다.</p>
+        <h1>원하는 테스트를 바로 만들어보세요</h1>
+        <p>의학적 진단이 아닌 재미/콘텐츠용 테스트로 생성됩니다.</p>
 
         <div class="home-tools" style="margin-top:14px">
-          <input id="apiKey" type="password" placeholder="Gemini API Key" aria-label="Gemini API Key" />
-          <select id="model" aria-label="모델 선택">
-            <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-            <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-          </select>
-        </div>
-
-        <div class="home-tools">
           <input id="topic" type="text" placeholder="주제 (예: 연애 갈등 대화 스타일)" aria-label="테스트 주제" />
           <input id="audience" type="text" placeholder="대상 (예: 20~30대 직장인)" aria-label="타깃 대상" />
         </div>
@@ -49,43 +41,38 @@
             <option value="10" selected>10문항</option>
             <option value="12">12문항</option>
           </select>
-          <button class="primary" id="btnGenerate" type="button">AI 생성</button>
+          <button class="primary" id="btnGenerate" type="button">AI로 만들기</button>
         </div>
 
-        <p id="genStatus" class="search-meta">입력 후 AI 생성을 눌러주세요.</p>
+        <p id="genStatus" class="search-meta">주제/대상을 입력하고 생성 버튼을 눌러주세요.</p>
 
-        <div class="card mini" style="padding:14px;margin-top:12px">
-          <h4>생성 결과(JSON)</h4>
-          <textarea id="resultJson" style="width:100%;min-height:340px;background:rgba(0,0,0,.15);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px"></textarea>
+        <div class="card mini" id="resultCard" style="padding:14px;margin-top:12px;display:none">
+          <h4 id="resultTitle">생성 완료</h4>
+          <p id="resultMeta" class="note" style="margin:0 0 8px"></p>
           <div class="btns">
-            <button id="btnCopyJson" type="button">JSON 복사</button>
-            <button id="btnDownloadData" type="button">tests/data용 JS 다운로드</button>
-            <button id="btnDownloadHtml" type="button">tests용 HTML 다운로드</button>
+            <button class="primary" id="btnStartNow" type="button">바로 테스트 시작</button>
+            <button id="btnRegenerate" type="button">다시 생성</button>
           </div>
         </div>
-      </main>
 
-      <aside class="card side">
-        <h3>사용 순서</h3>
-        <ol class="top-list">
-          <li>주제/톤 입력 후 생성</li>
-          <li>결과 검토 후 다운로드</li>
-          <li>`tests/data/{slug}.js`에 추가</li>
-          <li>`tests/{slug}.html` 파일 생성</li>
-          <li>홈 카드/사이트맵에 링크 추가</li>
-        </ol>
-        <h3 style="margin-top:16px">주의</h3>
-        <ul class="top-list">
-          <li>의학적 진단 문구 금지</li>
-          <li>낙인/혐오 표현 금지</li>
-          <li>재미/콘텐츠용 고지 유지</li>
-        </ul>
-      </aside>
+        <details style="margin-top:12px">
+          <summary style="cursor:pointer;font-weight:700">고급 옵션 (JSON 확인/다운로드)</summary>
+          <div class="card mini" style="padding:14px;margin-top:10px">
+            <textarea id="resultJson" style="width:100%;min-height:260px;background:rgba(0,0,0,.15);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px"></textarea>
+            <div class="btns">
+              <button id="btnCopyJson" type="button">JSON 복사</button>
+              <button id="btnDownloadData" type="button">tests/data용 JS 다운로드</button>
+              <button id="btnDownloadHtml" type="button">tests용 HTML 다운로드</button>
+            </div>
+          </div>
+        </details>
+      </main>
     </div>
   </div>
 
   <script>
     const $ = (id) => document.getElementById(id);
+    const GENERATED_TEST_KEY = "generatedTestDraft";
 
     function setThemeToggle() {
       const themeToggle = $("themeToggle");
@@ -93,14 +80,6 @@
       const isLight = document.documentElement.classList.contains("light-theme");
       themeToggle.textContent = isLight ? "☀️" : "🌙";
       themeToggle.addEventListener("click", toggleTheme);
-    }
-
-    function setApiKeyFromConfig() {
-      const apiInput = $("apiKey");
-      if (!apiInput) return;
-      if (window.GEMINI_API_KEY && !apiInput.value) {
-        apiInput.value = String(window.GEMINI_API_KEY);
-      }
     }
 
     function slugify(text) {
@@ -136,16 +115,15 @@
       if (typesRaw.length < 4) throw new Error("types는 4개가 필요합니다.");
 
       const typeKeys = typesRaw.map((x, i) => sanitizeKeyName(x, i));
-      const typeSet = new Set(typeKeys);
-      if (typeSet.size !== 4) throw new Error("types 키가 중복되었습니다.");
+      if (new Set(typeKeys).size !== 4) throw new Error("types 키가 중복되었습니다.");
 
       const normalized = {
         slug: slugify(testObj.slug || fallbackSlug),
-        badge: String(testObj.badge || "테스트"),
+        badge: String(testObj.badge || "AI 테스트"),
         storageKey: "",
         ogTitle: String(testObj.ogTitle || testObj.title || "AI 심리테스트"),
         ogDesc: String(testObj.ogDesc || "AI로 생성한 심리테스트"),
-        ogImage: 'location.origin + "/og.png"',
+        ogImage: location.origin + "/og.png",
         types: typeKeys,
         results: {},
         questions: []
@@ -155,6 +133,7 @@
       if (!testObj.results || typeof testObj.results !== "object") {
         throw new Error("results 객체가 필요합니다.");
       }
+
       typeKeys.forEach((k, i) => {
         const source = testObj.results[k] || Object.values(testObj.results)[i] || {};
         normalized.results[k] = {
@@ -185,10 +164,7 @@
             if (!Object.values(score).some((v) => v > 0)) {
               score[typeKeys[cIndex % 4]] = 2;
             }
-            return {
-              t: String(ch?.t || `선택지 ${cIndex + 1}`),
-              s: score
-            };
+            return { t: String(ch?.t || `선택지 ${cIndex + 1}`), s: score };
           })
         };
       });
@@ -231,16 +207,27 @@
       URL.revokeObjectURL(url);
     }
 
+    function saveGeneratedTest(testObj) {
+      sessionStorage.setItem(GENERATED_TEST_KEY, JSON.stringify(testObj));
+    }
+
+    function startGeneratedTest() {
+      if (!latest) return;
+      saveGeneratedTest(latest);
+      location.href = "/play-generated.html";
+    }
+
     async function generateWithGemini() {
-      const apiKey = ($("apiKey").value || "").trim();
-      const model = $("model").value;
+      const apiKey = String(window.GEMINI_API_KEY || "").trim();
+      const model = "gemini-2.5-flash";
       const topic = ($("topic").value || "").trim();
       const audience = ($("audience").value || "").trim();
       const tone = ($("tone").value || "").trim();
       const questionCount = Number($("questionCount").value || 10);
       const status = $("genStatus");
+      const btnGenerate = $("btnGenerate");
 
-      if (!apiKey) throw new Error("API Key를 입력해주세요.");
+      if (!apiKey) throw new Error("Gemini API 키 설정이 필요합니다.");
       if (!topic) throw new Error("주제를 입력해주세요.");
 
       const systemPrompt =
@@ -248,7 +235,7 @@
 반드시 JSON만 출력해라. 코드블록/설명/주석 금지.
 의학적 진단/치료를 암시하지 말고 재미/콘텐츠 톤으로 작성해라.
 편견, 혐오, 차별 표현 금지.
-구조:
+아래 구조를 지켜라:
 {
   "slug":"영문소문자-하이픈",
   "badge":"짧은 배지",
@@ -256,10 +243,8 @@
   "ogDesc":"한 줄 소개",
   "types":["type1","type2","type3","type4"],
   "results":{
-    "type1":{"emoji":"✨","title":"...형","desc":"...","tags":["","",""],"strengths":["","",""],"pitfalls":["",""],"routine":["","",""]},
-    "type2":{...},
-    "type3":{...},
-    "type4":{...}
+    "type1":{"emoji":"✨","title":"...형","desc":"...","tags":["","",""] ,"strengths":["","",""] ,"pitfalls":["",""] ,"routine":["","",""]},
+    "type2":{},"type3":{},"type4":{}
   },
   "questions":[
     {"q":"질문","c":[
@@ -276,9 +261,11 @@
 대상: ${audience || "일반 사용자"}
 톤: ${tone || "가볍고 이해 쉬운"}
 문항 수: ${questionCount}
-출력은 반드시 위 JSON 형식만.`;
+출력은 반드시 JSON만.`;
 
       status.textContent = "AI 생성 중...";
+      btnGenerate.disabled = true;
+
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
       const resp = await fetch(endpoint, {
         method: "POST",
@@ -291,23 +278,50 @@
           }
         })
       });
+      btnGenerate.disabled = false;
+
       if (!resp.ok) {
         const txt = await resp.text();
         throw new Error(`Gemini API 오류: ${resp.status} ${txt.slice(0, 180)}`);
       }
+
       const json = await resp.json();
       const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || "";
       const parsed = extractJson(text);
       const normalized = validateAndNormalize(parsed, slugify(topic));
 
       $("resultJson").value = JSON.stringify(normalized, null, 2);
-      status.textContent = `완료: ${normalized.ogTitle} (${normalized.questions.length}문항)`;
+      $("resultCard").style.display = "block";
+      $("resultTitle").textContent = normalized.ogTitle;
+      $("resultMeta").textContent = `${normalized.questions.length}문항 · ${normalized.types.length}유형 생성 완료`;
+      status.textContent = "생성 완료. 바로 테스트를 시작해보세요.";
+      track("ai_test_generated", {
+        slug: normalized.slug,
+        question_count: normalized.questions.length,
+        model
+      });
       return normalized;
     }
 
     let latest = null;
 
     $("btnGenerate").addEventListener("click", async () => {
+      try {
+        latest = await generateWithGemini();
+      } catch (e) {
+        $("genStatus").textContent = `실패: ${e.message || e}`;
+      }
+    });
+
+    $("btnStartNow").addEventListener("click", () => {
+      if (!latest) {
+        $("genStatus").textContent = "먼저 테스트를 생성해주세요.";
+        return;
+      }
+      startGeneratedTest();
+    });
+
+    $("btnRegenerate").addEventListener("click", async () => {
       try {
         latest = await generateWithGemini();
       } catch (e) {
@@ -349,7 +363,6 @@
     });
 
     setThemeToggle();
-    setApiKeyFromConfig();
   </script>
 </body>
 </html>

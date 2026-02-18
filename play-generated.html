@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://pagead2.googlesyndication.com https://t1.kakaocdn.net https://developers.kakao.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://kapi.kakao.com; font-src 'self' data:; frame-src https:;" />
+  <title>생성 테스트 진행</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/utils.js"></script>
+  <script src="/analytics-consent.js" defer></script>
+</head>
+<body>
+  <script>
+    (function () {
+      const raw = sessionStorage.getItem("generatedTestDraft");
+      if (!raw) {
+        document.body.innerHTML = `
+        <div class="wrap">
+          <main class="card hero">
+            <h1>생성된 테스트가 없습니다</h1>
+            <p>AI 테스트 만들기 페이지에서 먼저 생성해주세요.</p>
+            <div class="btns">
+              <a class="go" href="/create-test.html">AI 테스트 만들러 가기</a>
+              <a class="pill" href="/">🏠 홈</a>
+            </div>
+          </main>
+        </div>`;
+        return;
+      }
+
+      let test = null;
+      try {
+        test = JSON.parse(raw);
+      } catch (e) {
+        document.body.innerHTML = "<p style='padding:20px'>테스트 데이터를 읽을 수 없습니다.</p>";
+        return;
+      }
+
+      if (!test || typeof test !== "object") {
+        document.body.innerHTML = "<p style='padding:20px'>테스트 데이터가 올바르지 않습니다.</p>";
+        return;
+      }
+
+      if (!test.slug) test.slug = "generated";
+      if (!test.storageKey) test.storageKey = `lastResult_${test.slug}`;
+      if (!test.ogTitle) test.ogTitle = "AI 생성 테스트";
+      if (!test.ogDesc) test.ogDesc = "AI가 생성한 심리테스트";
+      if (!test.ogImage) test.ogImage = location.origin + "/og.png";
+
+      window.TEST = test;
+
+      const script = document.createElement("script");
+      script.src = "/tests/shared-shell.js";
+      document.body.appendChild(script);
+    })();
+  </script>
+</body>
+</html>
