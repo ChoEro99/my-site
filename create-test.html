@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://generativelanguage.googleapis.com; font-src 'self' data:; frame-src https:;" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://generativelanguage.googleapis.com; font-src 'self' data:; frame-src https://accounts.google.com https:;" />
   <title>AI 심리테스트 만들기</title>
   <meta name="description" content="로그인 후 결제로 AI 심리테스트를 생성하고 보관할 수 있습니다." />
   <link rel="stylesheet" href="/style.css" />
@@ -11,6 +11,8 @@
   <script src="/auth.js"></script>
   <script src="/pay-config.js"></script>
   <script src="/gemini-config.js"></script>
+  <script src="/google-auth-config.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="/analytics-consent.js" defer></script>
 </head>
 <body>
@@ -38,6 +40,9 @@
             <input id="loginPassword" type="password" placeholder="비밀번호 (6자 이상)" />
             <button id="btnLogin" type="button">로그인</button>
             <button id="btnSignup" type="button">회원가입</button>
+          </div>
+          <div style="margin-top:10px">
+            <div id="googleLoginWrap"></div>
           </div>
           <p id="authStatus" class="search-meta">로그인 후 생성 기능을 사용할 수 있습니다.</p>
         </section>
@@ -108,6 +113,7 @@
     const GEN_WALLET_KEY = "genCreditsV1";
     let currentUser = null;
     let latestRecord = null;
+    let googleLoginReady = false;
 
     function safeParse(raw, fallback) { try { return JSON.parse(raw || ""); } catch (e) { return fallback; } }
     function setThemeToggle() {
@@ -118,6 +124,53 @@
       if (typeof window.toggleTheme === "function") t.addEventListener("click", toggleTheme);
     }
     function safeTrack(name, data) { if (typeof window.track === "function") window.track(name, data || {}); }
+    function setAuthStatus(msg) {
+      const el = $("authStatus");
+      if (el) el.textContent = msg;
+    }
+
+    function initGoogleLogin() {
+      const wrap = $("googleLoginWrap");
+      if (!wrap) return;
+      if (currentUser) {
+        wrap.innerHTML = "";
+        return;
+      }
+
+      const clientId = String(window.GOOGLE_CLIENT_ID || "").trim();
+      if (!clientId) {
+        setAuthStatus("Google Client ID가 설정되지 않았습니다.");
+        return;
+      }
+      if (!(window.google && window.google.accounts && window.google.accounts.id)) {
+        setAuthStatus("Google 로그인 스크립트를 불러오는 중입니다...");
+        return;
+      }
+      if (!googleLoginReady) {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: (response) => {
+            try {
+              window.Auth.loginWithGoogleCredential(response.credential);
+              setAuthStatus("Google 로그인 완료");
+              renderAuthState();
+            } catch (e) {
+              setAuthStatus(`실패: ${e.message || e}`);
+            }
+          }
+        });
+        googleLoginReady = true;
+      }
+      wrap.innerHTML = "";
+      window.google.accounts.id.renderButton(wrap, {
+        type: "standard",
+        theme: "outline",
+        size: "large",
+        text: "signin_with",
+        shape: "pill",
+        width: 280
+      });
+    }
 
     function getAllTests() { const v = safeParse(localStorage.getItem(GEN_TESTS_KEY), []); return Array.isArray(v) ? v : []; }
     function saveAllTests(v) { localStorage.setItem(GEN_TESTS_KEY, JSON.stringify(v || [])); }
@@ -242,17 +295,26 @@
       currentUser = window.Auth && window.Auth.getCurrentUser ? window.Auth.getCurrentUser() : null;
       const authCard = $("authCard"), memberCard = $("memberCard"), panel = $("generatorPanel"), status = $("genStatus");
       if (!currentUser) {
-        authCard.style.display = "block"; memberCard.style.display = "none"; panel.style.display = "none";
-        status.textContent = "로그인 후 생성권 결제로 사용할 수 있습니다.";
+        authCard.style.display = "block"; memberCard.style.display = "none"; panel.style.display = "block";
+        status.textContent = "생성하려면 로그인 + 생성권 결제가 필요합니다.";
+        initGoogleLogin();
         renderLibrary(); return;
       }
-      authCard.style.display = "none"; memberCard.style.display = "block"; panel.style.display = "block";
+      authCard.style.display = "none"; memberCard.style.display = "block";
       const credits = getCredits(currentUser.id);
       $("memberTitle").textContent = `${currentUser.email} 님`;
       $("memberMeta").textContent = `보유 생성권: ${credits}회`;
-      if (!String(window.GEMINI_API_KEY || "").trim()) status.textContent = "설정 오류: Gemini API 키를 읽지 못했습니다.";
-      else if (credits <= 0) status.textContent = "생성권이 없습니다. 생성권 결제하기를 눌러주세요.";
-      else status.textContent = "준비 완료. 생성권 1회가 차감됩니다.";
+      if (!String(window.GEMINI_API_KEY || "").trim()) {
+        status.textContent = "설정 오류: Gemini API 키를 읽지 못했습니다.";
+        panel.style.display = "block";
+      } else if (credits <= 0) {
+        status.textContent = "생성권이 없습니다. 생성 버튼을 누르면 결제 안내가 표시됩니다.";
+        panel.style.display = "block";
+      } else {
+        status.textContent = "준비 완료. 생성권 1회가 차감됩니다.";
+        panel.style.display = "block";
+      }
+      initGoogleLogin();
       renderLibrary();
     }
 
@@ -371,6 +433,7 @@
 
     setThemeToggle();
     renderAuthState();
+    setTimeout(initGoogleLogin, 300);
   </script>
 </body>
 </html>

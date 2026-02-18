@@ -81,10 +81,57 @@
     clearSession();
   }
 
+  function parseJwtPayload(token) {
+    try {
+      const parts = String(token || "").split(".");
+      if (parts.length < 2) return null;
+      const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+      const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+      const json = decodeURIComponent(escape(atob(padded)));
+      return JSON.parse(json);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function loginWithGoogleCredential(credential) {
+    const payload = parseJwtPayload(credential);
+    const email = String(payload?.email || "").trim().toLowerCase();
+    if (!email) throw new Error("Google 계정 이메일을 읽지 못했습니다.");
+
+    const name = String(payload?.name || "").trim();
+    const googleSub = String(payload?.sub || "");
+    const users = getUsers();
+    let user = users.find((u) => u.email === email);
+
+    if (!user) {
+      user = {
+        id: "u_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8),
+        email,
+        passwordHash: "",
+        name,
+        provider: "google",
+        googleSub,
+        createdAt: Date.now()
+      };
+      users.push(user);
+      saveUsers(users);
+    } else {
+      user.provider = user.provider || "google";
+      if (!user.name && name) user.name = name;
+      if (!user.googleSub && googleSub) user.googleSub = googleSub;
+      saveUsers(users);
+    }
+
+    setSession(user);
+    return user;
+  }
+
   window.Auth = {
     getCurrentUser,
     register,
     login,
-    logout
+    logout,
+    loginWithGoogleCredential
   };
 })();
