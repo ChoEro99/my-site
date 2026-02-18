@@ -1,8 +1,11 @@
 <!doctype html><html lang="ko"><head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; connect-src 'self'; font-src 'self' data:; frame-src https:;" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co; font-src 'self' data:; frame-src https:;" />
 <title>심층 분석 PDF</title>
 <link rel="stylesheet" href="/style.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+<script src="/supabase-client.js"></script>
 <script src="/pay-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -23,7 +26,7 @@
 </main></div></div>
 
 <script>
-(function () {
+(async function () {
   const p = new URLSearchParams(location.search);
   const test = p.get('test') || '';
   const result = p.get('result') || '';
@@ -68,7 +71,17 @@
   }
 
   if (source === 'generated') {
-    generatedRecord = getGeneratedRecord();
+    if (window.Supa?.isEnabled && window.Supa.isEnabled() && generatedId) {
+      try {
+        const user = await window.Supa.getCurrentUser();
+        if (user?.id) {
+          generatedRecord = await window.Supa.getGeneratedTest(generatedId, user.id);
+        }
+      } catch (e) {}
+    }
+    if (!generatedRecord) {
+      generatedRecord = getGeneratedRecord();
+    }
     if (!generatedRecord?.paid) {
       alert('생성 결제 기록이 확인되지 않아 리포트를 열 수 없습니다.');
       location.href = '/create-test.html';
@@ -1093,9 +1106,19 @@
       doc.save(`${test || 'test'}_${result || 'result'}_${plan}_report.pdf`);
 
       if (source === 'generated' && generatedRecord) {
-        generatedRecord.reportDownloadsRemaining = Math.max(0, Number(generatedRecord.reportDownloadsRemaining || 0) - 1);
-        generatedRecord.updatedAt = Date.now();
-        saveGeneratedRecord(generatedRecord);
+        if (window.Supa?.isEnabled && window.Supa.isEnabled() && generatedRecord.id) {
+          try {
+            const user = await window.Supa.getCurrentUser();
+            if (user?.id) {
+              const updated = await window.Supa.decrementGeneratedReport(generatedRecord.id, user.id);
+              generatedRecord = updated || generatedRecord;
+            }
+          } catch (e) {}
+        } else {
+          generatedRecord.reportDownloadsRemaining = Math.max(0, Number(generatedRecord.reportDownloadsRemaining || 0) - 1);
+          generatedRecord.updatedAt = Date.now();
+          saveGeneratedRecord(generatedRecord);
+        }
         const paymentTextNow = purchase?.paymentId ? `결제번호 ${purchase.paymentId}` : '결제정보 확인';
         const todayNow = new Date();
         document.getElementById('meta').textContent = `${testTitle} · ${paymentTextNow} · 생성일 ${todayNow.toLocaleDateString('ko-KR')} · 남은 다운로드 ${Number(generatedRecord.reportDownloadsRemaining || 0)}회`;

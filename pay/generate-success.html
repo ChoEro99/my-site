@@ -1,8 +1,11 @@
 <!doctype html><html lang="ko"><head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'; font-src 'self' data:; frame-src https:;" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co; font-src 'self' data:; frame-src https:;" />
 <title>생성권 결제 완료</title>
 <link rel="stylesheet" href="/style.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+<script src="/supabase-client.js"></script>
 <script src="/auth.js"></script>
 <script src="/pay-config.js"></script>
 <script src="/utils.js"></script>
@@ -18,34 +21,47 @@
 </main></div></div>
 <script>
 (function(){
-  const user = window.Auth?.getCurrentUser ? window.Auth.getCurrentUser() : null;
-  if (!user) {
-    alert('로그인이 필요합니다.');
-    location.href = '/create-test.html';
-    return;
+  async function init(){
+    let user = null;
+    if (window.Supa?.isEnabled && window.Supa.isEnabled()) {
+      user = await window.Supa.getCurrentUser();
+    } else {
+      user = window.Auth?.getCurrentUser ? window.Auth.getCurrentUser() : null;
+    }
+    if (!user) {
+      alert('로그인이 필요합니다.');
+      location.href = '/create-test.html';
+      return;
+    }
+
+    const paymentId = new URLSearchParams(location.search).get('paymentId') || `demo_${Date.now()}`;
+    const pkg = window.TEST_GENERATION_PACKAGE || {};
+    const credits = Number(pkg.generationCredits || 1);
+
+    if (window.Supa?.isEnabled && window.Supa.isEnabled()) {
+      await window.Supa.addCredits(user.id, credits);
+    } else {
+      const walletKey = 'genCreditsV1';
+      const wallet = JSON.parse(localStorage.getItem(walletKey) || '{}');
+      wallet[user.id] = Number(wallet[user.id] || 0) + credits;
+      localStorage.setItem(walletKey, JSON.stringify(wallet));
+    }
+
+    const historyKey = 'genPaymentsV1';
+    const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+    history.unshift({
+      userId: user.id,
+      paymentId,
+      credits,
+      amount: Number(pkg.price || 1900),
+      createdAt: Date.now()
+    });
+    localStorage.setItem(historyKey, JSON.stringify(history.slice(0, 200)));
+
+    const email = user.email || '';
+    document.getElementById('successSummary').textContent = `${email} · 생성권 ${credits}회 지급 완료`;
   }
-
-  const paymentId = new URLSearchParams(location.search).get('paymentId') || `demo_${Date.now()}`;
-  const pkg = window.TEST_GENERATION_PACKAGE || {};
-  const credits = Number(pkg.generationCredits || 1);
-
-  const walletKey = 'genCreditsV1';
-  const wallet = JSON.parse(localStorage.getItem(walletKey) || '{}');
-  wallet[user.id] = Number(wallet[user.id] || 0) + credits;
-  localStorage.setItem(walletKey, JSON.stringify(wallet));
-
-  const historyKey = 'genPaymentsV1';
-  const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
-  history.unshift({
-    userId: user.id,
-    paymentId,
-    credits,
-    amount: Number(pkg.price || 1900),
-    createdAt: Date.now()
-  });
-  localStorage.setItem(historyKey, JSON.stringify(history.slice(0, 200)));
-
-  document.getElementById('successSummary').textContent = `${user.email} · 생성권 ${credits}회 지급 완료`;
+  init();
 })();
 </script>
 <script>

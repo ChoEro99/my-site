@@ -1,8 +1,11 @@
 <!doctype html><html lang="ko"><head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.iamport.kr; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://api.iamport.kr https://*.iamport.kr; font-src 'self' data:; frame-src https:;" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.iamport.kr https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://api.iamport.kr https://*.iamport.kr https://*.supabase.co; font-src 'self' data:; frame-src https:;" />
 <title>AI 테스트 생성권 결제</title>
 <link rel="stylesheet" href="/style.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+<script src="/supabase-client.js"></script>
 <script src="/auth.js"></script>
 <script src="/pay-config.js"></script>
 <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
@@ -21,59 +24,73 @@
 </main></div></div>
 <script>
 (function(){
-  const user = window.Auth?.getCurrentUser ? window.Auth.getCurrentUser() : null;
-  if (!user) {
-    alert('로그인이 필요합니다.');
-    location.href = '/create-test.html';
-    return;
+  let user = null;
+  function toLocalUser(u) {
+    if (!u) return null;
+    return { id: u.id, email: u.email || '', name: u.user_metadata?.name || '' };
   }
 
-  const pkg = window.TEST_GENERATION_PACKAGE || {};
-  const amount = Number(pkg.price || 1900);
-  const credits = Number(pkg.generationCredits || 1);
-  const reportDownloads = Number(pkg.reportDownloadsPerTest || 2);
-  const orderName = `AI 테스트 생성권 ${credits}회`;
-
-  document.getElementById('paySummary').textContent = `${user.email} · ${orderName}`;
-  document.getElementById('payCard').innerHTML = `
-    <p class="premium-label">결제 금액</p>
-    <p class="premium-price">💵 ${amount.toLocaleString()}원</p>
-    <p class="premium-sub">지급 생성권: ${credits}회</p>
-    <p class="premium-sub">생성 테스트당 리포트 다운로드: ${reportDownloads}회</p>
-  `;
-
-  function goSuccess(paymentId){
-    const success = new URL('/pay/generate-success.html', location.origin);
-    success.searchParams.set('paymentId', paymentId || `demo_${Date.now()}`);
-    location.href = success.toString();
-  }
-
-  document.getElementById('btnPay').onclick = function(){
-    const impCode = window.PAY_CONFIG?.portone?.impCode;
-    const pg = window.PAY_CONFIG?.portone?.pgFull || window.PAY_CONFIG?.portone?.pgStarter;
-    if (!impCode || !pg || !window.IMP) {
-      goSuccess();
+  async function init() {
+    if (window.Supa?.isEnabled && window.Supa.isEnabled()) {
+      user = toLocalUser(await window.Supa.getCurrentUser());
+    } else {
+      user = window.Auth?.getCurrentUser ? window.Auth.getCurrentUser() : null;
+    }
+    if (!user) {
+      alert('로그인이 필요합니다.');
+      location.href = '/create-test.html';
       return;
     }
-    const IMP = window.IMP;
-    IMP.init(impCode);
-    IMP.request_pay({
-      pg,
-      pay_method: 'card',
-      merchant_uid: `gen_${user.id}_${Date.now()}`,
-      name: orderName,
-      amount,
-      m_redirect_url: location.href
-    }, function(rsp){
-      if (rsp.success) {
-        goSuccess(rsp.imp_uid || rsp.merchant_uid);
-      } else {
-        const fail = new URL('/pay/fail.html', location.origin);
-        fail.searchParams.set('message', rsp.error_msg || '결제에 실패했습니다.');
-        location.href = fail.toString();
+
+    const pkg = window.TEST_GENERATION_PACKAGE || {};
+    const amount = Number(pkg.price || 1900);
+    const credits = Number(pkg.generationCredits || 1);
+    const reportDownloads = Number(pkg.reportDownloadsPerTest || 2);
+    const orderName = `AI 테스트 생성권 ${credits}회`;
+
+    document.getElementById('paySummary').textContent = `${user.email} · ${orderName}`;
+    document.getElementById('payCard').innerHTML = `
+      <p class="premium-label">결제 금액</p>
+      <p class="premium-price">💵 ${amount.toLocaleString()}원</p>
+      <p class="premium-sub">지급 생성권: ${credits}회</p>
+      <p class="premium-sub">생성 테스트당 리포트 다운로드: ${reportDownloads}회</p>
+    `;
+
+    function goSuccess(paymentId){
+      const success = new URL('/pay/generate-success.html', location.origin);
+      success.searchParams.set('paymentId', paymentId || `demo_${Date.now()}`);
+      location.href = success.toString();
+    }
+
+    document.getElementById('btnPay').onclick = function(){
+      const impCode = window.PAY_CONFIG?.portone?.impCode;
+      const pg = window.PAY_CONFIG?.portone?.pgFull || window.PAY_CONFIG?.portone?.pgStarter;
+      if (!impCode || !pg || !window.IMP) {
+        goSuccess();
+        return;
       }
-    });
-  };
+      const IMP = window.IMP;
+      IMP.init(impCode);
+      IMP.request_pay({
+        pg,
+        pay_method: 'card',
+        merchant_uid: `gen_${user.id}_${Date.now()}`,
+        name: orderName,
+        amount,
+        m_redirect_url: location.href
+      }, function(rsp){
+        if (rsp.success) {
+          goSuccess(rsp.imp_uid || rsp.merchant_uid);
+        } else {
+          const fail = new URL('/pay/fail.html', location.origin);
+          fail.searchParams.set('message', rsp.error_msg || '결제에 실패했습니다.');
+          location.href = fail.toString();
+        }
+      });
+    };
+  }
+
+  init();
 })();
 </script>
 <script>

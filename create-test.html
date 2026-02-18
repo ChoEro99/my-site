@@ -3,11 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://generativelanguage.googleapis.com; font-src 'self' data:; frame-src https://accounts.google.com https:;" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://accounts.google.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://generativelanguage.googleapis.com https://*.supabase.co; font-src 'self' data:; frame-src https://accounts.google.com https:;" />
   <title>AI 심리테스트 만들기</title>
   <meta name="description" content="로그인 후 결제로 AI 심리테스트를 생성하고 보관할 수 있습니다." />
   <link rel="stylesheet" href="/style.css" />
   <script src="/utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/supabase-config.js"></script>
+  <script src="/supabase-client.js"></script>
   <script src="/auth.js"></script>
   <script src="/pay-config.js"></script>
   <script src="/gemini-config.js"></script>
@@ -41,9 +44,7 @@
             <button id="btnLogin" type="button">로그인</button>
             <button id="btnSignup" type="button">회원가입</button>
           </div>
-          <div style="margin-top:10px">
-            <div id="googleLoginWrap"></div>
-          </div>
+          <div style="margin-top:10px"><div id="googleLoginWrap"></div></div>
           <p id="authStatus" class="search-meta">로그인 후 생성 기능을 사용할 수 있습니다.</p>
         </section>
 
@@ -56,7 +57,7 @@
           </div>
         </section>
 
-        <section id="generatorPanel" style="display:none">
+        <section id="generatorPanel" style="display:block">
           <div class="home-tools" style="margin-top:14px">
             <input id="topic" type="text" placeholder="주제 (예: 연애 갈등 대화 스타일)" />
             <input id="audience" type="text" placeholder="대상 (예: 20~30대 직장인)" />
@@ -72,7 +73,7 @@
             <button class="primary" id="btnGenerate" type="button">AI로 만들기</button>
           </div>
 
-          <p id="genStatus" class="search-meta">주제/대상을 입력하고 생성 버튼을 눌러주세요.</p>
+          <p id="genStatus" class="search-meta">생성하려면 로그인 + 생성권 결제가 필요합니다.</p>
 
           <div class="card mini" id="resultCard" style="padding:14px;margin-top:12px;display:none">
             <h4 id="resultTitle">생성 완료</h4>
@@ -111,9 +112,12 @@
     const GENERATED_TEST_META_KEY = "generatedTestMeta";
     const GEN_TESTS_KEY = "generatedTestsV1";
     const GEN_WALLET_KEY = "genCreditsV1";
+
     let currentUser = null;
     let latestRecord = null;
     let googleLoginReady = false;
+
+    const useSupabase = () => !!(window.Supa && window.Supa.isEnabled && window.Supa.isEnabled());
 
     function safeParse(raw, fallback) { try { return JSON.parse(raw || ""); } catch (e) { return fallback; } }
     function setThemeToggle() {
@@ -124,59 +128,47 @@
       if (typeof window.toggleTheme === "function") t.addEventListener("click", toggleTheme);
     }
     function safeTrack(name, data) { if (typeof window.track === "function") window.track(name, data || {}); }
-    function setAuthStatus(msg) {
-      const el = $("authStatus");
-      if (el) el.textContent = msg;
+    function setAuthStatus(msg) { const el = $("authStatus"); if (el) el.textContent = msg; }
+
+    function localGetWallet() { const v = safeParse(localStorage.getItem(GEN_WALLET_KEY), {}); return v && typeof v === "object" ? v : {}; }
+    function localGetCredits(uid) { return Number(localGetWallet()[uid] || 0); }
+    function localSetCredits(uid, value) { const w = localGetWallet(); w[uid] = Math.max(0, Number(value || 0)); localStorage.setItem(GEN_WALLET_KEY, JSON.stringify(w)); }
+    function localGetAllTests() { const v = safeParse(localStorage.getItem(GEN_TESTS_KEY), []); return Array.isArray(v) ? v : []; }
+    function localSaveAllTests(v) { localStorage.setItem(GEN_TESTS_KEY, JSON.stringify(v || [])); }
+
+    async function getCurrentUser() {
+      if (useSupabase()) return await window.Supa.getCurrentUser();
+      return window.Auth && window.Auth.getCurrentUser ? window.Auth.getCurrentUser() : null;
     }
 
-    function initGoogleLogin() {
-      const wrap = $("googleLoginWrap");
-      if (!wrap) return;
-      if (currentUser) {
-        wrap.innerHTML = "";
-        return;
-      }
-
-      const clientId = String(window.GOOGLE_CLIENT_ID || "").trim();
-      if (!clientId) {
-        setAuthStatus("Google Client ID가 설정되지 않았습니다.");
-        return;
-      }
-      if (!(window.google && window.google.accounts && window.google.accounts.id)) {
-        setAuthStatus("Google 로그인 스크립트를 불러오는 중입니다...");
-        return;
-      }
-      if (!googleLoginReady) {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: (response) => {
-            try {
-              window.Auth.loginWithGoogleCredential(response.credential);
-              setAuthStatus("Google 로그인 완료");
-              renderAuthState();
-            } catch (e) {
-              setAuthStatus(`실패: ${e.message || e}`);
-            }
-          }
-        });
-        googleLoginReady = true;
-      }
-      wrap.innerHTML = "";
-      window.google.accounts.id.renderButton(wrap, {
-        type: "standard",
-        theme: "outline",
-        size: "large",
-        text: "signin_with",
-        shape: "pill",
-        width: 280
-      });
+    async function getCredits(uid) {
+      if (useSupabase()) return await window.Supa.getCredits(uid);
+      return localGetCredits(uid);
     }
 
-    function getAllTests() { const v = safeParse(localStorage.getItem(GEN_TESTS_KEY), []); return Array.isArray(v) ? v : []; }
-    function saveAllTests(v) { localStorage.setItem(GEN_TESTS_KEY, JSON.stringify(v || [])); }
-    function getWallet() { const v = safeParse(localStorage.getItem(GEN_WALLET_KEY), {}); return v && typeof v === "object" ? v : {}; }
-    function getCredits(userId) { return Number(getWallet()[userId] || 0); }
-    function setCredits(userId, value) { const w = getWallet(); w[userId] = Math.max(0, Number(value || 0)); localStorage.setItem(GEN_WALLET_KEY, JSON.stringify(w)); }
+    async function addCredits(uid, delta) {
+      if (useSupabase()) return await window.Supa.addCredits(uid, delta);
+      const next = localGetCredits(uid) + Number(delta || 0);
+      localSetCredits(uid, next);
+      return next;
+    }
+
+    async function setCredits(uid, value) {
+      if (useSupabase()) return await window.Supa.setCredits(uid, value);
+      localSetCredits(uid, value);
+    }
+
+    async function listTests(uid) {
+      if (useSupabase()) return await window.Supa.listGeneratedTests(uid);
+      return localGetAllTests().filter((x) => x.ownerId === uid);
+    }
+
+    async function saveTestRecord(uid, testObj, reportDownloads) {
+      if (useSupabase()) return await window.Supa.saveGeneratedTest(uid, testObj, reportDownloads);
+      const id = "g_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+      const rec = { id, ownerId: uid, createdAt: Date.now(), paid: true, reportDownloadsRemaining: reportDownloads, test: testObj };
+      const all = localGetAllTests(); all.unshift(rec); localSaveAllTests(all); return rec;
+    }
 
     function slugify(text) {
       return String(text || "").trim().toLowerCase().replace(/[^a-z0-9가-힣\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "new-test";
@@ -250,11 +242,11 @@
 <meta property="og:description" content="${obj.ogDesc}" />
 <meta property="og:type" content="website" />
 <meta property="og:image" content="https://my-site-five-ecru.vercel.app/og.png" />
-<link rel="stylesheet" href="/style.css"/><script src="/utils.js"><\/script><script src="/analytics-consent.js" defer><\/script>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6051453612452994" crossorigin="anonymous"><\/script>
+<link rel="stylesheet" href="/style.css"/><script src="/utils.js"><\\/script><script src="/analytics-consent.js" defer><\\/script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6051453612452994" crossorigin="anonymous"><\\/script>
 </head><body>
-<script src="/tests/data/${obj.slug}.js"><\/script>
-<script src="/tests/shared-shell.js"><\/script>
+<script src="/tests/data/${obj.slug}.js"><\\/script>
+<script src="/tests/shared-shell.js"><\\/script>
 </body></html>\n`;
     }
 
@@ -264,23 +256,16 @@
       const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     }
 
-    function saveRecord(testObj) {
-      const id = "g_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
-      const reportDownloads = Number((window.TEST_GENERATION_PACKAGE && window.TEST_GENERATION_PACKAGE.reportDownloadsPerTest) || 2);
-      const rec = { id, ownerId: currentUser.id, createdAt: Date.now(), paid: true, reportDownloadsRemaining: reportDownloads, test: testObj };
-      const all = getAllTests(); all.unshift(rec); saveAllTests(all); return rec;
-    }
-
     function openRecord(rec) {
       sessionStorage.setItem(GENERATED_TEST_KEY, JSON.stringify(rec.test));
       sessionStorage.setItem(GENERATED_TEST_META_KEY, JSON.stringify({ id: rec.id, paid: !!rec.paid, reportDownloadsRemaining: Number(rec.reportDownloadsRemaining || 0) }));
       location.href = "/play-generated.html";
     }
 
-    function renderLibrary() {
+    async function renderLibrary() {
       const list = $("libraryList"); const empty = $("libraryEmpty"); list.innerHTML = "";
       if (!currentUser) { empty.style.display = "block"; empty.textContent = "로그인 후 생성한 테스트가 여기에 보관됩니다."; return; }
-      const mine = getAllTests().filter((x) => x.ownerId === currentUser.id);
+      const mine = await listTests(currentUser.id);
       if (!mine.length) { empty.style.display = "block"; empty.textContent = "아직 생성된 테스트가 없습니다."; return; }
       empty.style.display = "none";
       mine.forEach((it) => {
@@ -291,31 +276,75 @@
       });
     }
 
-    function renderAuthState() {
-      currentUser = window.Auth && window.Auth.getCurrentUser ? window.Auth.getCurrentUser() : null;
+    function initGoogleLogin() {
+      const wrap = $("googleLoginWrap");
+      if (!wrap) return;
+      if (currentUser) { wrap.innerHTML = ""; return; }
+
+      if (useSupabase()) {
+        wrap.innerHTML = "";
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "primary";
+        btn.textContent = "Google로 로그인";
+        btn.onclick = async () => {
+          try {
+            await window.Supa.signInWithGoogle();
+          } catch (e) {
+            setAuthStatus(`실패: ${e.message || e}`);
+          }
+        };
+        wrap.appendChild(btn);
+        return;
+      }
+
+      const clientId = String(window.GOOGLE_CLIENT_ID || "").trim();
+      if (!clientId || !(window.google && window.google.accounts && window.google.accounts.id)) return;
+      if (!googleLoginReady) {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: (response) => {
+            try {
+              window.Auth.loginWithGoogleCredential(response.credential);
+              setAuthStatus("Google 로그인 완료");
+              renderAuthState();
+            } catch (e) {
+              setAuthStatus(`실패: ${e.message || e}`);
+            }
+          }
+        });
+        googleLoginReady = true;
+      }
+      wrap.innerHTML = "";
+      window.google.accounts.id.renderButton(wrap, { type: "standard", theme: "outline", size: "large", text: "signin_with", shape: "pill", width: 280 });
+    }
+
+    async function renderAuthState() {
+      currentUser = await getCurrentUser();
       const authCard = $("authCard"), memberCard = $("memberCard"), panel = $("generatorPanel"), status = $("genStatus");
+
+      panel.style.display = "block";
       if (!currentUser) {
-        authCard.style.display = "block"; memberCard.style.display = "none"; panel.style.display = "block";
+        authCard.style.display = "block";
+        memberCard.style.display = "none";
         status.textContent = "생성하려면 로그인 + 생성권 결제가 필요합니다.";
         initGoogleLogin();
-        renderLibrary(); return;
+        await renderLibrary();
+        return;
       }
-      authCard.style.display = "none"; memberCard.style.display = "block";
-      const credits = getCredits(currentUser.id);
+
+      authCard.style.display = "none";
+      memberCard.style.display = "block";
+      const credits = await getCredits(currentUser.id);
       $("memberTitle").textContent = `${currentUser.email} 님`;
       $("memberMeta").textContent = `보유 생성권: ${credits}회`;
-      if (!String(window.GEMINI_API_KEY || "").trim()) {
-        status.textContent = "설정 오류: Gemini API 키를 읽지 못했습니다.";
-        panel.style.display = "block";
-      } else if (credits <= 0) {
-        status.textContent = "생성권이 없습니다. 생성 버튼을 누르면 결제 안내가 표시됩니다.";
-        panel.style.display = "block";
-      } else {
-        status.textContent = "준비 완료. 생성권 1회가 차감됩니다.";
-        panel.style.display = "block";
-      }
+
+      if (!String(window.GEMINI_API_KEY || "").trim()) status.textContent = "설정 오류: Gemini API 키를 읽지 못했습니다.";
+      else if (credits <= 0) status.textContent = "생성권이 없습니다. 생성 버튼을 누르면 결제 안내가 표시됩니다.";
+      else status.textContent = "준비 완료. 생성권 1회가 차감됩니다.";
+
       initGoogleLogin();
-      renderLibrary();
+      await renderLibrary();
     }
 
     async function generateWithGemini() {
@@ -326,43 +355,33 @@
       const tone = ($("tone").value || "").trim();
       const questionCount = Number($("questionCount").value || 10);
       const status = $("genStatus"); const btn = $("btnGenerate");
+
       if (!currentUser) throw new Error("로그인이 필요합니다.");
       if (!apiKey) throw new Error("Gemini API 키 설정이 필요합니다.");
       if (!topic) throw new Error("주제를 입력해주세요.");
 
-      const before = getCredits(currentUser.id);
+      const before = await getCredits(currentUser.id);
       if (before <= 0) throw new Error("생성권이 부족합니다. 결제 후 다시 시도해주세요.");
-      setCredits(currentUser.id, before - 1);
-      renderAuthState();
+      await setCredits(currentUser.id, before - 1);
+      await renderAuthState();
 
-      const systemPrompt = `너는 한국어 심리테스트 기획자다.
-반드시 JSON만 출력해라. 코드블록/설명/주석 금지.
-의학적 진단/치료를 암시하지 말고 재미/콘텐츠 톤으로 작성해라.
-편견, 혐오, 차별 표현 금지.
-아래 구조를 지켜라:
-{
-  "slug":"영문소문자-하이픈",
-  "badge":"짧은 배지",
-  "ogTitle":"테스트 제목",
-  "ogDesc":"한 줄 소개",
-  "types":["type1","type2","type3","type4"],
-  "results":{
-    "type1":{"emoji":"✨","title":"...형","desc":"...","tags":["","",""] ,"strengths":["","",""] ,"pitfalls":["",""] ,"routine":["","",""]},
-    "type2":{},"type3":{},"type4":{}
-  },
-  "questions":[{"q":"질문","c":[{"t":"선택지1","s":{"type1":2,"type2":0,"type3":0,"type4":0}},{"t":"선택지2","s":{"type1":0,"type2":2,"type3":0,"type4":0}},{"t":"선택지3","s":{"type1":0,"type2":0,"type3":2,"type4":0}},{"t":"선택지4","s":{"type1":0,"type2":0,"type3":0,"type4":2}}]}]
-}`;
+      const systemPrompt = `너는 한국어 심리테스트 기획자다.\n반드시 JSON만 출력해라. 코드블록/설명/주석 금지.\n의학적 진단/치료를 암시하지 말고 재미/콘텐츠 톤으로 작성해라.\n편견, 혐오, 차별 표현 금지.\n아래 구조를 지켜라:\n{\n  "slug":"영문소문자-하이픈",\n  "badge":"짧은 배지",\n  "ogTitle":"테스트 제목",\n  "ogDesc":"한 줄 소개",\n  "types":["type1","type2","type3","type4"],\n  "results":{\n    "type1":{"emoji":"✨","title":"...형","desc":"...","tags":["","",""] ,"strengths":["","",""] ,"pitfalls":["",""] ,"routine":["","",""]},\n    "type2":{},"type3":{},"type4":{}\n  },\n  "questions":[{"q":"질문","c":[{"t":"선택지1","s":{"type1":2,"type2":0,"type3":0,"type4":0}},{"t":"선택지2","s":{"type1":0,"type2":2,"type3":0,"type4":0}},{"t":"선택지3","s":{"type1":0,"type2":0,"type3":2,"type4":0}},{"t":"선택지4","s":{"type1":0,"type2":0,"type3":0,"type4":2}}]}]\n}`;
       const userPrompt = `주제: ${topic}\n대상: ${audience || "일반 사용자"}\n톤: ${tone || "가볍고 이해 쉬운"}\n문항 수: ${questionCount}\n출력은 반드시 JSON만.`;
 
-      status.textContent = "AI 생성 중..."; btn.disabled = true;
+      status.textContent = "AI 생성 중...";
+      btn.disabled = true;
       try {
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
         const resp = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }], generationConfig: { temperature: 0.7, responseMimeType: "application/json" } })
+          body: JSON.stringify({
+            contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
+            generationConfig: { temperature: 0.7, responseMimeType: "application/json" }
+          })
         });
         if (!resp.ok) throw new Error(`Gemini API 오류: ${resp.status} ${(await resp.text()).slice(0, 180)}`);
+
         const json = await resp.json();
         const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || "";
         const parsed = extractJson(text);
@@ -374,13 +393,15 @@
         $("resultTitle").textContent = normalized.ogTitle;
         $("resultMeta").textContent = `${normalized.questions.length}문항 · ${normalized.types.length}유형 생성 완료`;
 
-        latestRecord = saveRecord(normalized);
+        const reportDownloads = Number((window.TEST_GENERATION_PACKAGE && window.TEST_GENERATION_PACKAGE.reportDownloadsPerTest) || 2);
+        latestRecord = await saveTestRecord(currentUser.id, normalized, reportDownloads);
+
         status.textContent = "생성 완료. 바로 테스트를 시작해보세요.";
         safeTrack("ai_test_generated", { slug: normalized.slug, question_count: normalized.questions.length, model });
-        renderAuthState();
+        await renderAuthState();
       } catch (e) {
-        setCredits(currentUser.id, before);
-        renderAuthState();
+        await setCredits(currentUser.id, before);
+        await renderAuthState();
         throw e;
       } finally {
         btn.disabled = false;
@@ -388,44 +409,74 @@
     }
 
     function parseRecordFromTextarea() {
-      const obj = validateAndNormalize(JSON.parse($("resultJson").value), "new-test");
-      latestRecord = { id: "manual", paid: true, reportDownloadsRemaining: 2, test: obj };
+      const parsed = validateAndNormalize(JSON.parse($("resultJson").value), "new-test");
+      latestRecord = { id: "manual", ownerId: currentUser?.id || "", createdAt: Date.now(), paid: true, reportDownloadsRemaining: 2, test: parsed };
       return latestRecord;
     }
 
-    $("btnLogin").addEventListener("click", () => {
-      try { window.Auth.login($("loginEmail").value, $("loginPassword").value); $("authStatus").textContent = "로그인 완료"; renderAuthState(); }
-      catch (e) { $("authStatus").textContent = `실패: ${e.message || e}`; }
+    $("btnLogin").addEventListener("click", async () => {
+      try {
+        if (useSupabase()) await window.Supa.signInWithEmail($("loginEmail").value, $("loginPassword").value);
+        else window.Auth.login($("loginEmail").value, $("loginPassword").value);
+        setAuthStatus("로그인 완료");
+        await renderAuthState();
+      } catch (e) {
+        setAuthStatus(`실패: ${e.message || e}`);
+      }
     });
-    $("btnSignup").addEventListener("click", () => {
-      try { window.Auth.register($("loginEmail").value, $("loginPassword").value, ""); $("authStatus").textContent = "회원가입 및 로그인 완료"; renderAuthState(); }
-      catch (e) { $("authStatus").textContent = `실패: ${e.message || e}`; }
+
+    $("btnSignup").addEventListener("click", async () => {
+      try {
+        if (useSupabase()) {
+          await window.Supa.signUpWithEmail($("loginEmail").value, $("loginPassword").value);
+          await window.Supa.signInWithEmail($("loginEmail").value, $("loginPassword").value);
+        } else {
+          window.Auth.register($("loginEmail").value, $("loginPassword").value, "");
+        }
+        setAuthStatus("회원가입 및 로그인 완료");
+        await renderAuthState();
+      } catch (e) {
+        setAuthStatus(`실패: ${e.message || e}`);
+      }
     });
-    $("btnLogout").addEventListener("click", () => { window.Auth.logout(); latestRecord = null; renderAuthState(); });
+
+    $("btnLogout").addEventListener("click", async () => {
+      if (useSupabase()) await window.Supa.signOut();
+      else window.Auth.logout();
+      latestRecord = null;
+      await renderAuthState();
+    });
 
     $("btnGenerate").addEventListener("click", async () => {
       $("genStatus").textContent = "요청 준비 중...";
-      try { await generateWithGemini(); }
-      catch (e) { $("genStatus").textContent = `실패: ${e.message || e}`; }
+      try {
+        await generateWithGemini();
+      } catch (e) {
+        $("genStatus").textContent = `실패: ${e.message || e}`;
+      }
     });
 
     $("btnStartNow").addEventListener("click", () => {
       if (!latestRecord) { $("genStatus").textContent = "먼저 테스트를 생성해주세요."; return; }
       openRecord(latestRecord);
     });
+
     $("btnRegenerate").addEventListener("click", async () => {
       try { await generateWithGemini(); }
       catch (e) { $("genStatus").textContent = `실패: ${e.message || e}`; }
     });
 
     $("btnCopyJson").addEventListener("click", async () => {
-      const text = $("resultJson").value || ""; if (!text.trim()) return;
+      const text = $("resultJson").value || "";
+      if (!text.trim()) return;
       try { await navigator.clipboard.writeText(text); if (typeof showToast === "function") showToast("JSON 복사 완료"); } catch (e) {}
     });
+
     $("btnDownloadData").addEventListener("click", () => {
       const rec = latestRecord || parseRecordFromTextarea();
       downloadText(`${rec.test.slug}.js`, toDataJsText(rec.test));
     });
+
     $("btnDownloadHtml").addEventListener("click", () => {
       const rec = latestRecord || parseRecordFromTextarea();
       downloadText(`${rec.test.slug}.html`, toTestHtmlText(rec.test));
