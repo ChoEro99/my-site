@@ -13,6 +13,22 @@
   <h1>리포트 이용권 결제</h1>
   <p id="paySummary">주문 정보를 불러오는 중…</p>
   <div class="premium-upsell" id="payCard"></div>
+  <div class="form-grid" style="margin-top:12px">
+    <input id="reportAge" type="number" min="1" max="120" placeholder="나이 (예: 29)" />
+    <select id="reportGender">
+      <option value="">성별 선택</option>
+      <option value="남성">남성</option>
+      <option value="여성">여성</option>
+    </select>
+    <select id="reportMbti">
+      <option value="">MBTI 선택</option>
+      <option>INTJ</option><option>INTP</option><option>ENTJ</option><option>ENTP</option>
+      <option>INFJ</option><option>INFP</option><option>ENFJ</option><option>ENFP</option>
+      <option>ISTJ</option><option>ISFJ</option><option>ESTJ</option><option>ESFJ</option>
+      <option>ISTP</option><option>ISFP</option><option>ESTP</option><option>ESFP</option>
+    </select>
+  </div>
+  <p class="note" id="profileHint">결제 전 성별/나이/MBTI를 입력하면 Full 리포트 AI 분석 정확도를 높일 수 있습니다.</p>
   <div class="btns">
     <button class="primary" id="btnPay">결제하고 PDF 받기</button>
     <a class="pill" href="/">🏠 홈</a>
@@ -27,6 +43,7 @@
   const plan = params.get('plan') || 'starter';
   const draft = params.get('draft') || `${test}:${result}:${plan}`;
   const key = `reportDraft:${draft}`;
+  const profileKey = `reportProfile:${draft}`;
 
   let draftData = null;
   try { draftData = JSON.parse(localStorage.getItem(key) || 'null'); } catch(e) {}
@@ -49,6 +66,30 @@
     <p class="premium-sub">차감 규칙: Starter 1개 / Full 2개</p>
   `;
 
+  const ageInput = document.getElementById('reportAge');
+  const genderSelect = document.getElementById('reportGender');
+  const mbtiSelect = document.getElementById('reportMbti');
+  try {
+    const saved = JSON.parse(localStorage.getItem(profileKey) || 'null');
+    if (saved && typeof saved === 'object') {
+      ageInput.value = Number(saved.age || '') || '';
+      genderSelect.value = String(saved.gender || '');
+      mbtiSelect.value = String(saved.mbti || '');
+    }
+  } catch (e) {}
+
+  function saveProfileOrThrow() {
+    const age = Number(ageInput.value || 0);
+    const gender = String(genderSelect.value || '');
+    const mbti = String(mbtiSelect.value || '').toUpperCase();
+    if (!age || age < 1 || age > 120) throw new Error('나이를 정확히 입력해주세요.');
+    if (!gender) throw new Error('성별을 선택해주세요.');
+    if (!mbti) throw new Error('MBTI를 선택해주세요.');
+    const profile = { age, gender, mbti, savedAt: Date.now() };
+    localStorage.setItem(profileKey, JSON.stringify(profile));
+    return profile;
+  }
+
   function goSuccess(paymentId){
     const success = new URL('/pay/success.html', location.origin);
     success.searchParams.set('test', test);
@@ -61,6 +102,13 @@
   }
 
   document.getElementById('btnPay').onclick = function(){
+    try {
+      saveProfileOrThrow();
+    } catch (e) {
+      alert(e.message || e);
+      return;
+    }
+
     const impCode = window.PAY_CONFIG?.portone?.impCode;
     const pg = plan === 'full' ? window.PAY_CONFIG?.portone?.pgFull : window.PAY_CONFIG?.portone?.pgStarter;
     if (!impCode || !pg || !window.IMP) {

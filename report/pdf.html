@@ -1,6 +1,6 @@
 <!doctype html><html lang="ko"><head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co; font-src 'self' data:; frame-src https:;" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co https://generativelanguage.googleapis.com; font-src 'self' data:; frame-src https:;" />
 <title>심층 분석 PDF</title>
 <link rel="stylesheet" href="/style.css"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -8,6 +8,7 @@
 <script src="/supabase-client.js"></script>
 <script src="/auth.js"></script>
 <script src="/pay-config.js"></script>
+<script src="/gemini-config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="/utils.js"></script>
@@ -33,6 +34,7 @@
   const result = p.get('result') || '';
   const plan = p.get('plan') || 'starter';
   const draft = p.get('draft') || `${test}:${result}:${plan}`;
+  const profileKey = `reportProfile:${draft}`;
   const source = p.get('source') || 'standard';
   const generatedId = p.get('generatedId') || '';
   const reportCostMap = window.REPORT_VOUCHER_COST || { starter: 1, full: 2 };
@@ -45,6 +47,7 @@
   let reportCredits = 0;
   let reportItem = null;
   let currentUserId = "";
+  let reportProfile = null;
 
   async function getReportCredits() {
     if (window.Supa?.isEnabled && window.Supa.isEnabled()) {
@@ -177,6 +180,11 @@
   }
 
   const draftData = JSON.parse(localStorage.getItem(`reportDraft:${draft}`) || 'null');
+  try {
+    reportProfile = JSON.parse(localStorage.getItem(profileKey) || 'null');
+  } catch (e) {
+    reportProfile = null;
+  }
   const resultTitle = draftData?.resultTitle || result || '결과';
   const testTitle = draftData?.testTitle || test || '테스트';
   const data = draftData?.result || {};
@@ -184,7 +192,9 @@
   const planName = plan === 'full' ? 'Full' : 'Starter';
   document.getElementById('title').textContent = `${resultTitle} ${planName} PDF 리포트`;
   const today = new Date();
-  document.getElementById('meta').textContent = `${testTitle} · 생성일 ${today.toLocaleDateString('ko-KR')} · 남은 다운로드 ${Number(reportItem?.remainingDownloads || 0)}회 · 보유 이용권 ${reportCredits}개`;
+  const profileMeta = reportProfile
+    ? ` · ${reportProfile.gender || '-'} ${reportProfile.age || '-'}세 ${reportProfile.mbti || '-'}` : '';
+  document.getElementById('meta').textContent = `${testTitle}${profileMeta} · 생성일 ${today.toLocaleDateString('ko-KR')} · 남은 다운로드 ${Number(reportItem?.remainingDownloads || 0)}회 · 보유 이용권 ${reportCredits}개`;
 
   // ---------- helpers ----------
   const escapeHtml = (s) =>
@@ -1110,6 +1120,64 @@
     }).filter(s => s.bullets.length);
   };
 
+  const extractFirstJson = (text) => {
+    if (!text) throw new Error("AI 응답이 비어있습니다.");
+    const trimmed = String(text).trim();
+    try { return JSON.parse(trimmed); } catch (e) {}
+    const start = trimmed.indexOf("{");
+    const end = trimmed.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      return JSON.parse(trimmed.slice(start, end + 1));
+    }
+    throw new Error("AI 응답에서 JSON을 찾을 수 없습니다.");
+  };
+
+  async function generateFullSectionsWithGemini() {
+    if (plan !== "full") return null;
+    const apiKey = String(window.GEMINI_API_KEY || "").trim();
+    if (!apiKey) return null;
+
+    const profileText = reportProfile
+      ? `성별=${reportProfile.gender}, 나이=${reportProfile.age}, MBTI=${reportProfile.mbti}`
+      : "성별/나이/MBTI 미입력";
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const systemPrompt = [
+      "너는 한국어 심리테스트 결과 분석 리포트 작성가다.",
+      "의학적 진단/치료/질병 표현 금지.",
+      "출력은 JSON만: {\"sections\":[{\"title\":\"...\",\"bullets\":[\"...\",\"...\",\"...\"]}]}",
+      "sections는 8~10개, bullets는 각 3~5개.",
+      "재미+자기이해 콘텐츠 톤, 과장 금지, 실천 가능한 조언 중심."
+    ].join(" ");
+    const userPrompt = [
+      `테스트명: ${testTitle}`,
+      `결과명: ${resultTitle}`,
+      `프로필: ${profileText}`,
+      `강점: ${(strengths || []).join(", ") || "없음"}`,
+      `주의: ${(pitfalls || []).join(", ") || "없음"}`,
+      `루틴: ${(routine || []).join(", ") || "없음"}`,
+      "요청: Full 리포트용 심층 분석 섹션을 생성."
+    ].join("\n");
+
+    const resp = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] }],
+        generationConfig: { temperature: 0.6, responseMimeType: "application/json" }
+      })
+    });
+    if (!resp.ok) {
+      const msg = await resp.text();
+      throw new Error(`AI 분석 실패(${resp.status}): ${msg.slice(0, 120)}`);
+    }
+    const payload = await resp.json();
+    const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const parsed = extractFirstJson(text);
+    const normalized = normalizeCustomSections(parsed?.sections || []);
+    if (!normalized.length) throw new Error("AI 분석 섹션이 비어 있습니다.");
+    return normalized;
+  }
+
   const renderSections = (sections) => {
     return sections.map((sec) => {
       const title = escapeHtml(sec.title);
@@ -1119,12 +1187,22 @@
   };
 
   // ---------- choose content ----------
+  const ul = document.getElementById('reportList');
+  ul.innerHTML = '<li class="report-sec"><div style="margin:12px 0 6px"><strong>리포트 생성 중</strong></div><ul><li>분석 데이터를 준비하고 있습니다...</li></ul></li>';
+
   const custom = data?.report?.[plan]?.sections || data?.reportSections?.[plan] || null;
-  const sections = Array.isArray(custom) && custom.length
+  let sections = Array.isArray(custom) && custom.length
     ? normalizeCustomSections(custom)
     : buildGeneratedSections();
 
-  const ul = document.getElementById('reportList');
+  if (plan === 'full' && (!Array.isArray(custom) || !custom.length)) {
+    try {
+      const aiSections = await generateFullSectionsWithGemini();
+      if (aiSections && aiSections.length) sections = aiSections;
+    } catch (e) {
+      console.warn(e);
+    }
+  }
   ul.innerHTML = renderSections(sections);
 
   // ---------- PDF ----------
@@ -1173,7 +1251,7 @@
       upsertReportItem(reportItem);
 
       const todayNow = new Date();
-      document.getElementById('meta').textContent = `${testTitle} · 생성일 ${todayNow.toLocaleDateString('ko-KR')} · 남은 다운로드 ${Number(reportItem.remainingDownloads || 0)}회 · 보유 이용권 ${reportCredits}개`;
+      document.getElementById('meta').textContent = `${testTitle}${profileMeta} · 생성일 ${todayNow.toLocaleDateString('ko-KR')} · 남은 다운로드 ${Number(reportItem.remainingDownloads || 0)}회 · 보유 이용권 ${reportCredits}개`;
     } finally {
       if (btns) btns.style.display = prevDisplay;
       btn.disabled = false;

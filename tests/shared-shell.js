@@ -72,6 +72,10 @@
   <div class="toast" id="toast"></div>
   `;
 
+  if (typeof window.initGlobalAccountBar === "function") {
+    window.initGlobalAccountBar();
+  }
+
   const KAKAO_APP_KEY = window.KAKAO_APP_KEY || 'e810a3d9eddcf0271884bbe79e1ac6f3';
 
   function loadQuizRuntime() {

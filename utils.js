@@ -182,12 +182,28 @@ function injectGlobalAccountBarStyle() {
       font-weight:800;
       white-space:nowrap;
     }
+    .global-account-logout{
+      min-height:34px;
+      padding:0 10px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      color:var(--text);
+      background:rgba(255,255,255,.06);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      white-space:nowrap;
+      cursor:pointer;
+    }
     :root.light-theme .global-account-bar{ background:rgba(255,255,255,.68); }
     :root.light-theme .global-account-link{ background:rgba(164,150,148,.14); }
+    :root.light-theme .global-account-logout{ background:rgba(164,150,148,.1); }
     @media (max-width:560px){
       .global-account-bar{ top:8px; right:8px; padding:6px 8px; border-radius:12px; }
       .global-account-meta{ font-size:11px; }
       .global-account-link{ min-height:30px; padding:0 10px; font-size:12px; }
+      .global-account-logout{ min-height:30px; padding:0 8px; font-size:12px; }
     }
   `;
   document.head.appendChild(style);
@@ -267,9 +283,24 @@ function renderGlobalAccountBar(state) {
     : "생성권 - · 이용권 -";
 
   bar.innerHTML = `
+    ${state.loggedIn ? '<button class="global-account-logout" id="globalLogoutBtn" type="button">로그아웃</button>' : ''}
     <span class="global-account-meta">${meta}</span>
     <a class="global-account-link" href="${href}">${label}</a>
   `;
+  const logoutBtn = document.getElementById("globalLogoutBtn");
+  if (logoutBtn) {
+    logoutBtn.onclick = async () => {
+      try {
+        if (window.Supa?.isEnabled && window.Supa.isEnabled()) {
+          await window.Supa.signOut();
+        } else if (window.Auth?.logout) {
+          window.Auth.logout();
+        }
+      } catch (e) {}
+      try { localStorage.removeItem("activeUserId"); } catch (e) {}
+      location.href = "/";
+    };
+  }
   positionGlobalAccountBar();
 }
 
@@ -296,6 +327,7 @@ async function initGlobalAccountBar() {
   const state = await resolveGlobalAccountState();
   renderGlobalAccountBar(state);
 }
+window.initGlobalAccountBar = initGlobalAccountBar;
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => { initGlobalAccountBar(); });

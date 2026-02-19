@@ -385,53 +385,6 @@ function setPill(text){
     // 다른 테스트 유도
     $("otherTests").innerHTML = makeOtherTestsLinks();
 
-    // 결제 생성 테스트 전용: 심층 리포트 진입 버튼
-    const generatedMeta = TEST.generatedMeta;
-    const resultBtns = $("screenResult")?.querySelector(".btns");
-    let generatedReportBtn = $("btnGeneratedReport");
-    if (generatedMeta?.paid && generatedMeta?.id && resultBtns) {
-      if (!generatedReportBtn) {
-        generatedReportBtn = document.createElement("button");
-        generatedReportBtn.id = "btnGeneratedReport";
-        generatedReportBtn.type = "button";
-        generatedReportBtn.className = "primary";
-        generatedReportBtn.textContent = "심층 리포트 보기";
-        const againBtn = $("btnAgain");
-        if (againBtn && againBtn.parentNode === resultBtns) {
-          resultBtns.insertBefore(generatedReportBtn, againBtn);
-        } else {
-          resultBtns.appendChild(generatedReportBtn);
-        }
-      }
-      generatedReportBtn.onclick = () => {
-        const plan = "full";
-        const costMap = window.REPORT_VOUCHER_COST || { starter: 1, full: 2 };
-        const need = Number(costMap[plan] || 2);
-        const credits = getLocalReportCredits();
-        if (credits < need) {
-          const payUrl = new URL("/pay/report.html", location.origin);
-          payUrl.searchParams.set("test", TEST.slug);
-          payUrl.searchParams.set("result", resultId);
-          payUrl.searchParams.set("plan", plan);
-          payUrl.searchParams.set("draft", `${TEST.slug}:${resultId}:${plan}`);
-          location.href = payUrl.toString();
-          return;
-        }
-        const draftKey = `${TEST.slug}:${resultId}:${plan}`;
-        saveReportDraft(TEST, resultId, plan, r);
-        const reportUrl = new URL("/report/pdf.html", location.origin);
-        reportUrl.searchParams.set("test", TEST.slug);
-        reportUrl.searchParams.set("result", resultId);
-        reportUrl.searchParams.set("plan", plan);
-        reportUrl.searchParams.set("draft", draftKey);
-        reportUrl.searchParams.set("source", "generated");
-        reportUrl.searchParams.set("generatedId", String(generatedMeta.id));
-        location.href = reportUrl.toString();
-      };
-    } else if (generatedReportBtn) {
-      generatedReportBtn.remove();
-    }
-
     // ✅ 카카오 공유 (버튼/링크 안 뜨는 이슈 방지: imageUrl 절대주소 강제)
     const kbtn = document.getElementById("btnKakao");
     if (kbtn && window.Kakao && window.Kakao.isInitialized()) {
