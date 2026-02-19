@@ -14,7 +14,7 @@ create table if not exists public.generated_tests (
   user_id uuid not null references auth.users(id) on delete cascade,
   test_json jsonb not null,
   paid boolean not null default true,
-  report_downloads_remaining integer not null default 2,
+  report_downloads_remaining integer not null default 1,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

@@ -124,7 +124,7 @@
       user_id: userId,
       test_json: testObj,
       paid: true,
-      report_downloads_remaining: Math.max(0, Number(reportDownloads || 2))
+      report_downloads_remaining: Math.max(0, Number(reportDownloads || 1))
     };
     const { data, error } = await c.from("generated_tests").insert(payload).select().single();
     if (error) throw error;

@@ -1,7 +1,7 @@
 // quiz.js (FINAL) - Kakao share + shareUrl + absolute OG image + other tests
 const $ = (id) => document.getElementById(id);
 
-const ENABLE_PREMIUM_REPORT_UPSELL = false; // 임시: 유료 리포트 UI 숨김
+const ENABLE_PREMIUM_REPORT_UPSELL = true;
 
 // showToast and track are now in utils.js
 

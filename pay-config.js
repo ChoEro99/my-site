@@ -22,5 +22,5 @@ window.REPORT_CREDITS = window.REPORT_CREDITS || {
 window.TEST_GENERATION_PACKAGE = window.TEST_GENERATION_PACKAGE || {
   price: 1900,
   generationCredits: 1,
-  reportDownloadsPerTest: 2
+  reportDownloadsPerTest: 1
 };
