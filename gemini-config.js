@@ -1,1 +1,1 @@
-window.GEMINI_API_KEY = window.GEMINI_API_KEY || "AIzaSyD5biEeWAtzNd-8SM-q4MMBktxIS8o7PCU";
+window.GEMINI_API_KEY = window.GEMINI_API_KEY || "";

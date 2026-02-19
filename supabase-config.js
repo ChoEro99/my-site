@@ -1,2 +1,2 @@
-window.SUPABASE_URL = window.SUPABASE_URL || "https://oyofrasfsrflxpeatghi.supabase.co";
-window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im95b2ZyYXNmc3JmbHhwZWF0Z2hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE0MzU3MDYsImV4cCI6MjA4NzAxMTcwNn0.zUuIMXHmuXahlnOguSU9WSNj7453uXAxuzVjCL5-Tjg";
+window.SUPABASE_URL = window.SUPABASE_URL || "";
+window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "";
