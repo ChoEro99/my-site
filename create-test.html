@@ -14,6 +14,47 @@
   <script src="/pay-config.js"></script>
   <script src="/gemini-config.js"></script>
   <script src="/analytics-consent.js" defer></script>
+  <style>
+    .creator-page .card.mini { border-radius: 20px; }
+    .creator-row-two,
+    .creator-row-three {
+      display: grid;
+      gap: 12px;
+      align-items: stretch;
+    }
+    .creator-row-two { grid-template-columns: 1fr 1fr; }
+    .creator-row-three { grid-template-columns: 1fr 1fr 160px; }
+    .creator-row-two input,
+    .creator-row-three select,
+    .creator-row-three button,
+    .member-actions .go,
+    .member-actions button,
+    .result-actions button,
+    .library-action {
+      min-height: 56px;
+      border-radius: 16px;
+      font-size: 18px;
+    }
+    .member-actions,
+    .result-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .member-actions .go,
+    .member-actions button { min-width: 170px; justify-content: center; display: inline-flex; align-items: center; }
+    .result-actions button { min-width: 190px; }
+    .library-action { margin-top: 10px; min-width: 170px; }
+    @media (max-width: 980px) {
+      .creator-row-two,
+      .creator-row-three { grid-template-columns: 1fr; }
+      .creator-row-three button { width: 100%; }
+      .member-actions .go,
+      .member-actions button,
+      .result-actions button { width: 100%; }
+    }
+  </style>
 </head>
 <body>
   <div class="wrap">
@@ -29,13 +70,13 @@
     </header>
 
     <div class="grid" style="grid-template-columns:minmax(0,1fr)">
-      <main class="card hero">
+      <main class="card hero creator-page">
         <h1>원하는 테스트를 바로 만들어보세요</h1>
         <p>생성권 1회로 테스트 1개 생성 + 심층 리포트 PDF 2회 다운로드 권한이 부여됩니다.</p>
 
         <section class="card mini" id="authCard" style="padding:14px;margin-top:12px;display:none">
           <h4>로그인</h4>
-          <div class="btns">
+          <div class="btns member-actions">
             <button id="btnGoogleLogin" class="primary" type="button">Google로 로그인</button>
           </div>
           <p id="authStatus" class="search-meta">로그인 후 생성 기능을 사용할 수 있습니다.</p>
@@ -44,19 +85,19 @@
         <section class="card mini" id="memberCard" style="padding:14px;margin-top:12px;display:none">
           <h4 id="memberTitle">회원 정보</h4>
           <p id="memberMeta" class="search-meta"></p>
-          <div class="btns">
+          <div class="btns member-actions">
             <a class="go" href="/pay/generate.html">생성권 결제하기</a>
             <button id="btnLogout" type="button">로그아웃</button>
           </div>
         </section>
 
         <section id="generatorPanel" style="display:block">
-          <div class="home-tools" style="margin-top:14px">
+          <div class="home-tools creator-row-two" style="margin-top:14px">
             <input id="topic" type="text" placeholder="주제 (예: 연애 갈등 대화 스타일)" />
             <input id="age" type="text" placeholder="나이 (예: 20대 후반, 34세)" />
           </div>
 
-          <div class="home-tools">
+          <div class="home-tools creator-row-three">
             <select id="gender" aria-label="성별 선택">
               <option value="">성별 선택</option>
               <option value="여성">여성</option>
@@ -89,9 +130,8 @@
           <div class="card mini" id="resultCard" style="padding:14px;margin-top:12px;display:none">
             <h4 id="resultTitle">생성 완료</h4>
             <p id="resultMeta" class="note" style="margin:0 0 8px"></p>
-            <div class="btns">
+            <div class="btns result-actions">
               <button class="primary" id="btnStartNow" type="button">바로 테스트 시작</button>
-              <button id="btnRegenerate" type="button">다시 생성</button>
             </div>
           </div>
 
@@ -115,6 +155,7 @@
 
     let currentUser = null;
     let latestRecord = null;
+    let isGenerating = false;
     const useSupabase = () => !!(window.Supa && window.Supa.isEnabled && window.Supa.isEnabled());
 
     function safeParse(raw, fallback) { try { return JSON.parse(raw || ""); } catch (e) { return fallback; } }
@@ -127,6 +168,11 @@
     }
     function safeTrack(name, data) { if (typeof window.track === "function") window.track(name, data || {}); }
     function setAuthStatus(msg) { const el = $("authStatus"); if (el) el.textContent = msg; }
+    window.addEventListener("beforeunload", (event) => {
+      if (!isGenerating) return;
+      event.preventDefault();
+      event.returnValue = "";
+    });
 
     function localGetWallet() { const v = safeParse(localStorage.getItem(GEN_WALLET_KEY), {}); return v && typeof v === "object" ? v : {}; }
     function localGetCredits(uid) { return Number(localGetWallet()[uid] || 0); }
@@ -244,7 +290,7 @@
       mine.forEach((it) => {
         const d = document.createElement("div"); d.className = "choice";
         d.innerHTML = `<div style="font-weight:700">${it.test?.ogTitle || "AI 생성 테스트"}</div><div class="note" style="margin:0">${(it.test?.questions||[]).length}문항 · 리포트 남은 다운로드 ${Number(it.reportDownloadsRemaining || 0)}회</div>`;
-        const b = document.createElement("button"); b.type = "button"; b.className = "primary"; b.textContent = "이 테스트 시작"; b.style.marginTop = "8px"; b.onclick = () => openRecord(it);
+        const b = document.createElement("button"); b.type = "button"; b.className = "primary library-action"; b.textContent = "이 테스트 시작"; b.onclick = () => openRecord(it);
         d.appendChild(b); list.appendChild(d);
       });
     }
@@ -315,14 +361,14 @@
 
       const before = await getCredits(currentUser.id);
       if (before <= 0) throw new Error("생성권이 부족합니다. 결제 후 다시 시도해주세요.");
-      await setCredits(currentUser.id, before - 1);
-      await renderAuthState();
+      let deducted = false;
 
       const systemPrompt = `너는 한국어 심리테스트 기획자다.\n반드시 JSON만 출력해라. 코드블록/설명/주석 금지.\n의학적 진단/치료를 암시하지 말고 재미/콘텐츠 톤으로 작성해라.\n편견, 혐오, 차별 표현 금지.\n아래 구조를 지켜라:\n{\n  "slug":"영문소문자-하이픈",\n  "badge":"짧은 배지",\n  "ogTitle":"테스트 제목",\n  "ogDesc":"한 줄 소개",\n  "types":["type1","type2","type3","type4"],\n  "results":{\n    "type1":{"emoji":"✨","title":"...형","desc":"...","tags":["","",""] ,"strengths":["","",""] ,"pitfalls":["",""] ,"routine":["","",""]},\n    "type2":{},"type3":{},"type4":{}\n  },\n  "questions":[{"q":"질문","c":[{"t":"선택지1","s":{"type1":2,"type2":0,"type3":0,"type4":0}},{"t":"선택지2","s":{"type1":0,"type2":2,"type3":0,"type4":0}},{"t":"선택지3","s":{"type1":0,"type2":0,"type3":2,"type4":0}},{"t":"선택지4","s":{"type1":0,"type2":0,"type3":0,"type4":2}}]}]\n}`;
       const userPrompt = `주제: ${topic}\n나이: ${age}\n성별: ${gender}\nMBTI: ${mbti}\n톤: 가볍고 이해 쉬운\n문항 수: 12\n출력은 반드시 JSON만.`;
 
       status.textContent = "AI 생성 중...";
       btn.disabled = true;
+      isGenerating = true;
       try {
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
         const resp = await fetch(endpoint, {
@@ -337,11 +383,15 @@
 
         const json = await resp.json();
         const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        const parsed = extractJson(text);
-        const normalized = validateAndNormalize(parsed, slugify(topic));
-        normalized.questions = normalized.questions.slice(0, questionCount);
+          const parsed = extractJson(text);
+          const normalized = validateAndNormalize(parsed, slugify(topic));
+          normalized.questions = normalized.questions.slice(0, questionCount);
 
-        $("resultCard").style.display = "block";
+          await setCredits(currentUser.id, before - 1);
+          deducted = true;
+          await renderAuthState();
+
+          $("resultCard").style.display = "block";
         $("resultTitle").textContent = normalized.ogTitle;
         $("resultMeta").textContent = `${normalized.questions.length}문항 · ${normalized.types.length}유형 생성 완료`;
 
@@ -351,11 +401,14 @@
         status.textContent = "생성 완료. 바로 테스트를 시작해보세요.";
         safeTrack("ai_test_generated", { slug: normalized.slug, question_count: normalized.questions.length, model });
         await renderAuthState();
-      } catch (e) {
-        await setCredits(currentUser.id, before);
-        await renderAuthState();
-        throw e;
-      } finally {
+        } catch (e) {
+          if (deducted) {
+            await setCredits(currentUser.id, before);
+            await renderAuthState();
+          }
+          throw e;
+        } finally {
+        isGenerating = false;
         btn.disabled = false;
       }
     }
@@ -378,11 +431,6 @@
     $("btnStartNow").addEventListener("click", () => {
       if (!latestRecord) { $("genStatus").textContent = "먼저 테스트를 생성해주세요."; return; }
       openRecord(latestRecord);
-    });
-
-    $("btnRegenerate").addEventListener("click", async () => {
-      try { await generateWithGemini(); }
-      catch (e) { $("genStatus").textContent = `실패: ${e.message || e}`; }
     });
 
     setThemeToggle();
