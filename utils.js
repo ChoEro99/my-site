@@ -134,16 +134,20 @@ function getLocalNumberMapValue(key, userId) {
   }
 }
 
+function setLocalNumberMapValue(key, userId, value) {
+  try {
+    const map = JSON.parse(localStorage.getItem(key) || "{}");
+    map[userId] = Math.max(0, Number(value || 0));
+    localStorage.setItem(key, JSON.stringify(map));
+  } catch (e) {}
+}
+
 function injectGlobalAccountBarStyle() {
   if (document.getElementById("globalAccountBarStyle")) return;
   const style = document.createElement("style");
   style.id = "globalAccountBarStyle";
   style.textContent = `
     .global-account-bar{
-      position:fixed;
-      top:12px;
-      right:12px;
-      z-index:1200;
       display:flex;
       align-items:center;
       gap:8px;
@@ -153,6 +157,12 @@ function injectGlobalAccountBarStyle() {
       background:rgba(0,0,0,.18);
       backdrop-filter:blur(6px);
       box-shadow:0 10px 28px rgba(0,0,0,.25);
+    }
+    .global-account-bar.is-floating{
+      position:fixed;
+      top:12px;
+      right:12px;
+      z-index:1200;
     }
     .global-account-meta{
       font-size:13px;
@@ -198,6 +208,8 @@ async function resolveGlobalAccountState() {
         email = String(user.email || "");
         generationCredits = Number(await window.Supa.getCredits(userId) || 0);
         reportCredits = Number(await window.Supa.getReportCredits(userId) || 0);
+        setLocalNumberMapValue("genCreditsV1", userId, generationCredits);
+        setLocalNumberMapValue("reportCreditsV1", userId, reportCredits);
       }
     }
   } catch (e) {}
@@ -261,17 +273,18 @@ function positionGlobalAccountBar() {
   const bar = document.getElementById("globalAccountBar");
   if (!bar) return;
   const toggle = document.getElementById("themeToggle");
-  if (!toggle) {
-    bar.style.top = "12px";
-    bar.style.right = "12px";
+  if (toggle && toggle.parentElement) {
+    const parent = toggle.parentElement;
+    if (bar.parentElement !== parent) parent.insertBefore(bar, toggle);
+    bar.classList.remove("is-floating");
+    bar.style.top = "";
+    bar.style.right = "";
     return;
   }
-
-  const rect = toggle.getBoundingClientRect();
-  const rightGap = Math.max(12, window.innerWidth - rect.left + 10);
-  const topGap = Math.max(8, rect.top);
-  bar.style.top = `${topGap}px`;
-  bar.style.right = `${rightGap}px`;
+  if (bar.parentElement !== document.body) document.body.appendChild(bar);
+  bar.classList.add("is-floating");
+  bar.style.top = "12px";
+  bar.style.right = "12px";
 }
 
 async function initGlobalAccountBar() {
