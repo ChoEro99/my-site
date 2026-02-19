@@ -124,3 +124,146 @@ function toggleTheme() {
 
 // Initialize theme immediately on script load
 initTheme();
+
+function getLocalNumberMapValue(key, userId) {
+  try {
+    const map = JSON.parse(localStorage.getItem(key) || "{}");
+    return Number(map?.[userId] || 0);
+  } catch (e) {
+    return 0;
+  }
+}
+
+function injectGlobalAccountBarStyle() {
+  if (document.getElementById("globalAccountBarStyle")) return;
+  const style = document.createElement("style");
+  style.id = "globalAccountBarStyle";
+  style.textContent = `
+    .global-account-bar{
+      position:fixed;
+      top:12px;
+      right:12px;
+      z-index:1200;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:rgba(0,0,0,.18);
+      backdrop-filter:blur(6px);
+      box-shadow:0 10px 28px rgba(0,0,0,.25);
+    }
+    .global-account-meta{
+      font-size:13px;
+      color:var(--text);
+      white-space:nowrap;
+    }
+    .global-account-link{
+      min-height:34px;
+      padding:0 12px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      color:var(--text);
+      background:rgba(255,255,255,.08);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:800;
+      white-space:nowrap;
+    }
+    :root.light-theme .global-account-bar{ background:rgba(255,255,255,.68); }
+    :root.light-theme .global-account-link{ background:rgba(164,150,148,.14); }
+    @media (max-width:560px){
+      .global-account-bar{ top:8px; right:8px; padding:6px 8px; border-radius:12px; }
+      .global-account-meta{ font-size:11px; }
+      .global-account-link{ min-height:30px; padding:0 10px; font-size:12px; }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+async function resolveGlobalAccountState() {
+  let user = null;
+  let userId = "";
+  let email = "";
+  let generationCredits = 0;
+  let reportCredits = 0;
+
+  try {
+    if (window.Supa?.isEnabled && window.Supa.isEnabled()) {
+      user = await window.Supa.getCurrentUser();
+      if (user?.id) {
+        userId = String(user.id);
+        email = String(user.email || "");
+        generationCredits = Number(await window.Supa.getCredits(userId) || 0);
+        reportCredits = Number(await window.Supa.getReportCredits(userId) || 0);
+      }
+    }
+  } catch (e) {}
+
+  if (!userId) {
+    try {
+      if (window.Auth?.getCurrentUser) {
+        user = window.Auth.getCurrentUser();
+        if (user?.id) {
+          userId = String(user.id);
+          email = String(user.email || "");
+        }
+      }
+    } catch (e) {}
+  }
+
+  if (!userId) {
+    try { userId = String(localStorage.getItem("activeUserId") || ""); } catch (e) {}
+  }
+
+  if (userId) {
+    if (!generationCredits) generationCredits = getLocalNumberMapValue("genCreditsV1", userId);
+    if (!reportCredits) reportCredits = getLocalNumberMapValue("reportCreditsV1", userId);
+    try { localStorage.setItem("activeUserId", userId); } catch (e) {}
+  }
+
+  return {
+    loggedIn: !!userId,
+    userId,
+    email,
+    generationCredits,
+    reportCredits
+  };
+}
+
+function renderGlobalAccountBar(state) {
+  injectGlobalAccountBarStyle();
+  let bar = document.getElementById("globalAccountBar");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "globalAccountBar";
+    bar.className = "global-account-bar";
+    document.body.appendChild(bar);
+  }
+
+  const next = encodeURIComponent(location.pathname + location.search);
+  const href = state.loggedIn ? "/create-test.html" : `/login.html?next=${next}`;
+  const label = state.loggedIn ? "내 계정" : "로그인";
+  const meta = state.loggedIn
+    ? `생성권 ${Number(state.generationCredits || 0)} · 이용권 ${Number(state.reportCredits || 0)}`
+    : "생성권 - · 이용권 -";
+
+  bar.innerHTML = `
+    <span class="global-account-meta">${meta}</span>
+    <a class="global-account-link" href="${href}">${label}</a>
+  `;
+}
+
+async function initGlobalAccountBar() {
+  if (!document.body) return;
+  const state = await resolveGlobalAccountState();
+  renderGlobalAccountBar(state);
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => { initGlobalAccountBar(); });
+} else {
+  initGlobalAccountBar();
+}
