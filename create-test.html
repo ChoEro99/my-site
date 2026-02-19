@@ -191,11 +191,15 @@
       return await window.Supa.getCredits(uid);
     }
     async function getReportCredits(uid) {
-      if (!useSupabase()) {
-        const wallet = safeParse(localStorage.getItem("reportCreditsV1"), {});
-        return Number(wallet?.[uid] || 0);
+      const wallet = safeParse(localStorage.getItem("reportCreditsV1"), {});
+      const localCredits = Number(wallet?.[uid] || 0);
+      if (!useSupabase()) return localCredits;
+      try {
+        const remote = Number(await window.Supa.getReportCredits(uid) || 0);
+        return Math.max(remote, localCredits);
+      } catch (e) {
+        return localCredits;
       }
-      return await window.Supa.getReportCredits(uid);
     }
 
     async function addCredits(uid, delta) {
@@ -339,8 +343,10 @@
       authCard.style.display = "none";
       memberCard.style.display = "block";
       try { localStorage.setItem("activeUserId", String(currentUser.id || "")); } catch (e) {}
-      const credits = await getCredits(currentUser.id);
-      const reportCredits = await getReportCredits(currentUser.id);
+      const [credits, reportCredits] = await Promise.all([
+        getCredits(currentUser.id),
+        getReportCredits(currentUser.id)
+      ]);
       $("memberTitle").textContent = `${currentUser.email} 님`;
       $("memberMeta").textContent = `보유 생성권: ${credits}개 · 리포트 이용권: ${reportCredits}개`;
 

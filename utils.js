@@ -254,6 +254,24 @@ function renderGlobalAccountBar(state) {
     <span class="global-account-meta">${meta}</span>
     <a class="global-account-link" href="${href}">${label}</a>
   `;
+  positionGlobalAccountBar();
+}
+
+function positionGlobalAccountBar() {
+  const bar = document.getElementById("globalAccountBar");
+  if (!bar) return;
+  const toggle = document.getElementById("themeToggle");
+  if (!toggle) {
+    bar.style.top = "12px";
+    bar.style.right = "12px";
+    return;
+  }
+
+  const rect = toggle.getBoundingClientRect();
+  const rightGap = Math.max(12, window.innerWidth - rect.left + 10);
+  const topGap = Math.max(8, rect.top);
+  bar.style.top = `${topGap}px`;
+  bar.style.right = `${rightGap}px`;
 }
 
 async function initGlobalAccountBar() {
@@ -267,3 +285,5 @@ if (document.readyState === "loading") {
 } else {
   initGlobalAccountBar();
 }
+window.addEventListener("resize", positionGlobalAccountBar);
+window.addEventListener("scroll", positionGlobalAccountBar, { passive: true });
