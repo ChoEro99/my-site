@@ -87,6 +87,56 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;ma
 }
 :root.light-theme .pill:hover{background:rgba(164,150,148,.2);border-color:rgba(164,150,148,.6);}
 
+.account-chip{
+  min-height:54px;
+  padding:0 14px 0 10px;
+  border-radius:16px;
+  border:1px solid var(--line);
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  background:linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+  color:var(--text);
+  box-shadow:0 10px 22px rgba(0,0,0,.24);
+  transition:transform .15s ease, border-color .2s ease, background .2s ease;
+}
+.account-chip:hover{
+  transform:translateY(-1px);
+  border-color:rgba(110,231,255,.45);
+  background:linear-gradient(145deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+}
+.account-chip.is-logged-in{
+  border-color:rgba(110,231,255,.45);
+  background:linear-gradient(145deg, rgba(110,231,255,.18), rgba(167,139,250,.12));
+}
+.account-chip-icon{
+  width:32px;
+  height:32px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(255,255,255,.18);
+  font-size:16px;
+}
+.account-chip-label{
+  font-size:16px;
+  font-weight:800;
+  line-height:1;
+}
+:root.light-theme .account-chip{
+  background:linear-gradient(145deg, rgba(164,150,148,.14), rgba(164,150,148,.05));
+  box-shadow:0 8px 20px rgba(0,0,0,.08);
+}
+:root.light-theme .account-chip:hover{
+  border-color:rgba(164,150,148,.7);
+  background:linear-gradient(145deg, rgba(164,150,148,.2), rgba(164,150,148,.1));
+}
+:root.light-theme .account-chip.is-logged-in{
+  border-color:rgba(164,150,148,.8);
+  background:linear-gradient(145deg, rgba(164,150,148,.24), rgba(115,107,96,.14));
+}
+
 .grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,.95fr);gap:18px;align-items:start}
 @media (max-width:1200px){.grid{grid-template-columns:1fr}}
 
@@ -348,6 +398,9 @@ button:disabled{opacity:.55;cursor:not-allowed}
   .brand span{font-size:16px}
   .hero h1{font-size:40px}
   .pill{width:58px;height:58px;font-size:20px}
+  .account-chip{min-height:48px;padding:0 12px 0 8px;border-radius:14px}
+  .account-chip-icon{width:28px;height:28px;border-radius:8px}
+  .account-chip-label{font-size:14px}
   .home-tools{flex-direction:column;align-items:stretch}
   .home-tools button,.home-tools select{width:100%}
   .home-tools input,.home-tools select,.home-tools button,button{font-size:18px;min-height:48px}

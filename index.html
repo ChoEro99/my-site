@@ -33,7 +33,10 @@
          <span>AI 결과 기반 루틴 추천 · 결과 공유 가능</span>
        </div>
        <div style="display:flex;gap:12px;align-items:center">
-         <a class="pill" id="homeLoginLink" href="/login.html">로그인</a>
+         <a class="account-chip" id="homeLoginLink" href="/login.html?next=/create-test.html">
+           <span class="account-chip-icon" aria-hidden="true">👤</span>
+           <span class="account-chip-label">로그인</span>
+         </a>
          <button class="theme-toggle" id="themeToggle" aria-label="테마 전환">🌙</button>
        </div>
      </header>
@@ -342,19 +345,23 @@
 
     async function renderHomeAuthLink() {
       const link = document.getElementById("homeLoginLink");
+      const label = link?.querySelector(".account-chip-label");
       if (!link) return;
       try {
         const user = await getCurrentUser();
         if (user) {
-          link.textContent = "내 계정";
+          if (label) label.textContent = "내 계정";
           link.setAttribute("href", "/create-test.html");
+          link.classList.add("is-logged-in");
         } else {
-          link.textContent = "로그인";
+          if (label) label.textContent = "로그인";
           link.setAttribute("href", "/login.html?next=/create-test.html");
+          link.classList.remove("is-logged-in");
         }
       } catch (e) {
-        link.textContent = "로그인";
+        if (label) label.textContent = "로그인";
         link.setAttribute("href", "/login.html?next=/create-test.html");
+        link.classList.remove("is-logged-in");
       }
     }
 

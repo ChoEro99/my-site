@@ -46,7 +46,13 @@
       provider: "google",
       options: { redirectTo: location.origin + "/create-test.html" }
     });
-    if (error) throw error;
+    if (error) {
+      const msg = String(error.message || "");
+      if (msg.toLowerCase().includes("provider is not enabled")) {
+        throw new Error("Supabase에서 Google Provider가 비활성화되어 있습니다. Authentication > Providers > Google을 활성화해주세요.");
+      }
+      throw error;
+    }
   }
 
   async function signOut() {
