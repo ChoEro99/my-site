@@ -199,6 +199,7 @@ async function resolveGlobalAccountState() {
   let email = "";
   let generationCredits = 0;
   let reportCredits = 0;
+  let gotRemoteCredits = false;
 
   try {
     if (window.Supa?.isEnabled && window.Supa.isEnabled()) {
@@ -208,6 +209,7 @@ async function resolveGlobalAccountState() {
         email = String(user.email || "");
         generationCredits = Number(await window.Supa.getCredits(userId) || 0);
         reportCredits = Number(await window.Supa.getReportCredits(userId) || 0);
+        gotRemoteCredits = true;
         setLocalNumberMapValue("genCreditsV1", userId, generationCredits);
         setLocalNumberMapValue("reportCreditsV1", userId, reportCredits);
       }
@@ -231,8 +233,10 @@ async function resolveGlobalAccountState() {
   }
 
   if (userId) {
-    if (!generationCredits) generationCredits = getLocalNumberMapValue("genCreditsV1", userId);
-    if (!reportCredits) reportCredits = getLocalNumberMapValue("reportCreditsV1", userId);
+    if (!gotRemoteCredits) {
+      generationCredits = getLocalNumberMapValue("genCreditsV1", userId);
+      reportCredits = getLocalNumberMapValue("reportCreditsV1", userId);
+    }
     try { localStorage.setItem("activeUserId", userId); } catch (e) {}
   }
 
@@ -256,7 +260,7 @@ function renderGlobalAccountBar(state) {
   }
 
   const next = encodeURIComponent(location.pathname + location.search);
-  const href = state.loggedIn ? "/create-test.html" : `/login.html?next=${next}`;
+  const href = state.loggedIn ? "/account.html" : `/login.html?next=${next}`;
   const label = state.loggedIn ? "내 계정" : "로그인";
   const meta = state.loggedIn
     ? `생성권 ${Number(state.generationCredits || 0)} · 이용권 ${Number(state.reportCredits || 0)}`

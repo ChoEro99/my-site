@@ -59,7 +59,10 @@
     if (window.Supa?.isEnabled && window.Supa.isEnabled()) {
       const user = await window.Supa.getCurrentUser();
       if (!user?.id) throw new Error('로그인이 필요합니다.');
-      await window.Supa.decrementReportCredit(user.id, need);
+      const next = await window.Supa.decrementReportCredit(user.id, need);
+      const wallet = JSON.parse(localStorage.getItem('reportCreditsV1') || '{}');
+      wallet[user.id] = Number(next || 0);
+      localStorage.setItem('reportCreditsV1', JSON.stringify(wallet));
       return;
     }
     const user = window.Auth?.getCurrentUser ? window.Auth.getCurrentUser() : null;

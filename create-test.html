@@ -196,7 +196,9 @@
       if (!useSupabase()) return localCredits;
       try {
         const remote = Number(await window.Supa.getReportCredits(uid) || 0);
-        return Math.max(remote, localCredits);
+        wallet[uid] = remote;
+        localStorage.setItem("reportCreditsV1", JSON.stringify(wallet));
+        return remote;
       } catch (e) {
         return localCredits;
       }

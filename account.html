@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co; font-src 'self' data:; frame-src https:;" />
+  <title>내 계정 보관함</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/supabase-config.js"></script>
+  <script src="/supabase-client.js"></script>
+  <script src="/auth.js"></script>
+  <script src="/utils.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <b>내 계정 보관함</b>
+        <span>구매한 리포트 / 내가 만든 테스트</span>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <button class="theme-toggle" id="themeToggle" aria-label="테마 전환">🌙</button>
+        <a class="pill" href="/">🏠 홈</a>
+      </div>
+    </header>
+
+    <div class="grid" style="grid-template-columns:minmax(0,1fr)">
+      <main class="card hero">
+        <h1 id="accountTitle">계정 확인 중...</h1>
+        <p id="accountMeta" class="search-meta"></p>
+        <div class="btns">
+          <a class="go" href="/pay/generate.html">이용권 결제하기</a>
+          <a class="go" href="/create-test.html">AI 테스트 만들기</a>
+          <button id="btnLogout" type="button">로그아웃</button>
+        </div>
+      </main>
+
+      <section class="card mini" style="padding:14px">
+        <h4>이용권으로 구매한 리포트</h4>
+        <div id="reportEmpty" class="note">리포트 구매/이용 내역이 없습니다.</div>
+        <div id="reportList" class="choices"></div>
+      </section>
+
+      <section class="card mini" style="padding:14px">
+        <h4>내가 만든 테스트</h4>
+        <div id="testEmpty" class="note">생성한 테스트가 없습니다.</div>
+        <div id="testList" class="choices"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const GENERATED_TEST_KEY = "generatedTestDraft";
+    const GENERATED_TEST_META_KEY = "generatedTestMeta";
+
+    function setThemeToggle() {
+      const t = $("themeToggle");
+      if (!t) return;
+      const isLight = document.documentElement.classList.contains("light-theme");
+      t.textContent = isLight ? "☀️" : "🌙";
+      if (typeof window.toggleTheme === "function") t.addEventListener("click", toggleTheme);
+    }
+
+    async function getCurrentUser() {
+      if (window.Supa?.isEnabled && window.Supa.isEnabled()) return await window.Supa.getCurrentUser();
+      return window.Auth?.getCurrentUser ? window.Auth.getCurrentUser() : null;
+    }
+
+    async function getCredits(uid) {
+      if (window.Supa?.isEnabled && window.Supa.isEnabled()) {
+        const g = Number(await window.Supa.getCredits(uid) || 0);
+        const r = Number(await window.Supa.getReportCredits(uid) || 0);
+        return { generation: g, report: r };
+      }
+      const genMap = JSON.parse(localStorage.getItem("genCreditsV1") || "{}");
+      const repMap = JSON.parse(localStorage.getItem("reportCreditsV1") || "{}");
+      return { generation: Number(genMap?.[uid] || 0), report: Number(repMap?.[uid] || 0) };
+    }
+
+    function openGenerated(rec) {
+      sessionStorage.setItem(GENERATED_TEST_KEY, JSON.stringify(rec.test));
+      sessionStorage.setItem(GENERATED_TEST_META_KEY, JSON.stringify({
+        id: rec.id,
+        paid: !!rec.paid,
+        reportDownloadsRemaining: Number(rec.reportDownloadsRemaining || 0)
+      }));
+      location.href = "/play-generated.html";
+    }
+
+    async function renderGeneratedTests(userId) {
+      const list = $("testList");
+      const empty = $("testEmpty");
+      list.innerHTML = "";
+      let tests = [];
+      if (window.Supa?.isEnabled && window.Supa.isEnabled()) {
+        tests = await window.Supa.listGeneratedTests(userId);
+      } else {
+        const all = JSON.parse(localStorage.getItem("generatedTestsV1") || "[]");
+        tests = Array.isArray(all) ? all.filter((x) => x.ownerId === userId) : [];
+      }
+      if (!tests.length) {
+        empty.style.display = "block";
+        return;
+      }
+      empty.style.display = "none";
+      tests.forEach((it) => {
+        const d = document.createElement("div");
+        d.className = "choice";
+        d.innerHTML = `<div style="font-weight:700">${it.test?.ogTitle || "AI 생성 테스트"}</div><div class="note" style="margin:0">${(it.test?.questions || []).length}문항</div>`;
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "primary";
+        b.textContent = "이 테스트 시작";
+        b.style.marginTop = "8px";
+        b.onclick = () => openGenerated(it);
+        d.appendChild(b);
+        list.appendChild(d);
+      });
+    }
+
+    function readReportHistory(userId) {
+      const raw = JSON.parse(localStorage.getItem("reportVoucherPaymentsV1") || "[]");
+      const hist = Array.isArray(raw) ? raw : [];
+      return hist.filter((x) => String(x?.userId || "") === String(userId || ""));
+    }
+
+    function renderReportHistory(userId) {
+      const list = $("reportList");
+      const empty = $("reportEmpty");
+      list.innerHTML = "";
+      const hist = readReportHistory(userId);
+      if (!hist.length) {
+        empty.style.display = "block";
+        return;
+      }
+      empty.style.display = "none";
+      hist.slice(0, 30).forEach((it) => {
+        const d = document.createElement("div");
+        d.className = "choice";
+        const when = new Date(Number(it.createdAt || Date.now())).toLocaleString("ko-KR");
+        d.innerHTML = `<div style="font-weight:700">${it.packageId || "report_2"}</div><div class="note" style="margin:0">리포트 이용권 ${Number(it.reportCredits || 0)}개 · ${when}</div>`;
+        list.appendChild(d);
+      });
+    }
+
+    async function init() {
+      setThemeToggle();
+      const user = await getCurrentUser();
+      if (!user?.id) {
+        location.href = `/login.html?next=${encodeURIComponent("/account.html")}`;
+        return;
+      }
+      localStorage.setItem("activeUserId", String(user.id));
+      const credits = await getCredits(user.id);
+      $("accountTitle").textContent = `${user.email || "내 계정"}`;
+      $("accountMeta").textContent = `생성권 ${credits.generation}개 · 리포트 이용권 ${credits.report}개`;
+      await renderGeneratedTests(user.id);
+      renderReportHistory(user.id);
+    }
+
+    $("btnLogout").addEventListener("click", async () => {
+      if (window.Supa?.isEnabled && window.Supa.isEnabled()) await window.Supa.signOut();
+      else if (window.Auth?.logout) window.Auth.logout();
+      localStorage.removeItem("activeUserId");
+      location.href = "/";
+    });
+
+    init();
+  </script>
+</body>
+</html>
