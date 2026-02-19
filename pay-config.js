@@ -6,21 +6,36 @@ window.PAY_CONFIG = window.PAY_CONFIG || {
   }
 };
 
-// 필요 시 결과별 금액을 전역으로 변경
-window.REPORT_PRICES = window.REPORT_PRICES || {
-  starter: 900,
-  full: 1900
+// 이용권 정책
+window.VOUCHER_PACKAGES = window.VOUCHER_PACKAGES || {
+  generation_1: {
+    id: "generation_1",
+    label: "테스트 생성권 1개",
+    price: 1900,
+    generationCredits: 1,
+    reportCredits: 0
+  },
+  report_2: {
+    id: "report_2",
+    label: "리포트 이용권 2개",
+    price: 1900,
+    generationCredits: 0,
+    reportCredits: 2
+  },
+  combo_1_2: {
+    id: "combo_1_2",
+    label: "생성권 1개 + 리포트권 2개",
+    price: 2900,
+    generationCredits: 1,
+    reportCredits: 2
+  }
 };
 
-// 플랜별 리포트 생성 가능 횟수
-window.REPORT_CREDITS = window.REPORT_CREDITS || {
+// 리포트 소모량: starter=1, full=2
+window.REPORT_VOUCHER_COST = window.REPORT_VOUCHER_COST || {
   starter: 1,
   full: 2
 };
 
-// AI 테스트 생성 결제 패키지
-window.TEST_GENERATION_PACKAGE = window.TEST_GENERATION_PACKAGE || {
-  price: 1900,
-  generationCredits: 1,
-  reportDownloadsPerTest: 1
-};
+// 하위 호환
+window.TEST_GENERATION_PACKAGE = window.TEST_GENERATION_PACKAGE || window.VOUCHER_PACKAGES.generation_1;

@@ -41,9 +41,10 @@
 </head><body>
 <div class="wrap"><button class="theme-toggle" id="themeToggle" aria-label="테마 전환" style="position:fixed;top:20px;right:20px;z-index:1000">🌙</button><div class="grid" style="grid-template-columns:minmax(0,1fr)">
 <main class="card hero">
-  <h1>AI 테스트 생성권 결제</h1>
+  <h1>이용권 결제</h1>
   <p id="paySummary">주문 정보를 확인 중입니다.</p>
   <div class="pay-card" id="payCard"></div>
+  <div class="pay-card" id="packageSelector" style="margin-top:10px"></div>
   <div class="btns pay-actions">
     <button class="primary" id="btnPay">결제하기</button>
     <a class="pay-back" href="/create-test.html">이전으로</a>
@@ -53,6 +54,47 @@
 <script>
 (function(){
   let user = null;
+  let selectedPackageId = "generation_1";
+
+  function getPackages() {
+    const fallback = {
+      generation_1: { id: "generation_1", label: "테스트 생성권 1개", price: 1900, generationCredits: 1, reportCredits: 0 },
+      report_2: { id: "report_2", label: "리포트 이용권 2개", price: 1900, generationCredits: 0, reportCredits: 2 },
+      combo_1_2: { id: "combo_1_2", label: "생성권 1개 + 리포트권 2개", price: 2900, generationCredits: 1, reportCredits: 2 }
+    };
+    return window.VOUCHER_PACKAGES || fallback;
+  }
+
+  function renderPackageInfo(pkg) {
+    const amount = Number(pkg?.price || 0);
+    const generationCredits = Number(pkg?.generationCredits || 0);
+    const reportCredits = Number(pkg?.reportCredits || 0);
+    document.getElementById('payCard').innerHTML = `
+      <div class="row">
+        <span class="label">선택 상품</span>
+        <span class="amount">${pkg?.label || "이용권"}</span>
+      </div>
+      <div class="meta">결제 금액: 💵 ${amount.toLocaleString()}원</div>
+      <div class="meta">테스트 생성권: ${generationCredits}개 · 리포트 이용권: ${reportCredits}개</div>
+    `;
+  }
+
+  function renderPackageSelector(packages) {
+    const entries = Object.values(packages || {});
+    document.getElementById('packageSelector').innerHTML = entries.map((pkg) => `
+      <label style="display:flex;align-items:center;gap:10px;margin-bottom:8px;cursor:pointer">
+        <input type="radio" name="voucherPackage" value="${pkg.id}" ${pkg.id === selectedPackageId ? "checked" : ""} />
+        <span>${pkg.label} (${Number(pkg.price || 0).toLocaleString()}원)</span>
+      </label>
+    `).join("");
+    document.querySelectorAll('input[name="voucherPackage"]').forEach((el) => {
+      el.addEventListener('change', () => {
+        selectedPackageId = el.value;
+        renderPackageInfo(packages[selectedPackageId]);
+      });
+    });
+  }
+
   function toLocalUser(u) {
     if (!u) return null;
     return { id: u.id, email: u.email || '', name: u.user_metadata?.name || '' };
@@ -70,29 +112,27 @@
       return;
     }
 
-    const pkg = window.TEST_GENERATION_PACKAGE || {};
-    const amount = Number(pkg.price || 1900);
-    const credits = Number(pkg.generationCredits || 1);
-    const reportDownloads = Number(pkg.reportDownloadsPerTest || 1);
-    const orderName = `AI 테스트 생성권 ${credits}회`;
+    const packages = getPackages();
+    const fromQuery = new URLSearchParams(location.search).get("package");
+    if (fromQuery && packages[fromQuery]) selectedPackageId = fromQuery;
+    const pkg = packages[selectedPackageId];
+    const orderName = pkg.label;
 
-    document.getElementById('paySummary').textContent = `${user.email} · ${orderName}`;
-    document.getElementById('payCard').innerHTML = `
-      <div class="row">
-        <span class="label">결제 금액</span>
-        <span class="amount">💵 ${amount.toLocaleString()}원</span>
-      </div>
-      <div class="meta">지급 생성권: ${credits}회</div>
-      <div class="meta">생성 테스트당 리포트 다운로드: ${reportDownloads}회</div>
-    `;
+    document.getElementById('paySummary').textContent = `${user.email} · 이용권 상품 결제`;
+    renderPackageInfo(pkg);
+    renderPackageSelector(packages);
 
     function goSuccess(paymentId){
       const success = new URL('/pay/generate-success.html', location.origin);
       success.searchParams.set('paymentId', paymentId || `demo_${Date.now()}`);
+      success.searchParams.set('package', selectedPackageId);
       location.href = success.toString();
     }
 
     document.getElementById('btnPay').onclick = function(){
+      const selected = packages[selectedPackageId] || packages.generation_1;
+      const amount = Number(selected.price || 0);
+      const orderLabel = selected.label || '이용권';
       const impCode = window.PAY_CONFIG?.portone?.impCode;
       const pg = window.PAY_CONFIG?.portone?.pgFull || window.PAY_CONFIG?.portone?.pgStarter;
       if (!impCode || !pg || !window.IMP) {
@@ -105,7 +145,7 @@
         pg,
         pay_method: 'card',
         merchant_uid: `gen_${user.id}_${Date.now()}`,
-        name: orderName,
+        name: orderLabel,
         amount,
         m_redirect_url: location.href
       }, function(rsp){

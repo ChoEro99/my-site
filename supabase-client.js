@@ -73,11 +73,33 @@
     return Number(data?.credits || 0);
   }
 
+  async function getReportCredits(userId) {
+    const c = getClient();
+    if (!c) return null;
+    const { data, error } = await c
+      .from("generation_credits")
+      .select("report_credits")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw error;
+    return Number(data?.report_credits || 0);
+  }
+
   async function setCredits(userId, credits) {
     const c = getClient();
     if (!c) throw new Error("Supabase 설정이 필요합니다.");
     const { error } = await c.from("generation_credits").upsert(
       { user_id: userId, credits: Math.max(0, Number(credits || 0)), updated_at: new Date().toISOString() },
+      { onConflict: "user_id" }
+    );
+    if (error) throw error;
+  }
+
+  async function setReportCredits(userId, reportCredits) {
+    const c = getClient();
+    if (!c) throw new Error("Supabase 설정이 필요합니다.");
+    const { error } = await c.from("generation_credits").upsert(
+      { user_id: userId, report_credits: Math.max(0, Number(reportCredits || 0)), updated_at: new Date().toISOString() },
       { onConflict: "user_id" }
     );
     if (error) throw error;
@@ -90,11 +112,27 @@
     return next;
   }
 
+  async function addReportCredits(userId, amount) {
+    const current = await getReportCredits(userId);
+    const next = Number(current || 0) + Number(amount || 0);
+    await setReportCredits(userId, next);
+    return next;
+  }
+
   async function decrementCredit(userId) {
     const current = await getCredits(userId);
     if (Number(current || 0) <= 0) throw new Error("생성권이 부족합니다.");
     const next = Number(current) - 1;
     await setCredits(userId, next);
+    return next;
+  }
+
+  async function decrementReportCredit(userId, amount) {
+    const need = Math.max(0, Number(amount || 1));
+    const current = await getReportCredits(userId);
+    if (Number(current || 0) < need) throw new Error("리포트 이용권이 부족합니다.");
+    const next = Number(current) - need;
+    await setReportCredits(userId, next);
     return next;
   }
 
@@ -124,7 +162,7 @@
       user_id: userId,
       test_json: testObj,
       paid: true,
-      report_downloads_remaining: Math.max(0, Number(reportDownloads || 1))
+      report_downloads_remaining: Math.max(0, Number(reportDownloads ?? 0))
     };
     const { data, error } = await c.from("generated_tests").insert(payload).select().single();
     if (error) throw error;
@@ -185,9 +223,13 @@
     signInWithGoogle,
     signOut,
     getCredits,
+    getReportCredits,
     setCredits,
+    setReportCredits,
     addCredits,
+    addReportCredits,
     decrementCredit,
+    decrementReportCredit,
     listGeneratedTests,
     saveGeneratedTest,
     getGeneratedTest,

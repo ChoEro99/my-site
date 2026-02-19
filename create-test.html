@@ -73,7 +73,7 @@
     <div class="grid" style="grid-template-columns:minmax(0,1fr)">
       <main class="card hero creator-page">
         <h1>원하는 테스트를 바로 만들어보세요</h1>
-        <p>생성권 1회로 테스트 1개 생성 + 심층 리포트 PDF 1회 다운로드 권한이 부여됩니다.</p>
+        <p>생성권 1개로 AI 테스트 1개를 생성할 수 있습니다. 리포트는 별도 이용권으로 사용합니다.</p>
 
         <section class="card mini" id="authCard" style="padding:14px;margin-top:12px;display:none">
           <h4>로그인</h4>
@@ -87,7 +87,7 @@
           <h4 id="memberTitle">회원 정보</h4>
           <p id="memberMeta" class="search-meta"></p>
           <div class="btns member-actions">
-            <a class="go" href="/pay/generate.html">생성권 결제하기</a>
+            <a class="go" href="/pay/generate.html">이용권 결제하기</a>
             <button id="btnLogout" type="button">로그아웃</button>
           </div>
         </section>
@@ -190,6 +190,13 @@
       if (!useSupabase()) return localGetCredits(uid);
       return await window.Supa.getCredits(uid);
     }
+    async function getReportCredits(uid) {
+      if (!useSupabase()) {
+        const wallet = safeParse(localStorage.getItem("reportCreditsV1"), {});
+        return Number(wallet?.[uid] || 0);
+      }
+      return await window.Supa.getReportCredits(uid);
+    }
 
     async function addCredits(uid, delta) {
       if (useSupabase()) return await window.Supa.addCredits(uid, delta);
@@ -290,7 +297,7 @@
       empty.style.display = "none";
       mine.forEach((it) => {
         const d = document.createElement("div"); d.className = "choice";
-        d.innerHTML = `<div style="font-weight:700">${it.test?.ogTitle || "AI 생성 테스트"}</div><div class="note" style="margin:0">${(it.test?.questions||[]).length}문항 · 리포트 남은 다운로드 ${Number(it.reportDownloadsRemaining || 0)}회</div>`;
+        d.innerHTML = `<div style="font-weight:700">${it.test?.ogTitle || "AI 생성 테스트"}</div><div class="note" style="margin:0">${(it.test?.questions||[]).length}문항 · 리포트는 이용권으로 사용</div>`;
         const b = document.createElement("button"); b.type = "button"; b.className = "primary library-action"; b.textContent = "이 테스트 시작"; b.onclick = () => openRecord(it);
         d.appendChild(b); list.appendChild(d);
       });
@@ -332,8 +339,9 @@
       authCard.style.display = "none";
       memberCard.style.display = "block";
       const credits = await getCredits(currentUser.id);
+      const reportCredits = await getReportCredits(currentUser.id);
       $("memberTitle").textContent = `${currentUser.email} 님`;
-      $("memberMeta").textContent = `보유 생성권: ${credits}회`;
+      $("memberMeta").textContent = `보유 생성권: ${credits}개 · 리포트 이용권: ${reportCredits}개`;
 
       if (!String(window.GEMINI_API_KEY || "").trim()) status.textContent = "설정 오류: Gemini API 키를 읽지 못했습니다.";
       else if (credits <= 0) status.textContent = "생성권이 없습니다. 생성 버튼을 누르면 결제 안내가 표시됩니다.";
@@ -396,7 +404,7 @@
         $("resultTitle").textContent = normalized.ogTitle;
         $("resultMeta").textContent = `${normalized.questions.length}문항 · ${normalized.types.length}유형 생성 완료`;
 
-        const reportDownloads = Number((window.TEST_GENERATION_PACKAGE && window.TEST_GENERATION_PACKAGE.reportDownloadsPerTest) || 1);
+        const reportDownloads = 0;
         latestRecord = await saveTestRecord(currentUser.id, normalized, reportDownloads);
 
         status.textContent = "생성 완료. 바로 테스트를 시작해보세요.";

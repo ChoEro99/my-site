@@ -1,7 +1,7 @@
 <!doctype html><html lang="ko"><head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.iamport.kr; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://api.iamport.kr https://*.iamport.kr; font-src 'self' data:; frame-src https:;" />
-<title>PDF 리포트 결제</title>
+<title>리포트 이용권 결제</title>
 <link rel="stylesheet" href="/style.css"/>
 <script src="/analytics-consent.js" defer></script>
 <script src="/pay-config.js"></script>
@@ -10,14 +10,14 @@
 </head><body>
 <div class="wrap"><button class="theme-toggle" id="themeToggle" aria-label="테마 전환" style="position:fixed;top:20px;right:20px;z-index:1000">🌙</button><div class="grid" style="grid-template-columns:minmax(0,1fr)">
 <main class="card hero">
-  <h1>심층 분석 PDF 결제</h1>
+  <h1>리포트 이용권 결제</h1>
   <p id="paySummary">주문 정보를 불러오는 중…</p>
   <div class="premium-upsell" id="payCard"></div>
   <div class="btns">
     <button class="primary" id="btnPay">결제하고 PDF 받기</button>
     <a class="pill" href="/">🏠 홈</a>
   </div>
-  <p class="note">* PortOne(아임포트) 설정이 없으면 데모 결제로 동작합니다.</p>
+  <p class="note">* 리포트 이용권 2개(1,900원)를 구매하고 Starter/Full 리포트에 사용합니다.</p>
 </main></div></div>
 <script>
 (function(){
@@ -31,24 +31,22 @@
   let draftData = null;
   try { draftData = JSON.parse(localStorage.getItem(key) || 'null'); } catch(e) {}
 
-  const prices = {
-    starter: Number((window.REPORT_PRICES && window.REPORT_PRICES.starter) || 900),
-    full: Number((window.REPORT_PRICES && window.REPORT_PRICES.full) || 1900)
+  const reportPackage = (window.VOUCHER_PACKAGES && window.VOUCHER_PACKAGES.report_2) || {
+    id: "report_2",
+    label: "리포트 이용권 2개",
+    price: 1900,
+    reportCredits: 2
   };
-  const creditsByPlan = {
-    starter: Number((window.REPORT_CREDITS && window.REPORT_CREDITS.starter) || 1),
-    full: Number((window.REPORT_CREDITS && window.REPORT_CREDITS.full) || 2)
-  };
-  const amount = prices[plan] || prices.starter;
-  const credits = creditsByPlan[plan] || creditsByPlan.starter;
-  const orderName = `${draftData?.resultTitle || result || '결과'} ${plan === 'full' ? 'Full' : 'Starter'} PDF`;
+  const amount = Number(reportPackage.price || 1900);
+  const credits = Number(reportPackage.reportCredits || 2);
+  const orderName = `${reportPackage.label} 구매`;
 
-  document.getElementById('paySummary').textContent = `${draftData?.testTitle || test} · ${orderName}`;
+  document.getElementById('paySummary').textContent = `${draftData?.testTitle || test} · ${draftData?.resultTitle || result || '결과'} 리포트 이용권 구매`;
   document.getElementById('payCard').innerHTML = `
     <p class="premium-label">결제 금액</p>
     <p class="premium-price">💵 ${amount.toLocaleString()}원</p>
-    <p class="premium-sub">제공 횟수: AI 심층 리포트 ${credits}회</p>
-    <p class="premium-sub">결제 완료 후 바로 PDF 다운로드 페이지로 이동합니다.</p>
+    <p class="premium-sub">지급 이용권: 리포트 ${credits}개</p>
+    <p class="premium-sub">차감 규칙: Starter 1개 / Full 2개</p>
   `;
 
   function goSuccess(paymentId){
@@ -57,6 +55,7 @@
     success.searchParams.set('result', result);
     success.searchParams.set('plan', plan);
     success.searchParams.set('draft', draft);
+    success.searchParams.set('package', reportPackage.id);
     success.searchParams.set('paymentId', paymentId || `demo_${Date.now()}`);
     location.href = success.toString();
   }

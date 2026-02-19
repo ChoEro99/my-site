@@ -35,16 +35,29 @@
     }
 
     const paymentId = new URLSearchParams(location.search).get('paymentId') || `demo_${Date.now()}`;
-    const pkg = window.TEST_GENERATION_PACKAGE || {};
-    const credits = Number(pkg.generationCredits || 1);
+    const packageId = new URLSearchParams(location.search).get('package') || 'generation_1';
+    const packages = window.VOUCHER_PACKAGES || {
+      generation_1: { id: "generation_1", label: "테스트 생성권 1개", price: 1900, generationCredits: 1, reportCredits: 0 },
+      report_2: { id: "report_2", label: "리포트 이용권 2개", price: 1900, generationCredits: 0, reportCredits: 2 },
+      combo_1_2: { id: "combo_1_2", label: "생성권 1개 + 리포트권 2개", price: 2900, generationCredits: 1, reportCredits: 2 }
+    };
+    const pkg = packages[packageId] || packages.generation_1;
+    const generationCredits = Number(pkg.generationCredits || 0);
+    const reportCredits = Number(pkg.reportCredits || 0);
 
     if (window.Supa?.isEnabled && window.Supa.isEnabled()) {
-      await window.Supa.addCredits(user.id, credits);
+      if (generationCredits > 0) await window.Supa.addCredits(user.id, generationCredits);
+      if (reportCredits > 0) await window.Supa.addReportCredits(user.id, reportCredits);
     } else {
       const walletKey = 'genCreditsV1';
       const wallet = JSON.parse(localStorage.getItem(walletKey) || '{}');
-      wallet[user.id] = Number(wallet[user.id] || 0) + credits;
+      wallet[user.id] = Number(wallet[user.id] || 0) + generationCredits;
       localStorage.setItem(walletKey, JSON.stringify(wallet));
+
+      const reportWalletKey = 'reportCreditsV1';
+      const reportWallet = JSON.parse(localStorage.getItem(reportWalletKey) || '{}');
+      reportWallet[user.id] = Number(reportWallet[user.id] || 0) + reportCredits;
+      localStorage.setItem(reportWalletKey, JSON.stringify(reportWallet));
     }
 
     const historyKey = 'genPaymentsV1';
@@ -52,14 +65,16 @@
     history.unshift({
       userId: user.id,
       paymentId,
-      credits,
-      amount: Number(pkg.price || 1900),
+      packageId,
+      generationCredits,
+      reportCredits,
+      amount: Number(pkg.price || 0),
       createdAt: Date.now()
     });
     localStorage.setItem(historyKey, JSON.stringify(history.slice(0, 200)));
 
     const email = user.email || '';
-    document.getElementById('successSummary').textContent = `${email} · 생성권 ${credits}회 지급 완료`;
+    document.getElementById('successSummary').textContent = `${email} · 생성권 ${generationCredits}개 / 리포트 이용권 ${reportCredits}개 지급 완료`;
   }
   init();
 })();

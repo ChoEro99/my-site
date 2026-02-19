@@ -1,9 +1,13 @@
 <!doctype html><html lang="ko"><head>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'; font-src 'self' data:; frame-src https:;" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co; font-src 'self' data:; frame-src https:;" />
 <title>결제 완료</title>
 <link rel="stylesheet" href="/style.css"/>
 <script src="/pay-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-config.js"></script>
+<script src="/supabase-client.js"></script>
+<script src="/auth.js"></script>
 <script src="/utils.js"></script>
 </head><body>
 <div class="wrap"><button class="theme-toggle" id="themeToggle" aria-label="테마 전환" style="position:fixed;top:20px;right:20px;z-index:1000">🌙</button><div class="grid" style="grid-template-columns:minmax(0,1fr)">
@@ -23,47 +27,63 @@
   const plan = p.get('plan') || 'starter';
   const draft = p.get('draft') || `${test}:${result}:${plan}`;
   const paymentId = p.get('paymentId') || `demo_${Date.now()}`;
-  const creditsByPlan = {
-    starter: Number((window.REPORT_CREDITS && window.REPORT_CREDITS.starter) || 1),
-    full: Number((window.REPORT_CREDITS && window.REPORT_CREDITS.full) || 2)
+  const packageId = p.get('package') || 'report_2';
+  const reportPackage = (window.VOUCHER_PACKAGES && window.VOUCHER_PACKAGES[packageId]) || {
+    id: "report_2",
+    label: "리포트 이용권 2개",
+    reportCredits: 2
   };
-  const purchasedCredits = creditsByPlan[plan] || creditsByPlan.starter;
-  const purchaseKey = `reportPurchase:${draft}`;
-  const packKey = `reportPack:${plan}`;
+  const reportCredits = Number(reportPackage.reportCredits || 2);
 
-  let pack = null;
-  try { pack = JSON.parse(localStorage.getItem(packKey) || 'null'); } catch (e) {}
-  if (!pack || typeof pack !== 'object') {
-    pack = { plan, remaining: 0, purchased: 0, usedDrafts: {} };
+  async function grantReportCredits() {
+    let user = null;
+    if (window.Supa?.isEnabled && window.Supa.isEnabled()) {
+      user = await window.Supa.getCurrentUser();
+      if (!user?.id) throw new Error("로그인이 필요합니다.");
+      await window.Supa.addReportCredits(user.id, reportCredits);
+    } else {
+      user = window.Auth?.getCurrentUser ? window.Auth.getCurrentUser() : null;
+      if (!user?.id) throw new Error("로그인이 필요합니다.");
+      const reportWalletKey = 'reportCreditsV1';
+      const reportWallet = JSON.parse(localStorage.getItem(reportWalletKey) || '{}');
+      reportWallet[user.id] = Number(reportWallet[user.id] || 0) + reportCredits;
+      localStorage.setItem(reportWalletKey, JSON.stringify(reportWallet));
+    }
+
+    document.getElementById('successSummary').textContent = `${test} / ${result} / ${plan.toUpperCase()} · 리포트 이용권 ${reportCredits}개 지급 완료`;
+    localStorage.setItem(`reportPurchase:${draft}`, JSON.stringify({
+      paid: true,
+      paymentId,
+      purchasedAt: Date.now(),
+      test,
+      result,
+      plan,
+      packageId,
+      reportCredits
+    }));
+    const historyKey = 'reportVoucherPaymentsV1';
+    const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+    history.unshift({
+      userId: user.id,
+      paymentId,
+      packageId,
+      reportCredits,
+      createdAt: Date.now()
+    });
+    localStorage.setItem(historyKey, JSON.stringify(history.slice(0, 200)));
+
+    const reportUrl = new URL('/report/pdf.html', location.origin);
+    reportUrl.searchParams.set('test', test);
+    reportUrl.searchParams.set('result', result);
+    reportUrl.searchParams.set('plan', plan);
+    reportUrl.searchParams.set('draft', draft);
+    document.getElementById('btnReport').href = reportUrl.toString();
   }
-  const usedDrafts = (pack.usedDrafts && typeof pack.usedDrafts === 'object') ? pack.usedDrafts : {};
 
-  pack.plan = plan;
-  pack.remaining = Number(pack.remaining || 0) + purchasedCredits;
-  pack.purchased = Number(pack.purchased || 0) + purchasedCredits;
-  pack.lastPaymentId = paymentId;
-  pack.updatedAt = Date.now();
-  pack.usedDrafts = usedDrafts;
-  localStorage.setItem(packKey, JSON.stringify(pack));
-
-  localStorage.setItem(purchaseKey, JSON.stringify({
-    paid: true,
-    paymentId,
-    purchasedAt: Date.now(),
-    test,
-    result,
-    plan,
-    credits: purchasedCredits,
-    packKey
-  }));
-
-  document.getElementById('successSummary').textContent = `${test} / ${result} / ${plan.toUpperCase()} 구매 완료 · AI 리포트 ${purchasedCredits}회 지급`;
-  const reportUrl = new URL('/report/pdf.html', location.origin);
-  reportUrl.searchParams.set('test', test);
-  reportUrl.searchParams.set('result', result);
-  reportUrl.searchParams.set('plan', plan);
-  reportUrl.searchParams.set('draft', draft);
-  document.getElementById('btnReport').href = reportUrl.toString();
+  grantReportCredits().catch((e) => {
+    alert(e.message || e);
+    location.href = '/create-test.html';
+  });
 })();
 </script>
 <script>

@@ -5,8 +5,12 @@ create extension if not exists "pgcrypto";
 create table if not exists public.generation_credits (
   user_id uuid primary key references auth.users(id) on delete cascade,
   credits integer not null default 0,
+  report_credits integer not null default 0,
   updated_at timestamptz not null default now()
 );
+
+alter table public.generation_credits
+  add column if not exists report_credits integer not null default 0;
 
 -- Generated tests table
 create table if not exists public.generated_tests (
