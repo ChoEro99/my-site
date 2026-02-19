@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co; font-src 'self' data:; frame-src https://accounts.google.com https:;" />
+  <title>로그인 | AI 심리테스트</title>
+  <meta name="description" content="AI 심리테스트 생성 기능 사용을 위한 로그인 페이지" />
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/supabase-config.js"></script>
+  <script src="/supabase-client.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <b>로그인</b>
+        <span>AI 테스트 만들기 이용을 위해 로그인하세요.</span>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <button class="theme-toggle" id="themeToggle" aria-label="테마 전환">🌙</button>
+        <a class="pill" href="/">🏠 홈</a>
+      </div>
+    </header>
+
+    <div class="grid" style="grid-template-columns:minmax(0,1fr)">
+      <main class="card hero">
+        <h1>회원 로그인</h1>
+        <p class="search-meta">Google 계정으로 로그인합니다. (Supabase Auth)</p>
+        <div class="btns" style="margin-top:12px">
+          <button id="btnGoogleLogin" class="primary" type="button">Google로 로그인</button>
+        </div>
+        <p id="statusText" class="search-meta">로그인 후 생성권 결제가 필요합니다.</p>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    function useSupabase() {
+      return !!(window.Supa && window.Supa.isEnabled && window.Supa.isEnabled());
+    }
+
+    function setThemeToggle() {
+      const t = $("themeToggle");
+      if (!t) return;
+      const isLight = document.documentElement.classList.contains("light-theme");
+      t.textContent = isLight ? "☀️" : "🌙";
+      if (typeof window.toggleTheme === "function") t.addEventListener("click", toggleTheme);
+    }
+
+    function getNextUrl() {
+      const q = new URLSearchParams(location.search);
+      const next = (q.get("next") || "/create-test.html").trim();
+      return next.startsWith("/") ? next : "/create-test.html";
+    }
+
+    async function getCurrentUser() {
+      if (!useSupabase()) return null;
+      return await window.Supa.getCurrentUser();
+    }
+
+    function setStatus(msg) {
+      const el = $("statusText");
+      if (el) el.textContent = msg;
+    }
+
+    async function routeIfLoggedIn() {
+      const user = await getCurrentUser();
+      if (user) location.href = getNextUrl();
+    }
+
+    $("btnGoogleLogin").addEventListener("click", async () => {
+      if (!useSupabase()) {
+        setStatus("Supabase 설정이 없어 Google 로그인을 시작할 수 없습니다.");
+        return;
+      }
+      try {
+        await window.Supa.signInWithGoogle();
+      } catch (e) {
+        setStatus(`실패: ${e.message || e}`);
+      }
+    });
+
+    setThemeToggle();
+    routeIfLoggedIn();
+    if (!useSupabase()) setStatus("Supabase 설정이 필요합니다.");
+  </script>
+</body>
+</html>

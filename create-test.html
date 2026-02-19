@@ -11,11 +11,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/supabase-config.js"></script>
   <script src="/supabase-client.js"></script>
-  <script src="/auth.js"></script>
   <script src="/pay-config.js"></script>
   <script src="/gemini-config.js"></script>
-  <script src="/google-auth-config.js"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="/analytics-consent.js" defer></script>
 </head>
 <body>
@@ -38,13 +35,9 @@
 
         <section class="card mini" id="authCard" style="padding:14px;margin-top:12px;display:none">
           <h4>로그인</h4>
-          <div class="home-tools">
-            <input id="loginEmail" type="email" placeholder="이메일" />
-            <input id="loginPassword" type="password" placeholder="비밀번호 (6자 이상)" />
-            <button id="btnLogin" type="button">로그인</button>
-            <button id="btnSignup" type="button">회원가입</button>
+          <div class="btns">
+            <button id="btnGoogleLogin" class="primary" type="button">Google로 로그인</button>
           </div>
-          <div style="margin-top:10px"><div id="googleLoginWrap"></div></div>
           <p id="authStatus" class="search-meta">로그인 후 생성 기능을 사용할 수 있습니다.</p>
         </section>
 
@@ -115,8 +108,6 @@
 
     let currentUser = null;
     let latestRecord = null;
-    let googleLoginReady = false;
-
     const useSupabase = () => !!(window.Supa && window.Supa.isEnabled && window.Supa.isEnabled());
 
     function safeParse(raw, fallback) { try { return JSON.parse(raw || ""); } catch (e) { return fallback; } }
@@ -137,13 +128,13 @@
     function localSaveAllTests(v) { localStorage.setItem(GEN_TESTS_KEY, JSON.stringify(v || [])); }
 
     async function getCurrentUser() {
-      if (useSupabase()) return await window.Supa.getCurrentUser();
-      return window.Auth && window.Auth.getCurrentUser ? window.Auth.getCurrentUser() : null;
+      if (!useSupabase()) return null;
+      return await window.Supa.getCurrentUser();
     }
 
     async function getCredits(uid) {
-      if (useSupabase()) return await window.Supa.getCredits(uid);
-      return localGetCredits(uid);
+      if (!useSupabase()) return localGetCredits(uid);
+      return await window.Supa.getCredits(uid);
     }
 
     async function addCredits(uid, delta) {
@@ -159,8 +150,8 @@
     }
 
     async function listTests(uid) {
-      if (useSupabase()) return await window.Supa.listGeneratedTests(uid);
-      return localGetAllTests().filter((x) => x.ownerId === uid);
+      if (!useSupabase()) return localGetAllTests().filter((x) => x.ownerId === uid);
+      return await window.Supa.listGeneratedTests(uid);
     }
 
     async function saveTestRecord(uid, testObj, reportDownloads) {
@@ -277,46 +268,20 @@
     }
 
     function initGoogleLogin() {
-      const wrap = $("googleLoginWrap");
-      if (!wrap) return;
-      if (currentUser) { wrap.innerHTML = ""; return; }
-
-      if (useSupabase()) {
-        wrap.innerHTML = "";
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "primary";
-        btn.textContent = "Google로 로그인";
-        btn.onclick = async () => {
-          try {
-            await window.Supa.signInWithGoogle();
-          } catch (e) {
-            setAuthStatus(`실패: ${e.message || e}`);
-          }
-        };
-        wrap.appendChild(btn);
-        return;
-      }
-
-      const clientId = String(window.GOOGLE_CLIENT_ID || "").trim();
-      if (!clientId || !(window.google && window.google.accounts && window.google.accounts.id)) return;
-      if (!googleLoginReady) {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: (response) => {
-            try {
-              window.Auth.loginWithGoogleCredential(response.credential);
-              setAuthStatus("Google 로그인 완료");
-              renderAuthState();
-            } catch (e) {
-              setAuthStatus(`실패: ${e.message || e}`);
-            }
-          }
-        });
-        googleLoginReady = true;
-      }
-      wrap.innerHTML = "";
-      window.google.accounts.id.renderButton(wrap, { type: "standard", theme: "outline", size: "large", text: "signin_with", shape: "pill", width: 280 });
+      if (currentUser) return;
+      const btn = $("btnGoogleLogin");
+      if (!btn) return;
+      btn.onclick = async () => {
+        if (!useSupabase()) {
+          setAuthStatus("Supabase 설정이 없어 Google 로그인을 사용할 수 없습니다.");
+          return;
+        }
+        try {
+          await window.Supa.signInWithGoogle();
+        } catch (e) {
+          setAuthStatus(`실패: ${e.message || e}`);
+        }
+      };
     }
 
     async function renderAuthState() {
@@ -327,7 +292,9 @@
       if (!currentUser) {
         authCard.style.display = "block";
         memberCard.style.display = "none";
-        status.textContent = "생성하려면 로그인 + 생성권 결제가 필요합니다.";
+        status.textContent = useSupabase()
+          ? "생성하려면 Google 로그인 + 생성권 결제가 필요합니다."
+          : "Supabase 설정이 필요합니다.";
         initGoogleLogin();
         await renderLibrary();
         return;
@@ -414,35 +381,8 @@
       return latestRecord;
     }
 
-    $("btnLogin").addEventListener("click", async () => {
-      try {
-        if (useSupabase()) await window.Supa.signInWithEmail($("loginEmail").value, $("loginPassword").value);
-        else window.Auth.login($("loginEmail").value, $("loginPassword").value);
-        setAuthStatus("로그인 완료");
-        await renderAuthState();
-      } catch (e) {
-        setAuthStatus(`실패: ${e.message || e}`);
-      }
-    });
-
-    $("btnSignup").addEventListener("click", async () => {
-      try {
-        if (useSupabase()) {
-          await window.Supa.signUpWithEmail($("loginEmail").value, $("loginPassword").value);
-          await window.Supa.signInWithEmail($("loginEmail").value, $("loginPassword").value);
-        } else {
-          window.Auth.register($("loginEmail").value, $("loginPassword").value, "");
-        }
-        setAuthStatus("회원가입 및 로그인 완료");
-        await renderAuthState();
-      } catch (e) {
-        setAuthStatus(`실패: ${e.message || e}`);
-      }
-    });
-
     $("btnLogout").addEventListener("click", async () => {
       if (useSupabase()) await window.Supa.signOut();
-      else window.Auth.logout();
       latestRecord = null;
       await renderAuthState();
     });
