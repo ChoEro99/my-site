@@ -153,6 +153,7 @@
     const GENERATED_TEST_META_KEY = "generatedTestMeta";
     const GEN_TESTS_KEY = "generatedTestsV1";
     const GEN_WALLET_KEY = "genCreditsV1";
+    const GENERATED_TEST_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
     let currentUser = null;
     let latestRecord = null;
@@ -180,6 +181,16 @@
     function localSetCredits(uid, value) { const w = localGetWallet(); w[uid] = Math.max(0, Number(value || 0)); localStorage.setItem(GEN_WALLET_KEY, JSON.stringify(w)); }
     function localGetAllTests() { const v = safeParse(localStorage.getItem(GEN_TESTS_KEY), []); return Array.isArray(v) ? v : []; }
     function localSaveAllTests(v) { localStorage.setItem(GEN_TESTS_KEY, JSON.stringify(v || [])); }
+    function parseCreatedAt(value) {
+      const t = new Date(value).getTime();
+      return Number.isFinite(t) ? t : Date.now();
+    }
+    function formatRemaining(ms) {
+      const safe = Math.max(0, Number(ms || 0));
+      const day = 24 * 60 * 60 * 1000;
+      if (safe >= day) return `${Math.ceil(safe / day)}일`;
+      return `${Math.ceil(safe / (60 * 60 * 1000))}시간`;
+    }
 
     async function getCurrentUser() {
       if (!useSupabase()) return null;
@@ -298,12 +309,34 @@
     async function renderLibrary() {
       const list = $("libraryList"); const empty = $("libraryEmpty"); list.innerHTML = "";
       if (!currentUser) { empty.style.display = "block"; empty.textContent = "로그인 후 생성한 테스트가 여기에 보관됩니다."; return; }
-      const mine = await listTests(currentUser.id);
+      let mine = await listTests(currentUser.id);
+      const now = Date.now();
+      if (useSupabase()) {
+        const alive = [];
+        for (const t of mine) {
+          const createdAtMs = parseCreatedAt(t.createdAt);
+          const expiresAtMs = createdAtMs + GENERATED_TEST_TTL_MS;
+          if (expiresAtMs <= now) {
+            try { await window.Supa.deleteGeneratedTest(t.id, currentUser.id); } catch (e) {}
+          } else {
+            alive.push({ ...t, _expiresAtMs: expiresAtMs });
+          }
+        }
+        mine = alive;
+      } else {
+        const all = localGetAllTests();
+        const other = all.filter((x) => x.ownerId !== currentUser.id);
+        const alive = mine.filter((x) => (Number(x.createdAt || 0) + GENERATED_TEST_TTL_MS) > now)
+          .map((x) => ({ ...x, _expiresAtMs: Number(x.createdAt || now) + GENERATED_TEST_TTL_MS }));
+        localSaveAllTests([...other, ...alive]);
+        mine = alive;
+      }
       if (!mine.length) { empty.style.display = "block"; empty.textContent = "아직 생성된 테스트가 없습니다."; return; }
       empty.style.display = "none";
       mine.forEach((it) => {
         const d = document.createElement("div"); d.className = "choice";
-        d.innerHTML = `<div style="font-weight:700">${it.test?.ogTitle || "AI 생성 테스트"}</div><div class="note" style="margin:0">${(it.test?.questions||[]).length}문항 · 리포트는 이용권으로 사용</div>`;
+        const leftMs = Math.max(0, Number(it._expiresAtMs || 0) - Date.now());
+        d.innerHTML = `<div style="font-weight:700">${it.test?.ogTitle || "AI 생성 테스트"}</div><div class="note" style="margin:0">${(it.test?.questions||[]).length}문항 · 리포트는 이용권으로 사용 · 남은 시간 ${formatRemaining(leftMs)}</div>`;
         const b = document.createElement("button"); b.type = "button"; b.className = "primary library-action"; b.textContent = "이 테스트 시작"; b.onclick = () => openRecord(it);
         d.appendChild(b); list.appendChild(d);
       });

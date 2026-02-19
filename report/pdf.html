@@ -37,11 +37,14 @@
   const generatedId = p.get('generatedId') || '';
   const reportCostMap = window.REPORT_VOUCHER_COST || { starter: 1, full: 2 };
   const reportCost = Number(reportCostMap[plan] || reportCostMap.starter || 1);
+  const REPORT_ITEMS_KEY = "reportItemsV1";
+  const REPORT_MAX_DOWNLOADS = 2;
 
-  const purchase = JSON.parse(localStorage.getItem(`reportPurchase:${draft}`) || 'null');
   const generatedTestsKey = 'generatedTestsV1';
   let generatedRecord = null;
   let reportCredits = 0;
+  let reportItem = null;
+  let currentUserId = "";
 
   async function getReportCredits() {
     if (window.Supa?.isEnabled && window.Supa.isEnabled()) {
@@ -53,6 +56,63 @@
     if (!user?.id) return 0;
     const wallet = JSON.parse(localStorage.getItem('reportCreditsV1') || '{}');
     return Number(wallet[user.id] || 0);
+  }
+
+  function getCurrentUserIdLocal() {
+    const user = window.Auth?.getCurrentUser ? window.Auth.getCurrentUser() : null;
+    if (user?.id) return String(user.id);
+    return String(localStorage.getItem("activeUserId") || "");
+  }
+
+  function readReportItems() {
+    const raw = JSON.parse(localStorage.getItem(REPORT_ITEMS_KEY) || "[]");
+    return Array.isArray(raw) ? raw : [];
+  }
+
+  function saveReportItems(items) {
+    localStorage.setItem(REPORT_ITEMS_KEY, JSON.stringify(items || []));
+  }
+
+  function upsertReportItem(item) {
+    const all = readReportItems();
+    const idx = all.findIndex((x) => String(x.id) === String(item.id));
+    if (idx >= 0) all[idx] = item;
+    else all.unshift(item);
+    saveReportItems(all.slice(0, 300));
+    return item;
+  }
+
+  function buildReportItemId(userId, draftKey, planKey) {
+    return `${userId}:${draftKey}:${planKey}`;
+  }
+
+  function loadReportItem(userId, draftKey, planKey) {
+    const id = buildReportItemId(userId, draftKey, planKey);
+    return readReportItems().find((x) => String(x.id) === id) || null;
+  }
+
+  async function ensureReportItemAccess() {
+    if (!currentUserId) throw new Error("로그인이 필요합니다.");
+    const existing = loadReportItem(currentUserId, draft, plan);
+    if (existing) return existing;
+    if (reportCredits < reportCost) throw new Error(`리포트 이용권이 부족합니다. 필요 ${reportCost}개, 보유 ${reportCredits}개`);
+
+    await consumeReportCredits(reportCost);
+    reportCredits = Math.max(0, reportCredits - reportCost);
+    const now = Date.now();
+    const created = {
+      id: buildReportItemId(currentUserId, draft, plan),
+      userId: currentUserId,
+      draft,
+      test,
+      result,
+      plan,
+      createdAt: now,
+      updatedAt: now,
+      maxDownloads: REPORT_MAX_DOWNLOADS,
+      remainingDownloads: REPORT_MAX_DOWNLOADS
+    };
+    return upsertReportItem(created);
   }
 
   async function consumeReportCredits(need) {
@@ -100,7 +160,21 @@
     }
   }
 
+  if (window.Supa?.isEnabled && window.Supa.isEnabled()) {
+    const u = await window.Supa.getCurrentUser();
+    currentUserId = String(u?.id || "");
+  }
+  if (!currentUserId) currentUserId = getCurrentUserIdLocal();
+  if (currentUserId) localStorage.setItem("activeUserId", currentUserId);
+
   reportCredits = await getReportCredits();
+  try {
+    reportItem = await ensureReportItemAccess();
+  } catch (e) {
+    alert(e.message || e);
+    location.href = '/account.html';
+    return;
+  }
 
   const draftData = JSON.parse(localStorage.getItem(`reportDraft:${draft}`) || 'null');
   const resultTitle = draftData?.resultTitle || result || '결과';
@@ -110,8 +184,7 @@
   const planName = plan === 'full' ? 'Full' : 'Starter';
   document.getElementById('title').textContent = `${resultTitle} ${planName} PDF 리포트`;
   const today = new Date();
-  const paymentText = purchase?.paymentId ? `결제번호 ${purchase.paymentId}` : '결제정보 확인';
-  document.getElementById('meta').textContent = `${testTitle} · ${paymentText} · 생성일 ${today.toLocaleDateString('ko-KR')} · 리포트 이용권 ${reportCredits}개 (이번 리포트 차감 ${reportCost}개)`;
+  document.getElementById('meta').textContent = `${testTitle} · 생성일 ${today.toLocaleDateString('ko-KR')} · 남은 다운로드 ${Number(reportItem?.remainingDownloads || 0)}회 · 보유 이용권 ${reportCredits}개`;
 
   // ---------- helpers ----------
   const escapeHtml = (s) =>
@@ -1056,8 +1129,8 @@
 
   // ---------- PDF ----------
   document.getElementById('btnPdf').onclick = async function () {
-    if (reportCredits < reportCost) {
-      alert(`리포트 이용권이 부족합니다. 필요 ${reportCost}개, 보유 ${reportCredits}개`);
+    if (!reportItem || Number(reportItem.remainingDownloads || 0) <= 0) {
+      alert('이 리포트의 다운로드 가능 횟수(2회)를 모두 사용했습니다.');
       return;
     }
 
@@ -1093,12 +1166,14 @@
         renderedHeight += pageHeight;
       }
 
-      await consumeReportCredits(reportCost);
-      reportCredits = Math.max(0, reportCredits - reportCost);
       doc.save(`${test || 'test'}_${result || 'result'}_${plan}_report.pdf`);
-      const paymentTextNow = purchase?.paymentId ? `결제번호 ${purchase.paymentId}` : '결제정보 확인';
+
+      reportItem.remainingDownloads = Math.max(0, Number(reportItem.remainingDownloads || 0) - 1);
+      reportItem.updatedAt = Date.now();
+      upsertReportItem(reportItem);
+
       const todayNow = new Date();
-      document.getElementById('meta').textContent = `${testTitle} · ${paymentTextNow} · 생성일 ${todayNow.toLocaleDateString('ko-KR')} · 리포트 이용권 ${reportCredits}개 (이번 리포트 차감 ${reportCost}개)`;
+      document.getElementById('meta').textContent = `${testTitle} · 생성일 ${todayNow.toLocaleDateString('ko-KR')} · 남은 다운로드 ${Number(reportItem.remainingDownloads || 0)}회 · 보유 이용권 ${reportCredits}개`;
     } finally {
       if (btns) btns.style.display = prevDisplay;
       btn.disabled = false;

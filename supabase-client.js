@@ -214,6 +214,18 @@
     return current;
   }
 
+  async function deleteGeneratedTest(id, userId) {
+    const c = getClient();
+    if (!c) throw new Error("Supabase 설정이 필요합니다.");
+    const { error } = await c
+      .from("generated_tests")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", userId);
+    if (error) throw error;
+    return true;
+  }
+
   window.Supa = {
     isEnabled,
     getClient,
@@ -233,6 +245,7 @@
     listGeneratedTests,
     saveGeneratedTest,
     getGeneratedTest,
-    decrementGeneratedReport
+    decrementGeneratedReport,
+    deleteGeneratedTest
   };
 })();
