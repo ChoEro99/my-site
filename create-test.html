@@ -57,7 +57,6 @@
           </div>
 
           <div class="home-tools">
-            <input id="tone" type="text" placeholder="톤 (예: 가볍고 현실적인 조언)" />
             <select id="questionCount">
               <option value="8">8문항</option>
               <option value="10" selected>10문항</option>
@@ -77,17 +76,6 @@
             </div>
           </div>
 
-          <details style="margin-top:12px">
-            <summary style="cursor:pointer;font-weight:700">고급 옵션 (JSON 확인/다운로드)</summary>
-            <div class="card mini" style="padding:14px;margin-top:10px">
-              <textarea id="resultJson" style="width:100%;min-height:220px;background:rgba(0,0,0,.15);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px"></textarea>
-              <div class="btns">
-                <button id="btnCopyJson" type="button">JSON 복사</button>
-                <button id="btnDownloadData" type="button">tests/data용 JS 다운로드</button>
-                <button id="btnDownloadHtml" type="button">tests용 HTML 다운로드</button>
-              </div>
-            </div>
-          </details>
         </section>
 
         <section class="card mini" style="padding:14px;margin-top:12px">
@@ -222,31 +210,6 @@
       return out;
     }
 
-    function toDataJsText(obj) { return "window.TEST=" + JSON.stringify(obj, null, 2) + ";\n"; }
-    function toTestHtmlText(obj) {
-      return `<!doctype html><html lang="ko"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://pagead2.googlesyndication.com https://t1.kakaocdn.net https://developers.kakao.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://www.google-analytics.com https://kapi.kakao.com; font-src 'self' data:; frame-src https:;" />
-<title>${obj.ogTitle} | 2~3분</title>
-<meta name="description" content="${obj.ogDesc}"/>
-<meta property="og:title" content="${obj.ogTitle}" />
-<meta property="og:description" content="${obj.ogDesc}" />
-<meta property="og:type" content="website" />
-<meta property="og:image" content="https://my-site-five-ecru.vercel.app/og.png" />
-<link rel="stylesheet" href="/style.css"/><script src="/utils.js"><\\/script><script src="/analytics-consent.js" defer><\\/script>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6051453612452994" crossorigin="anonymous"><\\/script>
-</head><body>
-<script src="/tests/data/${obj.slug}.js"><\\/script>
-<script src="/tests/shared-shell.js"><\\/script>
-</body></html>\n`;
-    }
-
-    function downloadText(filename, text) {
-      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-    }
-
     function openRecord(rec) {
       sessionStorage.setItem(GENERATED_TEST_KEY, JSON.stringify(rec.test));
       sessionStorage.setItem(GENERATED_TEST_META_KEY, JSON.stringify({ id: rec.id, paid: !!rec.paid, reportDownloadsRemaining: Number(rec.reportDownloadsRemaining || 0) }));
@@ -319,7 +282,6 @@
       const model = "gemini-2.5-flash";
       const topic = ($("topic").value || "").trim();
       const audience = ($("audience").value || "").trim();
-      const tone = ($("tone").value || "").trim();
       const questionCount = Number($("questionCount").value || 10);
       const status = $("genStatus"); const btn = $("btnGenerate");
 
@@ -333,7 +295,7 @@
       await renderAuthState();
 
       const systemPrompt = `너는 한국어 심리테스트 기획자다.\n반드시 JSON만 출력해라. 코드블록/설명/주석 금지.\n의학적 진단/치료를 암시하지 말고 재미/콘텐츠 톤으로 작성해라.\n편견, 혐오, 차별 표현 금지.\n아래 구조를 지켜라:\n{\n  "slug":"영문소문자-하이픈",\n  "badge":"짧은 배지",\n  "ogTitle":"테스트 제목",\n  "ogDesc":"한 줄 소개",\n  "types":["type1","type2","type3","type4"],\n  "results":{\n    "type1":{"emoji":"✨","title":"...형","desc":"...","tags":["","",""] ,"strengths":["","",""] ,"pitfalls":["",""] ,"routine":["","",""]},\n    "type2":{},"type3":{},"type4":{}\n  },\n  "questions":[{"q":"질문","c":[{"t":"선택지1","s":{"type1":2,"type2":0,"type3":0,"type4":0}},{"t":"선택지2","s":{"type1":0,"type2":2,"type3":0,"type4":0}},{"t":"선택지3","s":{"type1":0,"type2":0,"type3":2,"type4":0}},{"t":"선택지4","s":{"type1":0,"type2":0,"type3":0,"type4":2}}]}]\n}`;
-      const userPrompt = `주제: ${topic}\n대상: ${audience || "일반 사용자"}\n톤: ${tone || "가볍고 이해 쉬운"}\n문항 수: ${questionCount}\n출력은 반드시 JSON만.`;
+      const userPrompt = `주제: ${topic}\n대상: ${audience || "일반 사용자"}\n톤: 가볍고 이해 쉬운\n문항 수: ${questionCount}\n출력은 반드시 JSON만.`;
 
       status.textContent = "AI 생성 중...";
       btn.disabled = true;
@@ -355,7 +317,6 @@
         const normalized = validateAndNormalize(parsed, slugify(topic));
         normalized.questions = normalized.questions.slice(0, questionCount);
 
-        $("resultJson").value = JSON.stringify(normalized, null, 2);
         $("resultCard").style.display = "block";
         $("resultTitle").textContent = normalized.ogTitle;
         $("resultMeta").textContent = `${normalized.questions.length}문항 · ${normalized.types.length}유형 생성 완료`;
@@ -373,12 +334,6 @@
       } finally {
         btn.disabled = false;
       }
-    }
-
-    function parseRecordFromTextarea() {
-      const parsed = validateAndNormalize(JSON.parse($("resultJson").value), "new-test");
-      latestRecord = { id: "manual", ownerId: currentUser?.id || "", createdAt: Date.now(), paid: true, reportDownloadsRemaining: 2, test: parsed };
-      return latestRecord;
     }
 
     $("btnLogout").addEventListener("click", async () => {
@@ -404,22 +359,6 @@
     $("btnRegenerate").addEventListener("click", async () => {
       try { await generateWithGemini(); }
       catch (e) { $("genStatus").textContent = `실패: ${e.message || e}`; }
-    });
-
-    $("btnCopyJson").addEventListener("click", async () => {
-      const text = $("resultJson").value || "";
-      if (!text.trim()) return;
-      try { await navigator.clipboard.writeText(text); if (typeof showToast === "function") showToast("JSON 복사 완료"); } catch (e) {}
-    });
-
-    $("btnDownloadData").addEventListener("click", () => {
-      const rec = latestRecord || parseRecordFromTextarea();
-      downloadText(`${rec.test.slug}.js`, toDataJsText(rec.test));
-    });
-
-    $("btnDownloadHtml").addEventListener("click", () => {
-      const rec = latestRecord || parseRecordFromTextarea();
-      downloadText(`${rec.test.slug}.html`, toTestHtmlText(rec.test));
     });
 
     setThemeToggle();
