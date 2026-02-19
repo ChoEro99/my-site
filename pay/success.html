@@ -41,6 +41,10 @@
       user = await window.Supa.getCurrentUser();
       if (!user?.id) throw new Error("로그인이 필요합니다.");
       await window.Supa.addReportCredits(user.id, reportCredits);
+      const reportWalletKey = 'reportCreditsV1';
+      const reportWallet = JSON.parse(localStorage.getItem(reportWalletKey) || '{}');
+      reportWallet[user.id] = Number(reportWallet[user.id] || 0) + reportCredits;
+      localStorage.setItem(reportWalletKey, JSON.stringify(reportWallet));
     } else {
       user = window.Auth?.getCurrentUser ? window.Auth.getCurrentUser() : null;
       if (!user?.id) throw new Error("로그인이 필요합니다.");
@@ -49,6 +53,7 @@
       reportWallet[user.id] = Number(reportWallet[user.id] || 0) + reportCredits;
       localStorage.setItem(reportWalletKey, JSON.stringify(reportWallet));
     }
+    localStorage.setItem('activeUserId', String(user.id || ''));
 
     document.getElementById('successSummary').textContent = `${test} / ${result} / ${plan.toUpperCase()} · 리포트 이용권 ${reportCredits}개 지급 완료`;
     localStorage.setItem(`reportPurchase:${draft}`, JSON.stringify({

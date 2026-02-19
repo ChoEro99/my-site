@@ -338,6 +338,7 @@
 
       authCard.style.display = "none";
       memberCard.style.display = "block";
+      try { localStorage.setItem("activeUserId", String(currentUser.id || "")); } catch (e) {}
       const credits = await getCredits(currentUser.id);
       const reportCredits = await getReportCredits(currentUser.id);
       $("memberTitle").textContent = `${currentUser.email} 님`;
@@ -425,6 +426,7 @@
     $("btnLogout").addEventListener("click", async () => {
       if (useSupabase()) await window.Supa.signOut();
       latestRecord = null;
+      try { localStorage.removeItem("activeUserId"); } catch (e) {}
       await renderAuthState();
     });
 

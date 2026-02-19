@@ -28,6 +28,22 @@ function getReportPrice(TEST, resultId, plan){
   return `${Number(costMap[plan] || 1)}이용권`;
 }
 
+function getActiveUserId(){
+  try { return String(localStorage.getItem("activeUserId") || "").trim(); }
+  catch (e) { return ""; }
+}
+
+function getLocalReportCredits(){
+  try {
+    const uid = getActiveUserId();
+    if (!uid) return 0;
+    const wallet = JSON.parse(localStorage.getItem("reportCreditsV1") || "{}");
+    return Number(wallet?.[uid] || 0);
+  } catch (e) {
+    return 0;
+  }
+}
+
 function buildReportCheckoutUrl(TEST, resultId, plan){
   const checkoutBase = TEST.reportCheckoutUrl || window.REPORT_CHECKOUT_URL || "/pay/report.html";
   const url = new URL(checkoutBase, location.origin);
@@ -67,18 +83,31 @@ function buildFullReportExampleUrl(TEST, resultId){
   return url.toString();
 }
 
-function makePremiumReportUpsell(TEST, resultId, result){
+function buildDirectReportUrl(TEST, resultId, plan){
+  const url = new URL('/report/pdf.html', location.origin);
+  url.searchParams.set('test', TEST.slug);
+  url.searchParams.set('result', resultId);
+  url.searchParams.set('plan', plan);
+  return url.toString();
+}
+
+function makePremiumReportUpsell(TEST, resultId, result, reportCredits){
   const starterPrice = getReportPrice(TEST, resultId, "starter");
   const fullPrice = getReportPrice(TEST, resultId, "full");
-  const starterLink = buildReportCheckoutUrl(TEST, resultId, "starter");
-  const fullLink = buildReportCheckoutUrl(TEST, resultId, "full");
+  const costMap = window.REPORT_VOUCHER_COST || { starter: 1, full: 2 };
+  const starterCost = Number(costMap.starter || 1);
+  const fullCost = Number(costMap.full || 2);
+  const hasStarter = Number(reportCredits || 0) >= starterCost;
+  const hasFull = Number(reportCredits || 0) >= fullCost;
+  const starterLink = hasStarter ? buildDirectReportUrl(TEST, resultId, "starter") : buildReportCheckoutUrl(TEST, resultId, "starter");
+  const fullLink = hasFull ? buildDirectReportUrl(TEST, resultId, "full") : buildReportCheckoutUrl(TEST, resultId, "full");
   const fullExampleLink = buildFullReportExampleUrl(TEST, resultId);
   const resultTitle = result?.title || "결과";
 
   return `
   <section class="premium-upsell" aria-label="심층 보고서 안내">
     <h4>${resultTitle} PDF 심층 분석 보고서</h4>
-    <p class="premium-sub">현재 결과에 맞춘 맞춤형 PDF를 결제 후 바로 확인할 수 있어요.</p>
+    <p class="premium-sub">현재 보유 리포트 이용권: ${Number(reportCredits || 0)}개</p>
     <div class="premium-grid">
       <article class="premium-plan">
         <p class="premium-label">Starter 보고서</p>
@@ -87,7 +116,7 @@ function makePremiumReportUpsell(TEST, resultId, result){
           <li>✔︎ 예시 사례 포함</li>
         </ul>
         <p class="premium-price">🎟 ${starterPrice}</p>
-        <a class="go premium-cta" href="${starterLink}" data-plan="starter" data-result-id="${resultId}">Starter 리포트 이용하기</a>
+        <a class="go premium-cta" href="${starterLink}" data-plan="starter" data-result-id="${resultId}" data-direct="${hasStarter ? "1" : "0"}">${hasStarter ? "Starter 리포트 이용하기" : "Starter 리포트 결제하기"}</a>
       </article>
       <article class="premium-plan premium-plan-full">
         <p class="premium-label">Full 보고서</p>
@@ -97,7 +126,7 @@ function makePremiumReportUpsell(TEST, resultId, result){
           <li>✔︎ 심층 확장 분석</li>
         </ul>
         <p class="premium-price">🎟 ${fullPrice}</p>
-        <a class="go premium-cta" href="${fullLink}" data-plan="full" data-result-id="${resultId}">Full 리포트 이용하기</a>
+        <a class="go premium-cta" href="${fullLink}" data-plan="full" data-result-id="${resultId}" data-direct="${hasFull ? "1" : "0"}">${hasFull ? "Full 리포트 이용하기" : "Full 리포트 결제하기"}</a>
         <a class="premium-example-link" href="${fullExampleLink}" target="_blank" rel="noopener">리포트 예시 보기</a>
       </article>
     </div>
@@ -320,21 +349,25 @@ function setPill(text){
       if (!ENABLE_PREMIUM_REPORT_UPSELL) {
         premiumUpsell.innerHTML = "";
       } else {
-        premiumUpsell.innerHTML = makePremiumReportUpsell(TEST, resultId, r);
+        const reportCredits = getLocalReportCredits();
+        premiumUpsell.innerHTML = makePremiumReportUpsell(TEST, resultId, r, reportCredits);
         premiumUpsell.querySelectorAll(".premium-cta").forEach((link) => {
           link.onclick = (event) => {
+            event.preventDefault();
             const plan = link.dataset.plan || "starter";
             saveReportDraft(TEST, resultId, plan, r);
-            const checkoutUrl = new URL(link.href);
-            checkoutUrl.searchParams.set("draft", `${TEST.slug}:${resultId}:${plan}`);
-            link.href = checkoutUrl.toString();
+            const isDirect = String(link.dataset.direct || "0") === "1";
+            const nextUrl = new URL(link.href);
+            nextUrl.searchParams.set("draft", `${TEST.slug}:${resultId}:${plan}`);
             track("report_checkout_click", {
               test_slug: TEST.slug,
               result_id: resultId,
               plan,
-              href: link.href,
+              direct: isDirect,
+              href: nextUrl.toString(),
               page_type: "result"
             });
+            location.href = nextUrl.toString();
           };
         });
       }
@@ -372,6 +405,18 @@ function setPill(text){
       }
       generatedReportBtn.onclick = () => {
         const plan = "full";
+        const costMap = window.REPORT_VOUCHER_COST || { starter: 1, full: 2 };
+        const need = Number(costMap[plan] || 2);
+        const credits = getLocalReportCredits();
+        if (credits < need) {
+          const payUrl = new URL("/pay/report.html", location.origin);
+          payUrl.searchParams.set("test", TEST.slug);
+          payUrl.searchParams.set("result", resultId);
+          payUrl.searchParams.set("plan", plan);
+          payUrl.searchParams.set("draft", `${TEST.slug}:${resultId}:${plan}`);
+          location.href = payUrl.toString();
+          return;
+        }
         const draftKey = `${TEST.slug}:${resultId}:${plan}`;
         saveReportDraft(TEST, resultId, plan, r);
         const reportUrl = new URL("/report/pdf.html", location.origin);
